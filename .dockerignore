@@ -1,0 +1,40 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+*.log
+
+# Desktop/Electron build artifacts
+desktop/release
+desktop/dist
+desktop/build
+
+# Mobile
+mobile/node_modules
+mobile/.expo
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+backend/dist
+backend/logs
+
+# Tests
+coverage
+__tests__
+
+# Documentation
+*.md
+LICENSE*

@@ -1,0 +1,16 @@
+export type {
+  SlideElement,
+  SlideAnimation,
+  Slide,
+  SlideLayout,
+  SlideBackground,
+  SlideTransition,
+  ParsedSlideData,
+  ParsedPresentation,
+  PresentationTheme,
+  Presentation,
+  ChatMessage,
+  WorkspaceStep,
+  UserIntent,
+  IntentAnalysis,
+} from './types';

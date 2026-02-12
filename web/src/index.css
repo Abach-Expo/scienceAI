@@ -1,0 +1,467 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==================== THEME VARIABLES ==================== */
+
+:root,
+[data-theme='dark'] {
+  --bg-primary: #0A0A0F;
+  --bg-secondary: #12121A;
+  --bg-tertiary: #1A1A25;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0B0;
+  --text-muted: #606070;
+  --accent-primary: #8B5CF6;
+  --accent-secondary: #EC4899;
+  --border-primary: #2A2A35;
+  --border-secondary: #3A3A45;
+  --scrollbar-track: #12121A;
+  --glass-bg: rgba(18, 18, 26, 0.8);
+}
+
+[data-theme='light'] {
+  --bg-primary: #F5F5F7;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #E8E8ED;
+  --text-primary: #1A1A2E;
+  --text-secondary: #4A4A5A;
+  --text-muted: #8A8A9A;
+  --accent-primary: #7C3AED;
+  --accent-secondary: #DB2777;
+  --border-primary: #D1D5DB;
+  --border-secondary: #B0B0C0;
+  --scrollbar-track: #E8E8ED;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme='midnight'] {
+  --bg-primary: #0D1117;
+  --bg-secondary: #161B22;
+  --bg-tertiary: #21262D;
+  --text-primary: #F0F6FC;
+  --text-secondary: #8B949E;
+  --text-muted: #484F58;
+  --accent-primary: #58A6FF;
+  --accent-secondary: #BC8CFF;
+  --border-primary: #30363D;
+  --border-secondary: #484F58;
+  --scrollbar-track: #161B22;
+  --glass-bg: rgba(22, 27, 34, 0.85);
+}
+
+/* ==================== БАЗОВЫЕ СТИЛИ ==================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== SCROLLBAR ==================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 80%, white), color-mix(in srgb, var(--accent-secondary) 80%, white));
+}
+
+/* ==================== SELECTION ==================== */
+
+::selection {
+  background: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  color: var(--text-primary);
+}
+
+/* ==================== FOCUS STYLES ==================== */
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip to content for accessibility */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--accent-primary);
+  color: white;
+  padding: 8px 16px;
+  z-index: 100;
+  border-radius: 0 0 8px 0;
+  transition: top 0.2s;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* ==================== GLASS EFFECT ==================== */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-strong {
+  background: color-mix(in srgb, var(--bg-secondary) 95%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-light {
+  background: color-mix(in srgb, var(--bg-tertiary) 15%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ==================== GRADIENTS ==================== */
+
+.gradient-text {
+  background: linear-gradient(135deg, #8B5CF6, #EC4899, #F59E0B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+              linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) border-box;
+  border: 1px solid transparent;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+}
+
+.gradient-bg-animated {
+  background: linear-gradient(-45deg, #8B5CF6, #EC4899, #3B82F6, #10B981);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ==================== GLOW EFFECTS ==================== */
+
+.glow {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 30px color-mix(in srgb, var(--accent-primary) 50%, transparent);
+}
+
+.glow-text {
+  text-shadow: 0 0 20px color-mix(in srgb, var(--accent-primary) 50%, transparent);
+}
+
+/* ==================== ANIMATIONS ==================== */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.6); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ==================== BUTTONS ==================== */
+
+.btn-primary {
+  @apply px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300;
+  background: linear-gradient(135deg, #8B5CF6, #EC4899);
+}
+
+.btn-primary:hover {
+  @apply scale-105;
+  box-shadow: 0 10px 40px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+.btn-primary:active {
+  @apply scale-95;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300;
+  @apply bg-bg-secondary border border-border-primary;
+}
+
+.btn-secondary:hover {
+  @apply border-accent-primary;
+  background-color: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+/* ==================== CARDS ==================== */
+
+.card {
+  @apply rounded-2xl p-6 transition-all duration-300;
+  @apply bg-bg-secondary border border-border-primary;
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent);
+  box-shadow: 0 20px 60px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+}
+
+/* ==================== INPUTS ==================== */
+
+.input {
+  @apply w-full px-4 py-3 rounded-xl transition-all duration-300;
+  @apply bg-bg-tertiary border border-border-primary text-text-primary;
+  @apply placeholder-text-muted;
+  @apply focus:outline-none focus:border-accent-primary focus:ring-2;
+  --tw-ring-color: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
+.input:focus {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
+/* ==================== TOOLTIPS ==================== */
+
+.tooltip {
+  @apply absolute z-50 px-3 py-2 text-sm rounded-lg;
+  @apply bg-bg-tertiary border border-border-primary text-text-primary;
+  @apply opacity-0 invisible transition-all duration-200;
+  @apply transform -translate-x-1/2;
+}
+
+.tooltip-trigger:hover .tooltip {
+  @apply opacity-100 visible;
+}
+
+/* ==================== LOADING ==================== */
+
+.skeleton {
+  @apply animate-pulse bg-bg-tertiary rounded;
+}
+
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-primary);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 768px) {
+  .glass {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* ==================== UTILITY CLASSES ==================== */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth hover transitions on interactive elements */
+.interactive {
+  @apply transition-all duration-200 ease-out;
+}
+
+.interactive:hover {
+  @apply -translate-y-0.5;
+}
+
+.interactive:active {
+  @apply translate-y-0 scale-[0.98];
+}
+
+/* Gradient text with theme awareness */
+.gradient-text-theme {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Mesh gradient background */
+.mesh-gradient {
+  background:
+    radial-gradient(at 40% 20%, color-mix(in srgb, var(--accent-primary) 15%, transparent) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, color-mix(in srgb, var(--accent-secondary) 10%, transparent) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, color-mix(in srgb, var(--accent-primary) 8%, transparent) 0px, transparent 50%),
+    var(--bg-primary);
+}
+
+/* Card with animated border on hover */
+.card-animated {
+  @apply rounded-2xl p-6 transition-all duration-500;
+  @apply bg-bg-secondary border border-border-primary;
+  background-size: 200% 200%;
+}
+
+.card-animated:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 60%, transparent);
+  box-shadow: 
+    0 20px 60px color-mix(in srgb, var(--accent-primary) 12%, transparent),
+    0 0 1px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  transform: translateY(-2px);
+}
+
+/* Animated gradient border */
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.rotating-border {
+  --angle: 0deg;
+  border: 2px solid transparent;
+  background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+              conic-gradient(from var(--angle), var(--accent-primary), var(--accent-secondary), var(--accent-primary)) border-box;
+  animation: rotate-border 4s linear infinite;
+}
+
+@keyframes rotate-border {
+  to { --angle: 360deg; }
+}
+
+/* Noise texture overlay */
+.noise-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-float,
+  .animate-pulse-glow,
+  .animate-shimmer,
+  .gradient-bg-animated {
+    animation: none !important;
+  }
+}
+
+/* Auto theme detection */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg-primary: #F5F5F7;
+    --bg-secondary: #FFFFFF;
+    --bg-tertiary: #E8E8ED;
+    --text-primary: #1A1A2E;
+    --text-secondary: #4A4A5A;
+    --text-muted: #8A8A9A;
+    --accent-primary: #7C3AED;
+    --accent-secondary: #DB2777;
+    --border-primary: #D1D5DB;
+    --border-secondary: #B0B0C0;
+    --scrollbar-track: #E8E8ED;
+    --glass-bg: rgba(255, 255, 255, 0.85);
+  }
+}
+
+/* ==================== PRINT STYLES ==================== */
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}

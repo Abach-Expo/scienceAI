@@ -1,0 +1,285 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// DATABASE CONFIGURATION - NEON PostgreSQL
+// ==========================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String?   // Nullable for OAuth users
+  name          String
+  avatar        String?
+  
+  // OAuth fields
+  googleId      String?   @unique
+  provider      String    @default("local") // local, google
+  
+  // Password reset
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  
+  // 🎫 SUBSCRIPTION - План и лимиты
+  subscriptionPlan    String    @default("free") // free, starter, pro, premium
+  subscriptionStatus  String    @default("active") // active, cancelled, expired, past_due
+  subscriptionExpiry  DateTime?
+  lemonSqueezyCustomerId    String?   @unique
+  lemonSqueezySubscriptionId String?
+  
+  // 📊 Usage tracking - Per billing period
+  aiGenerationsUsed   Int       @default(0)  // AI generations this period
+  aiGenerationsLimit  Int       @default(5)  // Limit based on plan (free=5)
+  tokensUsed          Int       @default(0)  // Total tokens used this period
+  tokensLimit         Int       @default(100) // Token limit based on plan (free=100)
+  gpt4oTokensUsed     Int       @default(0)  // GPT-4o tokens used separately
+  gpt4oTokensLimit    Int       @default(0)  // GPT-4o limit (0 for free/starter)
+  currentPeriodStart  DateTime  @default(now())
+  currentPeriodEnd    DateTime?
+  
+  // 📊 Granular usage tracking (synced from frontend)
+  presentationsCreated      Int       @default(0)
+  academicWorksCreated      Int       @default(0)
+  academicGenerationsToday  Int       @default(0)
+  chatMessagesToday         Int       @default(0)
+  dalleImagesUsed           Int       @default(0)
+  plagiarismChecksUsed      Int       @default(0)
+  dissertationGenerationsUsed Int     @default(0)
+  largeChapterGenerationsUsed Int     @default(0)
+  usageLastResetDate        DateTime  @default(now())
+  usageLastMonthlyReset     DateTime  @default(now())
+  
+  // Legacy fields
+  apiCallsCount Int       @default(0)
+  lastActiveAt  DateTime?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  documents     Document[]
+  projects      Project[]
+  chats         Chat[]
+  settings      UserSettings?
+  usageLogs     UsageLog[]
+  savedDissertations SavedDissertation[]
+  savedPresentations SavedPresentation[]
+}
+
+// Usage tracking for API calls
+model UsageLog {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action        String    // login, register, ai_chat, ai_presentation, ai_dissertation, export
+  tokensUsed    Int       @default(0)
+  details       String?   // JSON details
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+// User settings
+model UserSettings {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language      String    @default("ru")
+  theme         String    @default("dark")
+  openaiModel   String    @default("gpt-4o")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Chat model for AI conversations
+model Chat {
+  id            String    @id @default(uuid())
+  title         String
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      ChatMessage[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+}
+model ChatMessage {
+  id            String    @id @default(uuid())
+  chatId        String
+  chat          Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  role          String    // 'user' | 'assistant'
+  content       String
+  attachments   String?   // JSON string of attachment info
+  createdAt     DateTime  @default(now())
+
+  @@index([chatId])
+}
+
+// Project model - represents a dissertation/thesis project
+model Project {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  type          String    @default("THESIS") // THESIS, DISSERTATION, RESEARCH_PAPER, ARTICLE, REVIEW
+  status        String    @default("DRAFT")  // DRAFT, IN_PROGRESS, REVIEW, COMPLETED
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  documents     Document[]
+  outlines      Outline[]
+  references    Reference[]
+  analytics     Analytics[]
+
+  @@index([userId])
+}
+
+// Document model - stores all document versions
+model Document {
+  id            String    @id @default(uuid())
+  title         String
+  content       String
+  version       Int       @default(1)
+  type          String    @default("DRAFT") // DRAFT, OUTLINE, CHAPTER, ABSTRACT, CONCLUSION, FINAL
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId      String?
+  parent        Document? @relation("DocumentVersions", fields: [parentId], references: [id])
+  children      Document[] @relation("DocumentVersions")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  aiAnalysis    AIAnalysis[]
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+// Outline model - stores generated outlines/plans
+model Outline {
+  id            String    @id @default(uuid())
+  title         String
+  sections      String    // JSON string of sections
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// Reference model - stores scientific article references
+model Reference {
+  id            String    @id @default(uuid())
+  title         String
+  authors       String    // JSON string or comma-separated
+  abstract      String?
+  url           String?
+  doi           String?
+  arxivId       String?
+  year          Int?
+  source        String    @default("MANUAL") // ARXIV, SEMANTIC_SCHOLAR, PUBMED, MANUAL
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+
+  @@index([projectId])
+}
+
+// AI Analysis model - stores AI feedback on documents
+model AIAnalysis {
+  id            String    @id @default(uuid())
+  documentId    String
+  document      Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  type          String    // LOGIC, GRAMMAR, FACTS, STYLE, PLAGIARISM, COMPREHENSIVE
+  content       String    // JSON string of analysis results
+  score         Float?    // Overall score if applicable
+  createdAt     DateTime  @default(now())
+
+  @@index([documentId])
+}
+
+// Analytics model - tracks project progress
+model Analytics {
+  id            String    @id @default(uuid())
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wordCount     Int       @default(0)
+  sectionCount  Int       @default(0)
+  referenceCount Int      @default(0)
+  completionPercent Float @default(0)
+  date          DateTime  @default(now())
+
+  @@index([projectId])
+}
+// ==========================================
+// DISSERTATIONS & PRESENTATIONS STORAGE
+// ==========================================
+
+// Saved dissertations/scientific documents
+model SavedDissertation {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title           String
+  documentType    String    @default("dissertation") // dissertation, masters, bachelor, article, coursework, report, abstract
+  scienceField    String?
+  
+  // Content (JSON)
+  abstract        String?   // Abstract text
+  chapters        String    // JSON array of chapters with subchapters
+  citations       String?   // JSON array of citations
+  
+  // Metadata
+  uniquenessScore Float?
+  wordCount       Int       @default(0)
+  pageCount       Int       @default(0)
+  
+  // GOST compliance
+  gostFormat      String    @default("GOST_R_7_0_11_2011")
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([userId])
+}
+
+// Saved presentations
+model SavedPresentation {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title           String
+  topic           String?
+  
+  // Content (JSON)
+  slides          String    // JSON array of slides
+  theme           String    @default("modern") // Theme name
+  
+  // Metadata
+  slideCount      Int       @default(0)
+  hasImages       Boolean   @default(false)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([userId])
+}

@@ -1,0 +1,29 @@
+{
+  "name": "Science AI",
+  "short_name": "Science AI",
+  "description": "AI для студентов — диссертации, курсовые, презентации за минуты",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0F",
+  "theme_color": "#8B5CF6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "ru",
+  "dir": "ltr",
+  "screenshots": [],
+  "prefer_related_applications": false
+}

@@ -1,0 +1,47 @@
+{
+  "name": "science-ai-assistant",
+  "version": "1.0.0",
+  "description": "Scientific AI Assistant for thesis and dissertation writing",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "mobile"
+  ],
+  "scripts": {
+    "backend:dev": "cd backend && npm run dev",
+    "backend:build": "cd backend && npm run build",
+    "web:dev": "cd web && npm run dev",
+    "web:build": "cd web && npm run build",
+    "web:test": "cd web && npm test",
+    "web:test:coverage": "cd web && npm run test:coverage",
+    "mobile:start": "cd mobile && npm start",
+    "mobile:ios": "cd mobile && npm run ios",
+    "mobile:android": "cd mobile && npm run android",
+    "install:all": "npm install && cd backend && npm install && cd ../web && npm install && cd ../mobile && npm install",
+    "prisma:generate": "cd backend && npm run prisma:generate",
+    "prisma:migrate": "cd backend && npm run prisma:migrate",
+    "test": "npm run web:test && cd backend && npm test",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:report": "npx playwright show-report",
+    "test:all": "npm run test && npm run test:e2e"
+  },
+  "keywords": [
+    "ai",
+    "scientific",
+    "thesis",
+    "dissertation",
+    "research",
+    "react-native",
+    "typescript",
+    "openai",
+    "gpt"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.2.3"
+  }
+}

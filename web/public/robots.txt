@@ -1,0 +1,23 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://science-ai.app/sitemap.xml
+
+# Disallow sensitive paths
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /profile-setup
+Disallow: /chat
+Disallow: /presentations
+Disallow: /dissertation
+Disallow: /academic
+
+# Allow search engines to index public pages
+Allow: /
+Allow: /auth
+Allow: /pricing
+Allow: /privacy
+Allow: /terms
