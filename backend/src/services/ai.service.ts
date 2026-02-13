@@ -289,7 +289,7 @@ export class AIService {
 
   constructor() {
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+      apiKey: process.env.OPENAI_API_KEY || 'dummy-key-for-init'
     });
     this.model = process.env.OPENAI_MODEL || 'gpt-4o';
     this.fastModel = process.env.OPENAI_FAST_MODEL || 'gpt-4o-mini';
