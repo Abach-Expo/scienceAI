@@ -72,6 +72,8 @@ initSentry(app);
 app.use(helmet({
   contentSecurityPolicy: false, // Disable for API
   crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false, // Allow Google OAuth popup
+  crossOriginResourcePolicy: false, // Allow cross-origin requests
 }));
 
 // 🛡️ HPP - Prevent HTTP Parameter Pollution

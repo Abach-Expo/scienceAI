@@ -97,7 +97,8 @@ const AuthPage = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || data.error || 'Ошибка авторизации через Google');
+        const debugInfo = data.debug ? ` [Debug: ${data.debug}]` : '';
+        throw new Error((data.message || data.error || 'Ошибка авторизации через Google') + debugInfo);
       }
 
       // Сохраняем токен и данные пользователя
