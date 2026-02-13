@@ -219,10 +219,14 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
         audience: process.env.GOOGLE_CLIENT_ID,
       });
     } catch (verifyError: unknown) {
-      logger.error('Google token verification failed:', verifyError instanceof Error ? verifyError.message : verifyError);
+      const errMsg = verifyError instanceof Error ? verifyError.message : String(verifyError);
+      logger.error('Google token verification failed:', errMsg);
       res.status(401).json({
         success: false,
-        message: 'Ошибка верификации Google токена'
+        message: 'Ошибка верификации Google токена',
+        debug: errMsg,
+        clientIdSet: !!process.env.GOOGLE_CLIENT_ID,
+        clientIdPrefix: process.env.GOOGLE_CLIENT_ID?.substring(0, 15) || 'NONE'
       });
       return;
     }
