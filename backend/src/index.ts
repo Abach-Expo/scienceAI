@@ -229,7 +229,13 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info('Connected to database');
     
-    // Create HTTP server
+    // Skip HTTP server in serverless environment (Vercel)
+    if (process.env.VERCEL) {
+      logger.info('Running in Vercel serverless mode');
+      return;
+    }
+    
+    // Create HTTP server (local development only)
     const httpServer = createServer(app);
     
     // Initialize WebSocket
@@ -242,7 +248,9 @@ const startServer = async () => {
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
   }
 };
 
@@ -271,4 +279,6 @@ process.on('uncaughtException', (error: Error) => {
 
 startServer();
 
+// Export for Vercel serverless
 export default app;
+module.exports = app;
