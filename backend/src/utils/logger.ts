@@ -8,16 +8,18 @@ const logFormat = winston.format.combine(
   })
 );
 
-export const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  format: logFormat,
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        logFormat
-      )
-    }),
+const transports: winston.transport[] = [
+  new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      logFormat
+    )
+  }),
+];
+
+// File transports only in non-serverless environments
+if (!process.env.VERCEL) {
+  transports.push(
     new winston.transports.File({ 
       filename: 'logs/error.log', 
       level: 'error' 
@@ -25,5 +27,11 @@ export const logger = winston.createLogger({
     new winston.transports.File({ 
       filename: 'logs/combined.log' 
     })
-  ]
+  );
+}
+
+export const logger = winston.createLogger({
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  format: logFormat,
+  transports,
 });

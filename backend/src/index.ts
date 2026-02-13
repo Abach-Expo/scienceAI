@@ -159,6 +159,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Health check endpoint
 app.get('/health', async (_req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/health', async (_req: Request, res: Response) => {
   let dbStatus = 'unknown';
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -282,7 +286,10 @@ process.on('uncaughtException', (error: Error) => {
   setTimeout(() => process.exit(1), 1000);
 });
 
-startServer();
+// Start server only in non-serverless mode
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 // Export for Vercel serverless
 export default app;
