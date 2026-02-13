@@ -145,9 +145,9 @@ const flushQueues = async (): Promise<void> => {
 
   try {
     // Send to backend if endpoint exists
-    const API_URL = import.meta.env.VITE_API_URL || '';
+    const { API_URL } = await import('../config');
     if (API_URL) {
-      await fetch(`${API_URL}/api/analytics/batch`, {
+      await fetch(`${API_URL}/analytics/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ errors, analytics }),
