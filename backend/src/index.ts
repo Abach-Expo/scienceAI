@@ -282,8 +282,10 @@ process.on('unhandledRejection', (reason: unknown) => {
 process.on('uncaughtException', (error: Error) => {
   logger.error('Uncaught Exception:', error);
   Sentry.captureException(error);
-  // Give logger and Sentry time to flush, then exit
-  setTimeout(() => process.exit(1), 1000);
+  // Give logger and Sentry time to flush, then exit (only in non-serverless)
+  if (!process.env.VERCEL) {
+    setTimeout(() => process.exit(1), 1000);
+  }
 });
 
 // Start server only in non-serverless mode

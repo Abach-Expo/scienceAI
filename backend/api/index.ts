@@ -1,11 +1,9 @@
-import { Request, Response } from 'express';
+// Vercel Serverless Entry Point
+// @vercel/node will compile this TypeScript file and all its imports
 
-// Minimal test handler for Vercel
-export default function handler(req: Request, res: Response) {
-  res.status(200).json({ 
-    status: 'ok', 
-    message: 'Vercel serverless is working',
-    path: req.url,
-    timestamp: new Date().toISOString()
-  });
-}
+// Set VERCEL env before any imports
+process.env.VERCEL = '1';
+
+import app from '../src/index';
+
+export default app;
