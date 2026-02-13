@@ -36,10 +36,15 @@ import usageRoutes from './routes/usage.routes';
 // ==========================================
 // SECURITY: Validate required env variables
 // ==========================================
-const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'OPENAI_API_KEY'];
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
-    logger.error(`FATAL: Missing required environment variable: ${envVar}`);
+    const errorMsg = `FATAL: Missing required environment variable: ${envVar}`;
+    logger.error(errorMsg);
+    // In serverless, throw error instead of exit
+    if (process.env.VERCEL) {
+      throw new Error(errorMsg);
+    }
     process.exit(1);
   }
 }
