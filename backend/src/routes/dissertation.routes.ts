@@ -5,7 +5,11 @@ import { DissertationService, GenerationProgress } from '../services/dissertatio
 import { logger } from '../utils/logger';
 
 const router = Router();
-const dissertationService = new DissertationService();
+let _dissertationService: DissertationService | null = null;
+function getDissertationService(): DissertationService {
+  if (!_dissertationService) _dissertationService = new DissertationService();
+  return _dissertationService;
+}
 
 // ==================== SSE: Генерация полной работы ====================
 // POST /api/dissertation/generate
@@ -56,7 +60,7 @@ router.post(
       };
 
       // Генерация
-      const result = await dissertationService.generateFullDissertation(
+      const result = await getDissertationService().generateFullDissertation(
         {
           topic,
           type,
@@ -111,7 +115,7 @@ router.post(
       }
 
       const { targetPages } = req.body;
-      const estimate = dissertationService.estimateGenerationTime(parseInt(targetPages));
+      const estimate = getDissertationService().estimateGenerationTime(parseInt(targetPages));
 
       res.json({
         success: true,
