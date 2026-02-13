@@ -115,6 +115,7 @@ const allowedOrigins = [
   'https://science-ai.app',
   'https://www.science-ai.app',
   'https://science-ai-backend-np8p.vercel.app',
+  'https://science-ai-backend-l1aw.vercel.app',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
