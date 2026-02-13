@@ -9,7 +9,11 @@ import { checkPlagiarism } from '../services/plagiarism.service';
 import OpenAI from 'openai';
 
 const router = Router();
-const aiService = new AIService();
+let _aiService: AIService | null = null;
+function getAIService(): AIService {
+  if (!_aiService) _aiService = new AIService();
+  return _aiService;
+}
 
 // Серверный API ключ из .env (БЕЗОПАСНО - не виден клиенту)
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
@@ -241,7 +245,7 @@ router.post(
       if (taskType && ROUTED_TASK_TYPES.includes(taskType)) {
         logger.debug(`[AI] Using model routing for taskType: ${taskType}`);
         try {
-          const result = await aiService.generate(taskType, systemPrompt, userPrompt, {
+          const result = await getAIService().generate(taskType, systemPrompt, userPrompt, {
             temperature: isTextTask ? Math.max(temperature, 0.92) : temperature,
             maxTokens,
             presencePenalty: isTextTask ? 0.75 : 0.6,
@@ -343,7 +347,7 @@ router.post(
       const TEXT_TASK_TYPES = ['text_generation', 'essay', 'coursework', 'referat', 'dissertation', 'style_improvement'];
       if (taskType && TEXT_TASK_TYPES.includes(taskType)) {
         try {
-          const result = await aiService.generate(taskType, systemPrompt, userPrompt, {
+          const result = await getAIService().generate(taskType, systemPrompt, userPrompt, {
             temperature: Math.max(temperature, 0.92),
             maxTokens,
             presencePenalty: 0.75,
@@ -542,7 +546,7 @@ router.post(
       }
 
       // Generate outline using AI
-      const outline = await aiService.generateOutline(topic, type || project.type, additionalContext);
+      const outline = await getAIService().generateOutline(topic, type || project.type, additionalContext);
 
       // Save outline to database
       const savedOutline = await prisma.outline.create({
@@ -590,7 +594,7 @@ router.post(
 
       const { topic, outline, researchQuestions } = req.body;
 
-      const arguments_ = await aiService.generateArguments(topic, outline, researchQuestions);
+      const arguments_ = await getAIService().generateArguments(topic, outline, researchQuestions);
 
       res.json({
         success: true,
@@ -657,7 +661,7 @@ router.post(
       }
 
       // Generate draft
-      const draft = await aiService.generateDraft(
+      const draft = await getAIService().generateDraft(
         project.title,
         (outline.sections as unknown) as Array<{ title: string; description: string; subsections?: Array<{ title: string; description: string }> }>,
         section,
@@ -735,7 +739,7 @@ router.post(
       }
 
       // Perform AI analysis
-      const analysisResult = await aiService.analyzeDocument(document.content, analysisType);
+      const analysisResult = await getAIService().analyzeDocument(document.content, analysisType);
 
       // Save analysis
       const analysis = await prisma.aIAnalysis.create({
@@ -794,7 +798,7 @@ router.post(
       }
 
       // Improve style using AI
-      const improvedContent = await aiService.improveStyle(document.content, instructions);
+      const improvedContent = await getAIService().improveStyle(document.content, instructions);
 
       // Create new version or update
       let savedDocument;
@@ -863,7 +867,7 @@ router.post(
       }
 
       // Perform self-review using chain-of-thought
-      const review = await aiService.selfReview(document.content, document.project.type);
+      const review = await getAIService().selfReview(document.content, document.project.type);
 
       res.json({
         success: true,

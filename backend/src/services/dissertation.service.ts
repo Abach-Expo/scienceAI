@@ -197,7 +197,7 @@ export class DissertationService {
   private gptModel: string;
 
   constructor() {
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'dummy-key-for-init' });
     this.claudeModel = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20250514';
     this.gptModel = process.env.OPENAI_MODEL || 'gpt-4o';
 
