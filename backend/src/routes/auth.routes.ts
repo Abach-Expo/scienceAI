@@ -11,7 +11,8 @@ import { emailService } from '../services/email.service';
 const router = Router();
 
 // Google OAuth client
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '706158118774-ukrop2ocg4iq23fu5npamstfquu549q2.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Helper to log usage
 const logUsage = async (userId: string, action: string, req: Request, tokensUsed: number = 0, details?: Record<string, unknown>) => {
@@ -216,7 +217,7 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
     try {
       ticket = await googleClient.verifyIdToken({
         idToken: credential,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        audience: GOOGLE_CLIENT_ID,
       });
     } catch (verifyError: unknown) {
       const errMsg = verifyError instanceof Error ? verifyError.message : String(verifyError);
