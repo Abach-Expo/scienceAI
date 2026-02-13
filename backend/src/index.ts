@@ -107,17 +107,16 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
+  'https://science-ai.app',
+  'https://www.science-ai.app',
+  'https://science-ai-backend-np8p.vercel.app',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // In production, reject requests with no origin
-    // In development, allow them for Postman/CLI tools
+    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) {
-      if (process.env.NODE_ENV === 'production') {
-        return callback(new Error('Not allowed by CORS'));
-      }
       return callback(null, true);
     }
     
