@@ -306,7 +306,7 @@ const DashboardPage = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-bg-primary flex">
+    <div className="min-h-screen bg-bg-primary flex overflow-x-hidden">
       <DashboardSidebar
         user={user}
         activeTab={activeTab}
@@ -320,12 +320,12 @@ const DashboardPage = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header className="px-8 py-6 border-b border-border-primary bg-bg-secondary/50 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-text-primary">
+        <header className="px-4 md:px-8 py-4 md:py-6 border-b border-border-primary bg-bg-secondary/50 backdrop-blur-sm pt-16 md:pt-6">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold text-text-primary truncate">
                 {activeTab === 'all' && t('nav.allProjects')}
                 {activeTab === 'presentations' && t('nav.presentations')}
                 {activeTab === 'dissertations' && t('nav.dissertations')}
@@ -356,7 +356,7 @@ const DashboardPage = () => {
           />
 
           {/* Search & Filters */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <div className="flex-1 relative">
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
@@ -442,7 +442,7 @@ const DashboardPage = () => {
         </header>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
           {filteredItems.length === 0 ? (
             <EmptyState 
               type={searchQuery ? 'search' : activeTab}

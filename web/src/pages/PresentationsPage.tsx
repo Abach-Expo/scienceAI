@@ -7046,7 +7046,7 @@ Layout: ${slide.layout}`
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="flex items-center justify-between px-6 py-4 border-b border-border-primary bg-background-secondary/50 backdrop-blur-sm relative z-50 overflow-visible"
+        className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-b border-border-primary bg-background-secondary/50 backdrop-blur-sm relative z-50 overflow-visible"
       >
         <div className="flex items-center gap-4">
           <motion.button
@@ -7068,11 +7068,11 @@ Layout: ${slide.layout}`
           </motion.button>
           
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center hidden md:flex">
               <Layers className="text-text-primary" size={22} />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-text-primary">
+            <div className="min-w-0">
+              <h1 className="text-sm md:text-lg font-bold text-text-primary truncate">
                 {viewMode === 'chat' ? '✨ AI Презентации' : 
                  viewMode === 'workspace' ? '🔬 AI Workspace' :
                  currentPresentation?.title || 'Редактор'}
@@ -7107,7 +7107,7 @@ Layout: ${slide.layout}`
         </div>
         
         {/* Навигация по режимам */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           {/* Вкладки режимов */}
           <div className="flex rounded-xl glass border border-border-primary p-1">
             {[
@@ -7118,7 +7118,7 @@ Layout: ${slide.layout}`
                 key={tab.id}
                 onClick={() => setViewMode(tab.id as 'chat' | 'workspace' | 'editor')}
                 disabled={tab.id === 'editor' && !currentPresentation}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-2 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
                   viewMode === tab.id
                     ? 'bg-accent-primary text-text-primary'
                     : 'text-text-secondary hover:text-text-primary disabled:opacity-30'

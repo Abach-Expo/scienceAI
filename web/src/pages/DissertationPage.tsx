@@ -50,6 +50,8 @@ import {
   BarChart,
   Microscope,
   MessageSquare,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useSubscriptionStore, SUBSCRIPTION_PLANS, PLAN_LIMITS } from '../store/subscriptionStore';
 import PlagiarismChecker from '../components/PlagiarismChecker';
@@ -502,6 +504,7 @@ const DissertationPage = () => {
   const [showQuickActions, setShowQuickActions] = useState(false); // Сворачиваемые быстрые действия
   const [showLargeActions, setShowLargeActions] = useState(false); // Сворачиваемые супер-функции
   const [showPlagiarismPanel, setShowPlagiarismPanel] = useState(false); // Панель антиплагиата
+  const [showSidebarMobile, setShowSidebarMobile] = useState(false); // Мобильный сайдбар
   const [plagiarismPanelTab, setPlagiarismPanelTab] = useState<'check' | 'detect' | 'humanize'>('check');
   
   // Поддерживаемые языки
@@ -3256,17 +3259,53 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
   const progressPercentage = Math.round((wordCount / dissertation.targetWordCount) * 100);
 
   return (
-    <div className="min-h-screen bg-bg-primary flex">
+    <div className="min-h-screen bg-bg-primary flex overflow-x-hidden">
+      {/* Mobile sidebar toggle */}
+      <button
+        onClick={() => setShowSidebarMobile(prev => !prev)}
+        className="md:hidden fixed top-3 left-3 z-40 p-2.5 rounded-xl bg-bg-secondary border border-border-primary shadow-lg text-text-primary hover:bg-bg-tertiary transition-all"
+        aria-label="Toggle sidebar"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile sidebar backdrop */}
+      <AnimatePresence>
+        {showSidebarMobile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowSidebarMobile(false)}
+            className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar - Table of Contents */}
-      <aside className="w-80 border-r border-border-primary flex flex-col bg-bg-secondary/50">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-[280px] max-w-[85vw]
+        md:static md:w-80 md:max-w-none md:z-auto
+        border-r border-border-primary flex flex-col bg-bg-secondary
+        transform transition-transform duration-300 ease-in-out
+        ${showSidebarMobile ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         <div className="p-4 border-b border-border-primary">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-4"
-          >
-            <ArrowLeft size={18} />
-            Назад
-          </button>
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <ArrowLeft size={18} />
+              Назад
+            </button>
+            <button
+              onClick={() => setShowSidebarMobile(false)}
+              className="md:hidden p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-all"
+            >
+              <X size={20} />
+            </button>
+          </div>
           
           <input
             type="text"
@@ -3554,16 +3593,16 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-border-primary bg-bg-secondary/50 flex items-center gap-4">
+        <div className="px-4 py-3 border-b border-border-primary bg-bg-secondary/50 flex items-center gap-2 md:gap-4 pl-14 md:pl-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center hidden md:flex">
               <GraduationCap className="text-white" size={22} />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-text-primary">AI Редактор диссертации</h1>
-              <p className="text-xs text-text-muted">
+            <div className="min-w-0">
+              <h1 className="text-sm md:text-lg font-bold text-text-primary truncate">AI Редактор диссертации</h1>
+              <p className="text-xs text-text-muted truncate">
                 {saveStatus === 'saved' ? '✓ Сохранено' : saveStatus === 'saving' ? '⏳ Сохранение...' : '• Не сохранено'}
                 {' • '}{wordCount.toLocaleString()} слов
               </p>

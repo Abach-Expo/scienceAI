@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavigateFunction } from 'react-router-dom';
 import {
@@ -13,6 +13,8 @@ import {
   BookOpen,
   MessageSquare,
   Folder,
+  Menu,
+  X,
 } from 'lucide-react';
 import { UsageBanner } from '../UsageBanner';
 
@@ -47,20 +49,50 @@ const DashboardSidebar = ({
   language,
 }: DashboardSidebarProps) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  return (
-    <motion.aside
-      initial={{ x: -20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      className="w-72 bg-bg-secondary border-r border-border-primary flex flex-col"
-    >
+  // Close mobile sidebar on route change / resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) setMobileOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
+  const handleNavClick = (callback: () => void) => {
+    callback();
+    setMobileOpen(false);
+  };
+
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="p-6 border-b border-border-primary">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-            <Sparkles className="text-white" size={22} />
+      <div className="p-4 md:p-6 border-b border-border-primary">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+              <Sparkles className="text-white" size={22} />
+            </div>
+            <span className="text-xl font-bold text-text-primary">Science AI</span>
           </div>
-          <span className="text-xl font-bold text-text-primary">Science AI</span>
+          {/* Close button - mobile only */}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="md:hidden p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-all"
+          >
+            <X size={20} />
+          </button>
         </div>
       </div>
 
@@ -69,7 +101,7 @@ const DashboardSidebar = ({
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={onNewProject}
+          onClick={() => handleNavClick(onNewProject)}
           className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium flex items-center gap-3"
         >
           <Plus size={20} />
@@ -90,7 +122,7 @@ const DashboardSidebar = ({
         ].map((item) => (
           <button
             key={item.id}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => handleNavClick(() => setActiveTab(item.id))}
             className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-3 transition-all ${
               activeTab === item.id
                 ? 'bg-accent-primary/20 text-accent-primary'
@@ -108,14 +140,14 @@ const DashboardSidebar = ({
         </p>
 
         <button
-          onClick={() => navigate('/chat')}
+          onClick={() => handleNavClick(() => navigate('/chat'))}
           className="w-full px-3 py-2.5 rounded-xl flex items-center gap-3 text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-all"
         >
           <MessageSquare size={18} />
           {language === 'ru' ? 'AI Чат' : 'AI Chat'}
         </button>
         <button
-          onClick={() => navigate('/academic')}
+          onClick={() => handleNavClick(() => navigate('/academic'))}
           className="w-full px-3 py-2.5 rounded-xl flex items-center gap-3 text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-all"
         >
           <GraduationCap size={18} />
@@ -137,11 +169,11 @@ const DashboardSidebar = ({
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-medium text-sm">
             {user.name.charAt(0).toUpperCase()}
           </div>
-          <div className="flex-1 text-left">
+          <div className="flex-1 text-left min-w-0">
             <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
             <p className="text-xs text-text-muted truncate">{user.email}</p>
           </div>
-          <ChevronRight size={16} className={`transition-transform ${showUserMenu ? 'rotate-90' : ''}`} />
+          <ChevronRight size={16} className={`transition-transform flex-shrink-0 ${showUserMenu ? 'rotate-90' : ''}`} />
         </button>
 
         <AnimatePresence>
@@ -150,17 +182,17 @@ const DashboardSidebar = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute bottom-full left-4 right-4 mb-2 py-2 rounded-xl glass border border-border-primary shadow-xl"
+              className="absolute bottom-full left-4 right-4 mb-2 py-2 rounded-xl glass border border-border-primary shadow-xl z-50"
             >
               <button 
-                onClick={() => { onShowProfile(); setShowUserMenu(false); }}
+                onClick={() => { handleNavClick(onShowProfile); setShowUserMenu(false); }}
                 className="w-full px-4 py-2 flex items-center gap-3 text-text-secondary hover:bg-bg-tertiary transition-all"
               >
                 <User size={16} />
                 {t('common.profile')}
               </button>
               <button 
-                onClick={() => navigate('/settings')}
+                onClick={() => handleNavClick(() => navigate('/settings'))}
                 className="w-full px-4 py-2 flex items-center gap-3 text-text-secondary hover:bg-bg-tertiary transition-all"
               >
                 <Settings size={16} />
@@ -178,7 +210,55 @@ const DashboardSidebar = ({
           )}
         </AnimatePresence>
       </div>
-    </motion.aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-40 p-2.5 rounded-xl bg-bg-secondary border border-border-primary shadow-lg text-text-primary hover:bg-bg-tertiary transition-all"
+        aria-label="Open menu"
+      >
+        <Menu size={22} />
+      </button>
+
+      {/* Desktop sidebar - always visible on md+ */}
+      <motion.aside
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        className="hidden md:flex w-72 bg-bg-secondary border-r border-border-primary flex-col flex-shrink-0"
+      >
+        {sidebarContent}
+      </motion.aside>
+
+      {/* Mobile sidebar - overlay drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+              className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            />
+            {/* Drawer */}
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="md:hidden fixed inset-y-0 left-0 z-50 w-[280px] max-w-[85vw] bg-bg-secondary flex flex-col shadow-2xl"
+            >
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

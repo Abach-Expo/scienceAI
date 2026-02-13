@@ -67,7 +67,7 @@ const ChatPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(() => window.innerWidth >= 768);
   const [allChats, setAllChats] = useState<Chat[]>([]);
   const [editingTitle, setEditingTitle] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -904,6 +904,14 @@ const ChatPage = () => {
         )}
       </AnimatePresence>
 
+      {/* Sidebar - mobile backdrop */}
+      {showSidebar && (
+        <div
+          onClick={() => setShowSidebar(false)}
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+        />
+      )}
+      
       {/* Sidebar */}
       <AnimatePresence>
         {showSidebar && (
@@ -912,7 +920,7 @@ const ChatPage = () => {
             animate={{ width: 300, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-r border-border-primary bg-bg-secondary/30 backdrop-blur-sm flex flex-col overflow-hidden"
+            className="fixed inset-y-0 left-0 z-40 md:static md:z-auto border-r border-border-primary bg-bg-secondary backdrop-blur-sm flex flex-col overflow-hidden"
           >
             <div className="p-4 border-b border-border-primary space-y-3">
               <motion.button

@@ -71,22 +71,22 @@ const StatsWidgets = ({ showWidgets, stats, tipText, t }: StatsWidgetsProps) => 
           exit={{ opacity: 0, height: 0 }}
           className="mb-6 overflow-hidden"
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
             {widgets.map((widget, idx) => (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: widget.delay }}
-                className="p-4 rounded-xl glass border border-border-primary hover:border-accent-primary/30 transition-all"
+                className="p-3 md:p-4 rounded-xl glass border border-border-primary hover:border-accent-primary/30 transition-all"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${widget.gradient} flex items-center justify-center`}>
-                    <widget.icon size={20} className="text-white" />
+                <div className="flex items-center gap-2 md:gap-3 mb-2">
+                  <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br ${widget.gradient} flex items-center justify-center flex-shrink-0`}>
+                    <widget.icon size={18} className="text-white" />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-text-primary">{widget.value}</p>
-                    <p className="text-xs text-text-muted">{widget.label}</p>
+                  <div className="min-w-0">
+                    <p className="text-lg md:text-2xl font-bold text-text-primary">{widget.value}</p>
+                    <p className="text-xs text-text-muted truncate">{widget.label}</p>
                   </div>
                 </div>
               </motion.div>
