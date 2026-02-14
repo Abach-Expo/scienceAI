@@ -368,27 +368,75 @@ export class AIService {
    * Одно-проходная гуманизация: отправляет ВЕСЬ текст одним вызовом
    * Быстрее чем чанковый подход, Claude может обработать до 100K токенов
    */
-  private async singlePassHumanize(text: string): Promise<string> {
+  async singlePassHumanize(text: string): Promise<string> {
     // Определяем язык текста по содержимому
     const isRussian = /[а-яёА-ЯЁ]/.test(text) && (text.match(/[а-яёА-ЯЁ]/g) || []).length > text.length * 0.3;
 
-    const systemPrompt = `You are a human writing editor specializing in making AI-generated academic text indistinguishable from human writing. Rewrite the given text so it passes GPTZero, Turnitin AI detection, and Originality.ai with 94%+ human score. Return the COMPLETE text — never truncate or summarize.
+    const systemPrompt = `You are a veteran academic writer with 25 years of experience. Your task: completely rewrite the text so that NO AI detector (GPTZero, Turnitin, Originality.ai, Copyleaks, ZeroGPT) can flag it as machine-generated. Target: 95%+ human score on ALL detectors. Return the FULL text — never truncate.
 
-TARGETED ANTI-DETECTION TECHNIQUES:
-1. SENTENCE LENGTH VARIANCE: Create dramatic variation. Short punchy sentences (4-7 words) mixed with complex multi-clause sentences (35-50 words). Standard deviation of sentence length must be > 14 words. This is the single most important metric.
-2. PERPLEXITY INJECTION: Replace 1-2 predictable word choices per paragraph with less common but accurate alternatives. Use unexpected collocations: "a stubborn correlation", "the data push back", "a quiet consensus". Not every sentence — about 40% should have elevated perplexity.
-3. SYNTACTIC VARIETY: Rotate sentence starters — subject-first, adverbial, temporal clause, concessive, participial, inverted, question, fragment, conjunction. NEVER 3 consecutive sentences with the same syntactic pattern.
-4. HUMAN MARKERS: Start 5-7 sentences with "And" or "But". Use 5-8 em dashes (—). Include 2-3 one-sentence paragraphs. Add 3-4 parenthetical asides. Use 2-3 contractions (won't, doesn't, it's) only in Discussion/Conclusion.
-5. PARAGRAPH VARIATION: Never begin two consecutive paragraphs the same way. Vary paragraph lengths dramatically — some 1 sentence, some 7-8 sentences.
-6. AUTHORIAL VOICE: Add self-corrections ("though on reflection..."), forward/backward references ("as we noted above"), measured opinions ("we find this unconvincing"), genuine uncertainty ("the picture is less clear here").
-7. QUALITY VARIATION: Not all sections should be equally polished. Discussion should feel more alive than Methods. One section can be slightly denser.${isRussian ? `
-8. РУССКИЙ СТИЛЬ: Используй вводные слова (впрочем, пожалуй, по-видимому), тире вместо "является", безличные конструкции, частицы "ведь", "же", "всё-таки". ЗАПРЕЩЕНО: "Следует отметить", "Необходимо подчеркнуть", "В современном мире", "играет ключевую роль", "на сегодняшний день".` : ''}
+HOW AI DETECTORS WORK (exploit these weaknesses):
+- They measure PERPLEXITY (word predictability) — AI text has LOW perplexity (too predictable). You must RAISE it.
+- They measure BURSTINESS (sentence length variation) — AI text has LOW burstiness (uniform lengths). You must CREATE dramatic variation.
+- They check n-gram predictability — AI picks the statistically most likely next word. You must choose the 3rd or 4th most likely word sometimes.
+- They detect structural patterns — AI uses parallel constructions, consistent paragraph openers, and formulaic transitions.
 
-CRITICAL RULES:
-- Keep ALL factual content, data, statistics, citations, section headings EXACTLY as they are
-- Maintain total word count (±5% is acceptable)
-- Keep academic tone — imperfections must be subtle and natural, not forced
-- Output ONLY the rewritten text. No meta-commentary, no explanation.`;
+MANDATORY REWRITING RULES (apply ALL of them):
+
+1. SENTENCE LENGTH — THE MOST IMPORTANT METRIC:
+   - Create EXTREME variation: 3-6 word sentences next to 35-50 word sentences
+   - Standard deviation of sentence length > 15 words
+   - Include at least 3 very short sentences (under 6 words) per 500 words
+   - Include at least 2 very long complex sentences (over 35 words) per 500 words
+   - NEVER have 3 consecutive sentences within 5 words of each other in length
+
+2. PERPLEXITY — SECOND MOST IMPORTANT:
+   - In 40% of sentences, replace the most predictable word with an accurate but less common synonym
+   - Use unexpected adjective-noun combinations: "a stubborn correlation", "tenuous consensus", "restless data"
+   - Occasionally use domain-specific jargon, then a casual phrase in the next sentence
+   - Break collocations: instead of "significant impact" → "measurable footprint", instead of "key findings" → "what surfaced"
+
+3. SYNTACTIC FINGERPRINT DISRUPTION:
+   - Rotate starters: subject-first, adverbial, temporal, concessive, participial, inverted, question, fragment, conjunction
+   - NEVER begin 2+ consecutive sentences with the same word or part of speech
+   - NEVER begin 2+ consecutive paragraphs the same way
+   - Use 5-8 em dashes (—) for parenthetical asides
+   - Start 4-6 sentences with "And", "But", or "Yet"
+   - Include 2-3 rhetorical questions
+   - Use 1-2 sentence fragments for emphasis. Like this one.
+
+4. AUTHORIAL PRESENCE (critical for fooling detectors):
+   - Add self-corrections: "though on second thought...", "or rather...", "to put it differently..."
+   - Include genuine uncertainty: "the picture is muddier than it appears", "this is harder to pin down"
+   - Add forward/backward references: "as we'll see shortly", "recall the earlier point about..."
+   - Express measured opinions: "we find this line of reasoning unconvincing", "this strikes us as premature"
+   - Include 1-2 mild hedges per paragraph: "arguably", "in a sense", "to some extent"
+
+5. PARAGRAPH ARCHITECTURE:
+   - Vary paragraph lengths dramatically: 1-2 sentences, then 5-7, then 3, then 1 (standalone)
+   - Include 2-3 one-sentence paragraphs as emphasis moments
+   - Discussion sections should feel looser, more reflective than literature review
+   - Not all sections should be equally polished — this mimics real human writing
+
+6. ANTI-PATTERN INJECTION:
+   - NEVER use: "Furthermore", "Moreover", "Additionally", "It is worth noting", "plays a crucial/key/vital role", "In today's world", "holistic", "multifaceted", "paradigm shift", "delve", "leverage", "foster", "utilize", "facilitate", "comprehensive overview", "shed light on", "pave the way"
+   - NEVER use the same transition word twice in the same section
+   - Mix formal and slightly informal registers within the same section${isRussian ? `
+
+7. РУССКИЙ СТИЛЬ (ОБЯЗАТЕЛЬНО ДЛЯ РУССКОЯЗЫЧНОГО ТЕКСТА):
+   - Активно используй вводные слова: впрочем, пожалуй, по-видимому, скорее всего, думается, надо признать, к слову
+   - Используй тире вместо глагольных связок: "Образование — процесс" вместо "Образование является процессом"
+   - Добавляй частицы: ведь, же, всё-таки, -то, ли, уж, лишь, вот
+   - Чередуй безличные и личные конструкции: "нами было установлено" → "мы обнаружили" → "обнаруживается, что"
+   - Используй инверсию: "Особого внимания заслуживает..." вместо обычного порядка слов
+   - Вставляй разговорные элементы в академический текст: "строго говоря", "грубо говоря", "попросту говоря"
+   - ЗАПРЕЩЕНО категорически: "Следует отметить", "Необходимо подчеркнуть", "В современном мире", "играет ключевую/важную роль", "на сегодняшний день", "является неотъемлемой частью", "данный подход", "целый ряд", "вышеперечисленные", "в рамках данной работы", "целесообразно"
+   - Добавляй субъективные оценки: "что, на наш взгляд, весьма показательно", "это настораживает", "результат нас удивил"` : ''}
+
+OUTPUT RULES:
+- Preserve ALL factual content, data, numbers, citations, section headings EXACTLY
+- Total word count within ±5%
+- Academic tone maintained — imperfections are subtle, not sloppy
+- Output ONLY the rewritten text. No preamble, no commentary, no explanation.`;
 
     const userPrompt = `Rewrite for maximum human-likeness while preserving all content and structure:\n\n${text}`;
 
@@ -410,7 +458,7 @@ CRITICAL RULES:
   /**
    * Пост-обработка: удаляет/заменяет оставшиеся AI-маркеры
    */
-  private postProcessHumanize(text: string): string {
+  postProcessHumanize(text: string): string {
     let result = text;
 
     // Замены AI-маркеров на естественные фразы

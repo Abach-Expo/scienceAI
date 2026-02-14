@@ -470,6 +470,82 @@ router.post(
   }
 );
 
+// ================== AI HUMANIZATION ENDPOINT ==================
+// Uses Claude/GPT to rewrite text so it passes AI detectors (GPTZero, Turnitin, etc.)
+router.post(
+  '/humanize',
+  [
+    body('text').trim().notEmpty().withMessage('text is required'),
+    body('mode').optional().isIn(['academic', 'aggressive', 'quick']),
+  ],
+  async (req: Request, res: Response): Promise<void> => {
+    logger.debug('[AI Humanize] Request received');
+
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        res.status(400).json({ success: false, errors: errors.array() });
+        return;
+      }
+
+      const { text, mode = 'academic' } = req.body;
+
+      if (text.length < 50) {
+        res.status(400).json({ success: false, message: 'Текст слишком короткий для гуманизации (минимум 50 символов)' });
+        return;
+      }
+
+      if (text.length > 100000) {
+        res.status(400).json({ success: false, message: 'Текст слишком длинный (макс. 100 000 символов)' });
+        return;
+      }
+
+      const aiService = getAIService();
+
+      // Step 1: Post-process to remove obvious AI markers via regex
+      let humanized = aiService.postProcessHumanize(text);
+
+      // Step 2: AI-powered rewrite (the main humanization engine)
+      try {
+        humanized = await aiService.singlePassHumanize(humanized);
+      } catch (err: unknown) {
+        logger.warn(`AI humanization pass failed, returning regex-cleaned version: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
+
+      // Step 3: For aggressive mode, run a second AI pass focused on remaining patterns
+      if (mode === 'aggressive' && humanized.length > 200) {
+        try {
+          const secondPass = await aiService.singlePassHumanize(humanized);
+          if (secondPass.length >= humanized.length * 0.7) {
+            humanized = secondPass;
+          }
+        } catch (err: unknown) {
+          logger.warn(`Second humanization pass failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+      }
+
+      await recordUsage(
+        (req as AuthRequest).userId || 'anonymous',
+        Math.ceil(humanized.length / 4),
+        'humanize',
+        { mode, originalLength: text.length, humanizedLength: humanized.length }
+      );
+
+      res.json({
+        success: true,
+        humanizedText: humanized,
+        originalLength: text.length,
+        humanizedLength: humanized.length,
+        mode,
+      });
+
+    } catch (error: unknown) {
+      logger.error('AI Humanization error:', error);
+      res.status(500).json({ success: false, message: 'Ошибка гуманизации текста' });
+    }
+  }
+);
+
 // ================== PLAGIARISM CHECK ENDPOINT (REAL API) ==================
 router.post(
   '/check-plagiarism',

@@ -197,6 +197,12 @@ const SELF_REFERENCES = [
   'на наш взгляд',
   'по нашему мнению',
   'как нам кажется',
+  'надо признать',
+  'нельзя не отметить',
+  'стоит обратить внимание',
+  'любопытно, что',
+  'здесь нас удивило',
+  'мы обнаружили',
 ];
 
 const DOUBT_EXPRESSIONS = [
@@ -207,6 +213,25 @@ const DOUBT_EXPRESSIONS = [
   '(при всех оговорках)',
   '— хотя это дискуссионно',
   '— здесь мнения расходятся',
+  '(вопрос, впрочем, остаётся открытым)',
+  '(это, конечно, упрощение)',
+  '— но тут есть нюанс',
+];
+
+// Вводные слова и частицы для инъекции человечности
+const INTRODUCTORY_WORDS = [
+  'Впрочем,',
+  'Пожалуй,',
+  'По-видимому,',
+  'К слову,',
+  'Примечательно, что',
+  'Любопытно, что',
+  'Надо сказать,',
+  'Строго говоря,',
+  'Собственно,',
+  'Правда,',
+  'Между тем,',
+  'К тому же,',
 ];
 
 const ACADEMIC_CITATIONS = [
@@ -371,25 +396,82 @@ export function analyzeText(text: string): TextAnalysis {
     (paragraphVariety > 0.7 ? 10 : 0)
   );
   
-  // 6. Общий скор человечности
-  const patternPenalty = Math.min(50, (totalWeight / Math.max(maxWeight, 1)) * 80);
+  // 5.5 Consecutive sentence similarity check (AI tends to write uniform-length sentences)
+  let consecutiveSimilarPairs = 0;
+  for (let i = 0; i < sentenceLengths.length - 1; i++) {
+    if (Math.abs(sentenceLengths[i] - sentenceLengths[i + 1]) <= 4) {
+      consecutiveSimilarPairs++;
+    }
+  }
+  const consecutivePenalty = sentenceLengths.length > 3 
+    ? Math.min(20, (consecutiveSimilarPairs / (sentenceLengths.length - 1)) * 40) 
+    : 0;
+
+  // 5.6 Sentence starter diversity — AI often starts with the same parts of speech
+  const sentenceStarters = sentences
+    .map(s => s.trim().split(/\s+/)[0]?.toLowerCase() || '')
+    .filter(w => w.length > 0);
+  const uniqueStarters = new Set(sentenceStarters);
+  const starterDiversity = sentenceStarters.length > 0 ? uniqueStarters.size / sentenceStarters.length : 1;
+  const starterPenalty = starterDiversity < 0.5 ? (0.5 - starterDiversity) * 30 : 0;
+
+  // 5.7 Check for human-like markers (авторская позиция, сомнения, уточнения)
+  const humanMarkers = [
+    /впрочем|пожалуй|по-видимому|скорее всего|думается|надо признать/gi,
+    /на наш взгляд|мы полагаем|нам представляется|мы считаем/gi,
+    /строго говоря|грубо говоря|проще говоря|иначе говоря/gi,
+    /ведь|всё-таки|как ни странно|тем не менее/gi,
+    /though|however|arguably|in a sense|to some extent/gi,
+    /we believe|in our view|we find|it seems/gi,
+    /—/g, // em dashes
+    /\?/g, // questions
+  ];
+  let humanMarkerCount = 0;
+  humanMarkers.forEach(marker => {
+    const matches = text.match(marker);
+    if (matches) humanMarkerCount += matches.length;
+  });
+  const humanMarkerBonus = Math.min(15, humanMarkerCount * 2);
+
+  // 5.8 Repetitive transition words penalty
+  const transitions = (text.match(/\b(кроме того|более того|также|таким образом|следовательно|furthermore|moreover|additionally|consequently|therefore)\b/gi) || []);
+  const transitionFreq = new Map<string, number>();
+  transitions.forEach(t => transitionFreq.set(t.toLowerCase(), (transitionFreq.get(t.toLowerCase()) || 0) + 1));
+  let repeatedTransitionPenalty = 0;
+  transitionFreq.forEach(count => {
+    if (count > 2) repeatedTransitionPenalty += (count - 2) * 3;
+  });
+  repeatedTransitionPenalty = Math.min(15, repeatedTransitionPenalty);
+
+  // 6. Общий скор человечности (RECALIBRATED — более строгая формула)
+  const patternPenalty = Math.min(60, (totalWeight / Math.max(maxWeight, 1)) * 120);
   const humanScore = Math.max(0, Math.min(100, 
-    40 +                              // базовый
-    perplexityScore * 0.2 +           // словарное разнообразие
-    burstyScore * 0.25 +              // вариативность предложений
-    paragraphVariety * 15 +           // разнообразие начал
-    hapaxRatio * 10 -                 // редкие слова
-    patternPenalty                    // штраф за AI-паттерны
+    20 +                              // сниженный базовый (было 40)
+    perplexityScore * 0.15 +          // словарное разнообразие
+    burstyScore * 0.3 +              // вариативность предложений (вес увеличен)
+    paragraphVariety * 12 +           // разнообразие начал
+    hapaxRatio * 8 +                  // редкие слова
+    humanMarkerBonus -                // бонус за маркеры человечности
+    patternPenalty -                  // штраф за AI-паттерны (увеличен)
+    consecutivePenalty -              // штраф за одинаковую длину предложений подряд
+    starterPenalty -                  // штраф за однообразные начала предложений
+    repeatedTransitionPenalty         // штраф за повторяющиеся переходы
   ));
   
   // 7. Рекомендации
   const suggestions: string[] = [];
   
-  if (patternPenalty > 15) {
+  if (patternPenalty > 10) {
     suggestions.push('Замените AI-клише на естественные обороты (найдено: ' + aiPatterns.length + ')');
   }
   if (burstyScore < 35) {
-    suggestions.push('Чередуйте короткие (5 слов) и длинные (25 слов) предложения');
+    suggestions.push('Чередуйте короткие (3-5 слов) и длинные (30+ слов) предложения — вариативность критична');
+  }
+  if (consecutivePenalty > 8) {
+    suggestions.push('Слишком много предложений подряд одинаковой длины — разбейте монотонность');
+  }
+  if (starterPenalty > 5) {
+    suggestions.push('Разнообразьте начала предложений: вопросы, наречия, союзы, деепричастия');
   }
   if (vocabularyRichness < 0.45) {
     suggestions.push('Используйте более разнообразную лексику, избегайте повторов');
@@ -400,14 +482,23 @@ export function analyzeText(text: string): TextAnalysis {
   if (paragraphVariety < 0.6) {
     suggestions.push('Разнообразьте начала абзацев: попробуйте союзы, наречия, вопросы');
   }
-  if (!text.includes('на наш взгляд') && !text.includes('полагаем') && !text.includes('думается')) {
-    suggestions.push('Добавьте авторскую позицию: "мы полагаем", "на наш взгляд", "думается"');
+  if (humanMarkerBonus < 4) {
+    suggestions.push('Добавьте авторскую позицию: "мы полагаем", "на наш взгляд", "думается", "впрочем"');
+  }
+  if (repeatedTransitionPenalty > 5) {
+    suggestions.push('Слишком часто повторяются одни и те же переходные слова (кроме того, также и т.п.)');
   }
   if (!text.match(/\[\d+\]|\[.*,\s*\d{4}\]/)) {
     suggestions.push('Добавьте ссылки на источники в формате [Автор, год]');
   }
   if (avgSentenceLength > 0 && (avgSentenceLength < 8 || avgSentenceLength > 22)) {
     suggestions.push(`Средняя длина предложений (${Math.round(avgSentenceLength)} сл.) необычна — оптимально 12-18`);
+  }
+  if (!text.match(/[—]/)) {
+    suggestions.push('Используйте тире (—) для вставок и уточнений — это маркер живого письма');
+  }
+  if (!text.match(/\?/)) {
+    suggestions.push('Добавьте 1-2 риторических вопроса — они характерны для человеческого письма');
   }
   
   return {
@@ -458,6 +549,9 @@ export function humanizeTextAdvanced(
   // 4. Добавляем "сомнения" и хеджирование
   result = addHedging(result);
   
+  // 4.5 Разнообразим начала абзацев
+  result = diversifyParagraphStarters(result);
+  
   // 5. Добавляем разговорные элементы (если позволено)
   if (opts.addColloquialisms && !opts.preserveAcademic) {
     result = addColloquialElements(result);
@@ -487,8 +581,8 @@ function removeAIPatterns(text: string, intensity: string): string {
   
   const allPatterns = [...ADVANCED_AI_PATTERNS, ...ENGLISH_AI_PATTERNS];
   allPatterns.forEach(({ pattern, fix, weight }) => {
-    // При агрессивном режиме убираем всё, при лёгком — только тяжёлые
-    const threshold = intensity === 'aggressive' ? 0 : intensity === 'medium' ? 5 : 7;
+    // При агрессивном режиме убираем всё, при среднем — weight>=3, при лёгком — только тяжёлые
+    const threshold = intensity === 'aggressive' ? 0 : intensity === 'medium' ? 3 : 6;
     
     if (weight >= threshold && fix) {
       result = result.replace(pattern, fix);
@@ -499,7 +593,7 @@ function removeAIPatterns(text: string, intensity: string): string {
 }
 
 /**
- * Добавляет вариативность длины предложений
+ * Добавляет вариативность длины предложений (КРИТИЧНО для обхода AI-детекторов)
  */
 function addBurstiness(text: string): string {
   const paragraphs = text.split('\n\n');
@@ -509,61 +603,102 @@ function addBurstiness(text: string): string {
     
     if (sentences.length < 3) return para;
     
-    // Иногда объединяем короткие предложения
-    for (let i = 0; i < sentences.length - 1; i++) {
-      if (sentences[i].split(' ').length < 8 && sentences[i + 1].split(' ').length < 8) {
-        if (Math.random() > 0.6) {
-          // Объединяем через тире или точку с запятой
-          sentences[i] = sentences[i].replace(/\.$/, '') + ' — ' + 
-            sentences[i + 1].charAt(0).toLowerCase() + sentences[i + 1].slice(1);
-          sentences.splice(i + 1, 1);
+    const result: string[] = [];
+    
+    for (let i = 0; i < sentences.length; i++) {
+      const wordCount = sentences[i].split(' ').length;
+      
+      // Объединяем 2 коротких предложения подряд через тире/точку с запятой
+      if (wordCount < 8 && i < sentences.length - 1 && sentences[i + 1].split(' ').length < 10) {
+        if (Math.random() > 0.5) {
+          const connector = Math.random() > 0.5 ? ' — ' : '; ';
+          result.push(
+            sentences[i].replace(/\.$/, '') + connector + 
+            sentences[i + 1].charAt(0).toLowerCase() + sentences[i + 1].slice(1)
+          );
+          i++; // skip next
+          continue;
         }
       }
+      
+      // Разбиваем длинные предложения (>25 слов) через тире или "— и"
+      if (wordCount > 25 && sentences[i].includes(',')) {
+        const commaIdx = sentences[i].indexOf(',', Math.floor(sentences[i].length * 0.4));
+        if (commaIdx > 0 && Math.random() > 0.4) {
+          const firstPart = sentences[i].slice(0, commaIdx).trim();
+          const secondPart = sentences[i].slice(commaIdx + 1).trim();
+          result.push(firstPart + '.');
+          result.push(secondPart.charAt(0).toUpperCase() + secondPart.slice(1));
+          continue;
+        }
+      }
+      
+      // Иногда добавляем очень короткую фразу-реакцию после длинного предложения
+      if (wordCount > 20 && Math.random() > 0.75) {
+        result.push(sentences[i]);
+        const shortPhrases = ['Это показательно.', 'Вот что важно.', 'Факт примечательный.', 'Это бросается в глаза.', 'Данные говорят сами за себя.'];
+        result.push(shortPhrases[Math.floor(Math.random() * shortPhrases.length)]);
+        continue;
+      }
+      
+      result.push(sentences[i]);
     }
     
-    // Иногда разбиваем длинные предложения
-    return sentences.map(s => {
-      if (s.split(' ').length > 25 && s.includes(',')) {
-        const commaPos = s.indexOf(',', Math.floor(s.length / 2));
-        if (commaPos > 0 && Math.random() > 0.5) {
-          return s.slice(0, commaPos + 1) + ' А' + s.slice(commaPos + 2);
-        }
-      }
-      return s;
-    }).join(' ');
+    return result.join(' ');
   }).join('\n\n');
 }
 
 /**
- * Добавляет авторский голос
+ * Добавляет авторский голос и маркеры человечности
  */
 function addAuthoralVoice(text: string): string {
   let result = text;
   const paragraphs = result.split('\n\n');
   let insertCount = 0;
-  const maxInserts = Math.ceil(paragraphs.length / 3);
+  const maxInserts = Math.ceil(paragraphs.length / 2); // Чаще добавляем (было /3)
   
   for (let i = 1; i < paragraphs.length && insertCount < maxInserts; i++) {
-    if (paragraphs[i].length > 150 && Math.random() > 0.5) {
-      const selfRef = SELF_REFERENCES[Math.floor(Math.random() * SELF_REFERENCES.length)];
-      
-      // Находим подходящее место
+    if (paragraphs[i].length > 100 && Math.random() > 0.35) {
       const sentences = paragraphs[i].split(/(?<=[.!?])\s+/);
-      if (sentences.length > 1) {
-        const insertIdx = Math.floor(Math.random() * (sentences.length - 1));
-        const sentence = sentences[insertIdx];
-        
-        // Добавляем авторскую позицию
-        if (!sentence.includes('мы ') && !sentence.includes('наш')) {
-          sentences[insertIdx] = sentence.replace(
-            /^([А-ЯЁ])/,
-            `${selfRef.charAt(0).toUpperCase() + selfRef.slice(1)}, $1`.toLowerCase()
-          ).replace(/^./, c => c.toUpperCase());
+      if (sentences.length < 2) continue;
+      
+      // Разные виды авторских вставок
+      const insertType = Math.random();
+      
+      if (insertType < 0.3) {
+        // Вводное слово в начале случайного предложения
+        const introWord = INTRODUCTORY_WORDS[Math.floor(Math.random() * INTRODUCTORY_WORDS.length)];
+        const sentIdx = Math.floor(Math.random() * sentences.length);
+        if (!sentences[sentIdx].startsWith(introWord.split(',')[0])) {
+          sentences[sentIdx] = introWord + ' ' + 
+            sentences[sentIdx].charAt(0).toLowerCase() + sentences[sentIdx].slice(1);
         }
-        
-        paragraphs[i] = sentences.join(' ');
-        insertCount++;
+      } else if (insertType < 0.6) {
+        // Авторская позиция
+        const selfRef = SELF_REFERENCES[Math.floor(Math.random() * SELF_REFERENCES.length)];
+        const sentIdx = Math.floor(Math.random() * (sentences.length - 1));
+        const s = sentences[sentIdx];
+        if (!s.includes('мы ') && !s.includes('наш') && !s.includes('нам')) {
+          sentences[sentIdx] = s.replace(/\.$/, '') + ' — ' + selfRef + '.';
+        }
+      } else {
+        // Вставка тире с уточнением
+        const sentIdx = Math.floor(Math.random() * sentences.length);
+        const dashInserts = [
+          ' — что, на наш взгляд, весьма показательно',
+          ' — и это не случайно',
+          ' — здесь ситуация неоднозначна',
+          ' — хотя картина сложнее, чем кажется',
+          ' — причём иногда весьма существенно',
+        ];
+        const dash = dashInserts[Math.floor(Math.random() * dashInserts.length)];
+        if (!sentences[sentIdx].includes('—')) {
+          sentences[sentIdx] = sentences[sentIdx].replace(/\.$/, '') + dash + '.';
+        }
       }
+      
+      paragraphs[i] = sentences.join(' ');
+      insertCount++;
     }
   }
   
@@ -571,29 +706,90 @@ function addAuthoralVoice(text: string): string {
 }
 
 /**
- * Добавляет хеджирование (выражения сомнения)
+ * Добавляет хеджирование (выражения сомнения) и смягчение категоричности
  */
 function addHedging(text: string): string {
   let result = text;
   const paragraphs = result.split('\n\n');
   
-  // Добавляем 1-2 выражения сомнения
+  // Добавляем 2-4 выражения сомнения
   let added = 0;
+  const maxToAdd = Math.min(4, Math.ceil(paragraphs.length / 2));
   
-  for (let i = 0; i < paragraphs.length && added < 2; i++) {
+  for (let i = 0; i < paragraphs.length && added < maxToAdd; i++) {
     const para = paragraphs[i];
     
     // Ищем категоричные утверждения
-    if (para.match(/всегда|никогда|очевидно|несомненно|безусловно|является|обязательно/i)) {
-      if (Math.random() > 0.4) {
+    if (para.match(/всегда|никогда|очевидно|несомненно|безусловно|является|обязательно|однозначно|абсолютно|полностью/i)) {
+      if (Math.random() > 0.3) {
         const doubt = DOUBT_EXPRESSIONS[Math.floor(Math.random() * DOUBT_EXPRESSIONS.length)];
         
         // Вставляем после первой точки
         const dotPos = para.indexOf('.');
-        if (dotPos > 50) {
-          paragraphs[i] = para.slice(0, dotPos) + ' ' + doubt + para.slice(dotPos);
+        if (dotPos > 30) {
+          paragraphs[i] = para.slice(0, dotPos + 1) + ' ' + doubt + ' ' + para.slice(dotPos + 2);
           added++;
         }
+      }
+    }
+    
+    // Смягчаем категоричные утверждения
+    if (Math.random() > 0.5) {
+      paragraphs[i] = paragraphs[i]
+        .replace(/\bвсегда\b/i, 'как правило')
+        .replace(/\bникогда\b/i, 'крайне редко')
+        .replace(/\bочевидно, что\b/i, 'по всей видимости,')
+        .replace(/\bнесомненно\b/i, 'с высокой степенью вероятности')
+        .replace(/\bбезусловно\b/i, 'в значительной мере');
+    }
+  }
+  
+  return paragraphs.join('\n\n');
+}
+
+/**
+ * Разнообразит начала абзацев — AI-детекторы сильно штрафуют за однотипные начала
+ */
+function diversifyParagraphStarters(text: string): string {
+  const paragraphs = text.split('\n\n');
+  if (paragraphs.length < 3) return text;
+  
+  const starters = [
+    'Вместе с тем',
+    'Между тем',
+    'С другой стороны',
+    'Нельзя не заметить, что',
+    'Обращает на себя внимание то, что',
+    'Здесь уместно отметить:',
+    'Если взглянуть на это иначе,',
+    'Однако есть и другая сторона.',
+    'Что касается',
+    'Стоит вспомнить и о том, что',
+    'Возникает закономерный вопрос:',
+    'Но вот что интересно —',
+  ];
+  
+  let starterIdx = Math.floor(Math.random() * starters.length);
+  
+  // Проверяем, не начинаются ли 2+ подряд абзаца одинаково
+  for (let i = 1; i < paragraphs.length; i++) {
+    if (paragraphs[i].length < 80) continue;
+    
+    const prevFirst = paragraphs[i - 1].trim().split(/\s+/)[0]?.toLowerCase() || '';
+    const currFirst = paragraphs[i].trim().split(/\s+/)[0]?.toLowerCase() || '';
+    
+    // Если начала совпадают, или просто для разнообразия (30% шанс)
+    if (prevFirst === currFirst || Math.random() > 0.7) {
+      const starter = starters[starterIdx % starters.length];
+      starterIdx++;
+      
+      // Если начало — вопрос, просто добавляем перед абзацем
+      if (starter.endsWith('?') || starter.endsWith(':')) {
+        paragraphs[i] = starter + ' ' + paragraphs[i];
+      } else {
+        // Заменяем начало абзаца
+        paragraphs[i] = starter + ', ' + 
+          paragraphs[i].charAt(0).toLowerCase() + paragraphs[i].slice(1);
       }
     }
   }
@@ -705,34 +901,48 @@ function detectTopics(text: string): string[] {
 }
 
 /**
- * Добавляет мелкие несовершенства
+ * Добавляет мелкие несовершенства (имитация живого письма)
  */
 function addImperfections(text: string, intensity: string): string {
   let result = text;
   
-  // Иногда повторяем слово (как делают люди)
-  if (intensity !== 'light' && Math.random() > 0.7) {
-    const words = ['это', 'что', 'как', 'при', 'для'];
-    const word = words[Math.floor(Math.random() * words.length)];
-    const regex = new RegExp(`\\b(${word})\\b`, 'i');
-    const match = result.match(regex);
-    if (match && match.index && Math.random() > 0.5) {
-      // Добавляем лёгкое "запинание" через запятую
-      result = result.replace(regex, `$1, ${word}`);
-    }
+  // Заменяем "является" на тире (характерно для живого русского текста)
+  if (Math.random() > 0.3) {
+    result = result.replace(/\b(\S+)\s+является\s+(\S+)/i, '$1 — $2');
   }
   
-  // Заменяем некоторые точки на точку с запятой
-  if (Math.random() > 0.6) {
-    const sentences = result.split(/(?<=[.])\s+/);
-    for (let i = 0; i < sentences.length - 1; i++) {
-      if (sentences[i].length < 80 && sentences[i + 1].length < 80 && Math.random() > 0.7) {
-        sentences[i] = sentences[i].replace(/\.$/, ';');
-        sentences[i + 1] = sentences[i + 1].charAt(0).toLowerCase() + sentences[i + 1].slice(1);
-        break; // Только один раз
+  // Заменяем некоторые точки на точку с запятой (людей характерно)
+  const sentences = result.split(/(?<=[.])\s+/);
+  let semicolonAdded = false;
+  for (let i = 0; i < sentences.length - 1; i++) {
+    if (!semicolonAdded && sentences[i].length < 80 && sentences[i + 1].length < 80 && Math.random() > 0.5) {
+      sentences[i] = sentences[i].replace(/\.$/, ';');
+      sentences[i + 1] = sentences[i + 1].charAt(0).toLowerCase() + sentences[i + 1].slice(1);
+      semicolonAdded = true;
+    }
+  }
+  result = sentences.join(' ');
+  
+  // Добавляем тире-вставки (люди часто делают уточнения через тире)
+  if (intensity !== 'light' && Math.random() > 0.5) {
+    const dashInserts = [
+      '— а это существенно —',
+      '— и тут нет единства —',  
+      '— причём заметим —',
+      '— что немаловажно —',
+    ];
+    const paragraphs = result.split('\n\n');
+    for (let i = 0; i < paragraphs.length; i++) {
+      if (paragraphs[i].length > 200 && !paragraphs[i].includes('—') && Math.random() > 0.6) {
+        const commaPos = paragraphs[i].indexOf(',', Math.floor(paragraphs[i].length * 0.3));
+        if (commaPos > 0) {
+          const insert = dashInserts[Math.floor(Math.random() * dashInserts.length)];
+          paragraphs[i] = paragraphs[i].slice(0, commaPos) + ' ' + insert + ' ' + paragraphs[i].slice(commaPos + 1).trim();
+          break; // только 1 раз
+        }
       }
     }
-    result = sentences.join(' ');
+    result = paragraphs.join('\n\n');
   }
   
   return result;

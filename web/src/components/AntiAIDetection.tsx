@@ -8,6 +8,7 @@ import {
   TextAnalysis,
   HumanizationOptions,
 } from '../services/antiAIDetection';
+import { apiClient } from '../services/apiClient';
 
 interface AntiAIDetectionProps {
   initialText?: string;
@@ -43,37 +44,62 @@ export const AntiAIDetection: React.FC<AntiAIDetectionProps> = ({
     }, 300);
   }, [text]);
 
-  // Гуманизация
-  const handleHumanize = useCallback(() => {
+  // Гуманизация — вызывает BACKEND API для настоящей AI-гуманизации
+  const handleHumanize = useCallback(async () => {
     if (!text.trim()) return;
     
     setIsHumanizing(true);
     setOriginalText(text);
     
-    setTimeout(() => {
-      let humanized: string;
-      
-      switch (humanizationMode) {
-        case 'quick':
-          humanized = quickHumanize(text);
-          break;
-        case 'aggressive':
-          humanized = aggressiveHumanize(text);
-          break;
-        case 'academic':
-        default:
-          humanized = academicHumanize(text);
+    try {
+      // Попытка вызвать backend AI-гуманизацию (Claude/GPT)
+      const response = await apiClient.post<{
+        success: boolean;
+        humanizedText: string;
+        originalLength: number;
+        humanizedLength: number;
+        mode: string;
+      }>('/api/ai/humanize', {
+        text,
+        mode: humanizationMode,
+      });
+
+      if (response.success && response.humanizedText) {
+        setText(response.humanizedText);
+        onTextChange?.(response.humanizedText);
+        
+        const result = analyzeText(response.humanizedText);
+        setAnalysis(result);
+        setShowDiff(true);
+        setIsHumanizing(false);
+        return;
       }
-      
-      setText(humanized);
-      onTextChange?.(humanized);
-      
-      // Анализируем результат
-      const result = analyzeText(humanized);
-      setAnalysis(result);
-      setShowDiff(true);
-      setIsHumanizing(false);
-    }, 500);
+    } catch (err) {
+      console.warn('Backend humanization failed, falling back to local:', err);
+    }
+
+    // Fallback: локальная гуманизация если бэкенд недоступен
+    let humanized: string;
+    
+    switch (humanizationMode) {
+      case 'quick':
+        humanized = quickHumanize(text);
+        break;
+      case 'aggressive':
+        humanized = aggressiveHumanize(text);
+        break;
+      case 'academic':
+      default:
+        humanized = academicHumanize(text);
+    }
+    
+    setText(humanized);
+    onTextChange?.(humanized);
+    
+    const result = analyzeText(humanized);
+    setAnalysis(result);
+    setShowDiff(true);
+    setIsHumanizing(false);
   }, [text, humanizationMode, onTextChange]);
 
   // Возврат к оригиналу
