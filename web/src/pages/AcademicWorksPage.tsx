@@ -600,6 +600,44 @@ const AcademicWorksPage = () => {
   const [activeSection, setActiveSection] = useState(0);
   const [editorContent, setEditorContent] = useState('');
   const editorRef = useRef<HTMLTextAreaElement>(null);
+
+  // Форматирование текста в textarea
+  const insertTextAtCursor = (before: string, after: string) => {
+    const ta = editorRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const text = editorContent;
+    const selected = text.slice(start, end);
+    const newText = text.slice(0, start) + before + selected + after + text.slice(end);
+    setEditorContent(newText);
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(start + before.length, end + before.length);
+    }, 0);
+  };
+
+  const insertAtLineStart = (prefix: string) => {
+    const ta = editorRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const text = editorContent;
+    const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+    const newText = text.slice(0, lineStart) + prefix + text.slice(lineStart);
+    setEditorContent(newText);
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(start + prefix.length, start + prefix.length);
+    }, 0);
+  };
+
+  const formatBold = () => insertTextAtCursor('**', '**');
+  const formatItalic = () => insertTextAtCursor('*', '*');
+  const formatUnderline = () => insertTextAtCursor('<u>', '</u>');
+  const formatHeading1 = () => insertAtLineStart('# ');
+  const formatHeading2 = () => insertAtLineStart('## ');
+  const formatBulletList = () => insertAtLineStart('• ');
+
   const [showPlagiarismPanel, setShowPlagiarismPanel] = useState(false);
   const [plagiarismTab, setPlagiarismTab] = useState<'check' | 'detect'>('check');
   
@@ -727,7 +765,7 @@ const AcademicWorksPage = () => {
 
 🔹 Тип работы: ${selectedType.name} (${selectedType.nameEn})
 🔹 Структура: ${selectedType.sections.join(' → ')}
-🔹 Целевой объём: ~${targetWords} слов (${Math.round(targetWords / 250)} страниц)
+🔹 Целевой объём: СТРОГО ${targetWords} слов (${Math.round(targetWords / 250)} страниц). ОБЯЗАТЕЛЬНО напиши НЕ МЕНЕЕ ${targetWords} слов! Считай слова — если написал меньше, продолжай писать, пока не наберёшь ${targetWords} слов
 🔹 Язык: определи по теме (русский или английский)
 🔹 Стиль цитирования: ${citationStyleInfo?.name || 'ГОСТ'}
 ${requirements ? `🔹 Особые требования: ${requirements}` : ''}
@@ -771,7 +809,7 @@ ${specialized.requirements.slice(0, 3).map((r, i) => `${i + 1}. ${r}`).join('\n'
             systemPrompt,
             userPrompt,
             temperature: 0.85,
-            maxTokens: 8000,
+            maxTokens: Math.min(Math.max(Math.ceil(targetWords * 2), 4000), 16000),
           }),
         });
         
@@ -1574,22 +1612,22 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
 
               {/* Formatting buttons */}
               <div className="flex items-center gap-1">
-                <button className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
+                <button onClick={formatBold} title="Жирный" className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
                   <Bold size={16} />
                 </button>
-                <button className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
+                <button onClick={formatItalic} title="Курсив" className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
                   <Italic size={16} />
                 </button>
-                <button className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
+                <button onClick={formatUnderline} title="Подчёркнутый" className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
                   <Underline size={16} />
                 </button>
-                <button className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
+                <button onClick={formatHeading1} title="Заголовок 1" className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
                   <Heading1 size={16} />
                 </button>
-                <button className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
+                <button onClick={formatHeading2} title="Заголовок 2" className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
                   <Heading2 size={16} />
                 </button>
-                <button className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
+                <button onClick={formatBulletList} title="Список" className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors">
                   <List size={16} />
                 </button>
               </div>
