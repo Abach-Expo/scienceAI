@@ -1322,7 +1322,7 @@ ${fullContent.slice(-4000)}
     }
   };
 
-  // Генерация всей диссертации (все главы)
+  // Генерация всей диссертации автономно через бэкенд SSE
   const generateFullDissertation = async () => {
     // Проверяем право на генерацию полной диссертации (Pro)
     const limitCheck = subscription.canGenerateFullDissertation();
@@ -1331,36 +1331,195 @@ ${fullContent.slice(-4000)}
       return;
     }
 
-    setAiMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: `🎓 **Начинаю генерацию полной диссертации!**\n\n⚠️ Это займёт 15-30 минут.\n📑 Будет сгенерировано: введение + ${dissertation.chapters.filter(ch => !ch.title.toLowerCase().includes('введение') && !ch.title.toLowerCase().includes('заключение') && !ch.title.toLowerCase().includes('литератур')).length} глав + заключение`,
-      timestamp: new Date(),
-    }]);
-
-    // Генерируем введение
-    await generateIntroduction();
-    await new Promise(r => setTimeout(r, 3000));
-
-    // Генерируем основные главы
-    const mainChapters = dissertation.chapters.filter(ch => 
-      !ch.title.toLowerCase().includes('введение') && 
-      !ch.title.toLowerCase().includes('заключение') &&
-      !ch.title.toLowerCase().includes('литератур') &&
-      !ch.title.toLowerCase().includes('приложен')
-    );
-
-    for (const chapter of mainChapters) {
-      await generateLargeContent(chapter.id, 25);
-      await new Promise(r => setTimeout(r, 5000));
+    if (!dissertation.title.trim() || dissertation.title === 'Новая диссертация') {
+      setAiMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: '⚠️ Сначала укажите тему диссертации (заголовок).',
+        timestamp: new Date(),
+      }]);
+      return;
     }
 
+    // Маппинг frontend documentType → backend type
+    const docTypeMapping: Record<string, string> = {
+      dissertation: 'dissertation',
+      diploma: 'diploma',
+      coursework: 'coursework',
+      article: 'essay',
+      lecture: 'referat',
+      abstract: 'referat',
+      report: 'referat',
+    };
+    const backendType = docTypeMapping[dissertation.documentType] || 'dissertation';
+
+    // Вычисляем целевые страницы из целевого объёма слов (280 слов/страница)
+    const targetPages = Math.max(10, Math.round((dissertation.targetWordCount || 80000) / 280));
+
+    setIsGenerating(true);
+
     setAiMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'assistant',
-      content: `🎉 **Диссертация сгенерирована!**\n\nТеперь:\n1. Проверьте текст\n2. Добавьте свои правки\n3. Запустите проверку уникальности\n4. Экспортируйте в PDF`,
+      content: `🎓 **Запускаю автономную генерацию!**\n\n🤖 ИИ самостоятельно:\n1. Спланирует структуру\n2. Напишет каждую главу\n3. Соберёт полный документ\n\n📄 Целевой объём: **~${targetPages} страниц** (${(targetPages * 280).toLocaleString()} слов)\n📑 Тип: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || 'Диссертация'}\n⏱️ Примерное время: ${Math.ceil(targetPages * 0.3)} минут\n\n💡 Просто ждите — всё произойдёт автоматически.`,
       timestamp: new Date(),
     }]);
+
+    try {
+      const response = await fetch(`${API_URL}/dissertation/generate`, {
+        method: 'POST',
+        headers: getAuthorizationHeaders(),
+        body: JSON.stringify({
+          topic: dissertation.title,
+          type: backendType,
+          targetPages,
+          language: writingLanguage,
+          additionalInstructions: dissertation.topic || undefined,
+          style: writingStyle === 'academic' ? 'academic' : writingStyle === 'readable' ? 'popular' : 'scientific',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ошибка сервера: ${response.status}`);
+      }
+
+      // Читаем SSE поток
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Нет потока данных');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Последняя неполная строка остаётся в буфере
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+
+            if (data.type === 'progress') {
+              // Обновляем прогресс в UI
+              setLargeGenerationProgress({
+                current: data.currentChapter,
+                total: data.totalChapters,
+                section: data.chapterTitle,
+              });
+              setGenerationProgress(data.percentComplete);
+
+              // Обновляем сообщение о прогрессе
+              const progressMsg = `📝 **Генерация: ${data.percentComplete}%**\n\n` +
+                `📌 Фаза: ${data.phase === 'planning' ? 'Планирование структуры' : data.phase === 'generating' ? 'Написание текста' : data.phase === 'assembling' ? 'Сборка документа' : 'Готово!'}\n` +
+                `📑 Глава: ${data.currentChapter}/${data.totalChapters} — «${data.chapterTitle}»\n` +
+                `📊 Написано: ${data.wordsGenerated.toLocaleString()} слов (~${data.pagesGenerated} стр.)\n` +
+                `⏱️ Осталось: ~${Math.ceil(data.estimatedTimeRemaining / 60)} мин.`;
+
+              setAiMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (lastIdx >= 0 && updated[lastIdx].content.startsWith('📝 **Генерация:')) {
+                  updated[lastIdx] = { ...updated[lastIdx], content: progressMsg };
+                } else {
+                  updated.push({
+                    id: `progress-${Date.now()}`,
+                    role: 'assistant',
+                    content: progressMsg,
+                    timestamp: new Date(),
+                  });
+                }
+                return updated;
+              });
+            }
+
+            if (data.type === 'result') {
+              // Распределяем контент по главам
+              const resultChapters = data.chapters || [];
+              
+              setDissertation(prev => {
+                const newChapters = [...prev.chapters];
+                
+                // Заполняем главы контентом из бэкенда
+                for (const resultCh of resultChapters) {
+                  // Ищем подходящую главу по названию или индексу
+                  const matchIdx = newChapters.findIndex(ch => {
+                    const chLower = ch.title.toLowerCase();
+                    const resLower = resultCh.title.toLowerCase();
+                    return chLower.includes(resLower) || resLower.includes(chLower) ||
+                      chLower.replace(/глава \d+\.?\s*/i, '') === resLower.replace(/глава \d+\.?\s*/i, '');
+                  });
+
+                  if (matchIdx >= 0) {
+                    newChapters[matchIdx] = {
+                      ...newChapters[matchIdx],
+                      content: resultCh.content,
+                    };
+                  } else if (resultCh.number - 1 < newChapters.length) {
+                    // Фолбэк: по индексу
+                    newChapters[resultCh.number - 1] = {
+                      ...newChapters[resultCh.number - 1],
+                      content: resultCh.content,
+                    };
+                  }
+                }
+
+                return {
+                  ...prev,
+                  chapters: newChapters,
+                  updatedAt: new Date(),
+                };
+              });
+              setSaveStatus('unsaved');
+
+              // Счётчики подписки
+              subscription.incrementDissertationGenerations();
+              subscription.incrementLargeChapterGeneration();
+
+              setAiMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: `🎉 **Диссертация сгенерирована!**\n\n` +
+                  `📄 Объём: **${data.totalWords?.toLocaleString() || '?'} слов** (~${data.totalPages || '?'} стр.)\n` +
+                  `📑 Глав: ${resultChapters.length}\n` +
+                  `⏱️ Время: ${Math.round((data.metadata?.generationTime || 0) / 1000)} сек.\n` +
+                  `🤖 Модель: ${data.metadata?.model || 'AI'}\n\n` +
+                  `**Что дальше:**\n` +
+                  `1. Проверьте и отредактируйте текст\n` +
+                  `2. Запустите проверку на уникальность\n` +
+                  `3. Экспортируйте в PDF`,
+                timestamp: new Date(),
+              }]);
+            }
+
+            if (data.type === 'error') {
+              throw new Error(data.message || 'Ошибка генерации на сервере');
+            }
+          } catch (parseErr) {
+            // Пропускаем невалидные JSON-строки
+            if (line.trim().length > 6) {
+              console.warn('SSE parse error:', parseErr, 'line:', line);
+            }
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Full dissertation generation error:', error);
+      setAiMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `❌ **Ошибка генерации:**\n\n${error instanceof Error ? error.message : 'Неизвестная ошибка'}\n\n💡 Попробуйте ещё раз или сгенерируйте главы по отдельности.`,
+        timestamp: new Date(),
+      }]);
+    } finally {
+      setIsGenerating(false);
+      setGenerationProgress(0);
+      setLargeGenerationProgress({ current: 0, total: 0, section: '' });
+    }
   };
 
   // ================== УМНОЕ ОПРЕДЕЛЕНИЕ НАМЕРЕНИЯ (GPT) ==================
@@ -3138,11 +3297,11 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
     },
     { 
       icon: Sparkles, 
-      text: '🎓 Полная диссертация', 
+      text: '🎓 Полная работа (авто)', 
       action: generateFullDissertation,
       color: 'from-violet-600 to-purple-600',
       description: canDoFullDiss.allowed 
-        ? 'Сгенерировать всю работу (~100 страниц)' 
+        ? `ИИ сам напишет всю работу (~${Math.round((dissertation.targetWordCount || 80000) / 280)} стр.)` 
         : canDoFullDiss.reason || 'Только для Pro',
       disabled: !canDoFullDiss.allowed,
       proOnly: !canDoFullDiss.allowed
