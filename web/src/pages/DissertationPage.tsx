@@ -956,8 +956,8 @@ const DissertationPage = () => {
       // Определяем требуемое количество слов из промпта для динамического maxTokens
       const wordCountMatch = prompt.match(/(\d{3,6})\s*(слов|word|words|символ|знак|character)/i);
       const requestedWords = wordCountMatch ? parseInt(wordCountMatch[1]) : 800;
-      // ~1.5-2 токена на русское слово + запас
-      const dynamicMaxTokens = Math.min(Math.max(Math.ceil(requestedWords * 2), 4000), 16000);
+      // ~2.5-3 токена на русское слово + запас
+      const dynamicMaxTokens = Math.min(Math.max(Math.ceil(requestedWords * 3.5), 4000), 64000);
 
       const userPrompt = `ТЕМА ДИССЕРТАЦИИ: "${dissertation.title}"
 НАУЧНАЯ ОБЛАСТЬ: ${scienceFieldName}
@@ -973,7 +973,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 КРИТИЧЕСКИ ВАЖНО ДЛЯ КАЧЕСТВА:
 ════════════════════════════════════════════════════════════════
 1. Пиши на ${SUPPORTED_LANGUAGES[writingLanguage].name.toUpperCase()} языке, научным стилем по стандарту ${SUPPORTED_LANGUAGES[writingLanguage].academicStyle}
-2. ${requestedWords > 800 ? `ОБЯЗАТЕЛЬНО напиши НЕ МЕНЕЕ ${requestedWords} слов! Это критически важно. Считай слова. Если написал меньше — продолжай писать, пока не наберёшь ${requestedWords} слов.` : 'Минимум 800 слов для содержательного раздела'}
+2. ${requestedWords > 800 ? `ОБЯЗАТЕЛЬНО напиши НЕ МЕНЕЕ ${Math.round(requestedWords * 1.05)} слов! Это критически важно. Считай слова. Если написал меньше — продолжай писать, пока не наберёшь нужный объём. Минимум: ${requestedWords} слов, желательно ${Math.round(requestedWords * 1.1)}.` : 'Минимум 800 слов для содержательного раздела'}
 3. Каждый абзац — 4-6 развёрнутых предложений
 4. Добавляй авторские ремарки: "На наш взгляд...", "Представляется важным..."
 5. Используй ссылки: [Автор, год] — минимум 5-7 на раздел
@@ -1264,7 +1264,7 @@ ${fullContent.slice(-4000)}
             systemPrompt,
             userPrompt,
             temperature: 0.8,
-            maxTokens: 16000, // Максимум для длинного контента → основная модель
+            maxTokens: 64000, // Максимум для длинного контента → Claude поддерживает до 64K
           }),
         });
 

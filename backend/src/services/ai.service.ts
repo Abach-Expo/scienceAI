@@ -494,7 +494,7 @@ OUTPUT RULES:
 
     const result = await this.generateWithRouting('text_generation', systemPrompt, userPrompt, {
       temperature: 0.95,
-      maxTokens: Math.min(Math.ceil(text.length / 2.2), 16384),
+      maxTokens: Math.min(Math.ceil(text.length / 2.2), 64000),
       presencePenalty: 0.8,
       frequencyPenalty: 0.6,
     });

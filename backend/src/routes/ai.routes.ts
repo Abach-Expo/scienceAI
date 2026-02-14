@@ -30,6 +30,7 @@ type ModelConfig = {
 const MODELS: Record<string, ModelConfig> = {
   'gpt-4o': { name: 'gpt-4o', maxTokens: 16384, costPer1kTokens: 0.01, quality: 'highest' },
   'gpt-4o-mini': { name: 'gpt-4o-mini', maxTokens: 16384, costPer1kTokens: 0.00015, quality: 'high' },
+  'claude-sonnet': { name: 'claude-sonnet-4-20250514', maxTokens: 64000, costPer1kTokens: 0.015, quality: 'highest' },
   'gpt-3.5-turbo': { name: 'gpt-3.5-turbo', maxTokens: 4096, costPer1kTokens: 0.0005, quality: 'good' },
 };
 
