@@ -95,7 +95,7 @@ const CHARS_PER_PAGE = 1800;
 
 // Лимиты моделей по выходным токенам
 const MODEL_LIMITS = {
-  'claude-sonnet-4-20250514': { maxOutputTokens: 8192, wordsPerRequest: 3000, pagesPerRequest: 10 },
+  'claude-sonnet-4-20250514': { maxOutputTokens: 64000, wordsPerRequest: 12000, pagesPerRequest: 40 },
   'gpt-4o': { maxOutputTokens: 16384, wordsPerRequest: 5000, pagesPerRequest: 17 },
   'gpt-4o-mini': { maxOutputTokens: 16384, wordsPerRequest: 5000, pagesPerRequest: 17 },
 };
@@ -222,7 +222,7 @@ export class DissertationService {
       try {
         const response = await this.anthropic.messages.create({
           model: this.claudeModel,
-          max_tokens: Math.min(maxTokens, 8192),
+          max_tokens: Math.min(maxTokens, 64000),
           temperature,
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }],
@@ -445,7 +445,7 @@ ${instructions ? `Дополнительные требования: ${instructi
     const styleDesc = style === 'scientific' ? 'строго научный' : style === 'popular' ? 'научно-популярный' : 'академический';
 
     // Определяем, нужно ли разбивать главу на подзапросы
-    const maxWordsPerRequest = this.anthropic ? 3000 : 5000;
+    const maxWordsPerRequest = this.anthropic ? 12000 : 5000;
     const needsSplit = chapter.targetWords > maxWordsPerRequest;
 
     if (!needsSplit) {
@@ -528,7 +528,7 @@ ${instructions ? `Дополнительные требования: ${instructi
 Пиши главу: "${chapter.title}"
 Описание: ${chapter.description}${subsectionsInfo}
 
-ЦЕЛЕВОЙ ОБЪЁМ: ${targetWords} слов (это примерно ${Math.round(targetWords / WORDS_PER_PAGE)} страниц)
+ЦЕЛЕВОЙ ОБЪЁМ: НЕ МЕНЕЕ ${Math.round(targetWords * 1.05)} слов (это примерно ${Math.round(targetWords / WORDS_PER_PAGE)} страниц). Минимум ${targetWords} слов, желательно ${Math.round(targetWords * 1.1)}.
 
 ${previousContext ? `\n--- Контекст предыдущих глав ---\n${previousContext}\n---` : ''}
 ${instructions ? `\nДополнительно: ${instructions}` : ''}
@@ -537,7 +537,7 @@ ${instructions ? `\nДополнительно: ${instructions}` : ''}
 
     // Рассчитываем токены (~1 токен = ~0.75 слова на русском)
     const estimatedTokens = Math.ceil(targetWords / 0.6); // С запасом
-    const maxTokens = Math.min(estimatedTokens, this.anthropic ? 8192 : 16384);
+    const maxTokens = Math.min(estimatedTokens, this.anthropic ? 64000 : 16384);
 
     return await this.generate(systemPrompt, userPrompt, maxTokens, 0.85);
   }
@@ -595,7 +595,7 @@ ${instructions ? `\nДополнительно: ${instructions}` : ''}
     estimatedCost: number;
   } {
     const totalWords = targetPages * WORDS_PER_PAGE;
-    const wordsPerRequest = this.anthropic ? 3000 : 5000;
+    const wordsPerRequest = this.anthropic ? 12000 : 5000;
     const requests = Math.ceil(totalWords / wordsPerRequest) + 2; // +2 для плана и сборки
     const timePerRequest = 15; // секунд в среднем
 
