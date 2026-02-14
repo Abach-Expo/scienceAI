@@ -194,7 +194,7 @@ router.post(
     body('systemPrompt').trim().notEmpty().withMessage('systemPrompt is required'),
     body('userPrompt').trim().notEmpty().withMessage('userPrompt is required'),
     body('temperature').optional().isFloat({ min: 0, max: 2 }),
-    body('maxTokens').optional().isInt({ min: 1, max: 16000 }),
+    body('maxTokens').optional().isInt({ min: 1, max: 64000 }),
     body('model').optional().isIn(['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo']),
     body('taskType').optional().isString(),
   ],
@@ -324,7 +324,7 @@ router.post(
     body('systemPrompt').trim().notEmpty().withMessage('systemPrompt is required'),
     body('userPrompt').trim().notEmpty().withMessage('userPrompt is required'),
     body('temperature').optional().isFloat({ min: 0, max: 2 }),
-    body('maxTokens').optional().isInt({ min: 1, max: 16000 }),
+    body('maxTokens').optional().isInt({ min: 1, max: 64000 }),
     body('taskType').optional().isString(),
   ],
   async (req: Request, res: Response): Promise<void> => {

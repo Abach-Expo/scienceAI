@@ -1366,16 +1366,19 @@ ${fullContent.slice(-4000)}
     }]);
 
     try {
+      const abortController = new AbortController();
+      
       const response = await fetch(`${API_URL}/dissertation/generate`, {
         method: 'POST',
         headers: getAuthorizationHeaders(),
+        signal: abortController.signal,
         body: JSON.stringify({
           topic: dissertation.title,
           type: backendType,
           targetPages,
           language: writingLanguage,
           additionalInstructions: dissertation.topic || undefined,
-          style: writingStyle === 'academic' ? 'academic' : writingStyle === 'readable' ? 'popular' : 'scientific',
+          style: writingStyle === 'academic' ? 'academic' : writingStyle === 'readable' ? 'popular' : 'academic',
         }),
       });
 
@@ -1390,121 +1393,128 @@ ${fullContent.slice(-4000)}
       const decoder = new TextDecoder();
       let buffer = '';
 
+      const processSSELine = (line: string) => {
+        if (!line.startsWith('data: ')) return;
+        
+        let data: Record<string, unknown>;
+        try {
+          data = JSON.parse(line.slice(6));
+        } catch {
+          if (line.trim().length > 6) {
+            console.warn('SSE JSON parse error, line:', line);
+          }
+          return;
+        }
+
+        // Обработка ошибки сервера — НЕ внутри catch
+        if (data.type === 'error') {
+          reader.cancel();
+          throw new Error((data.message as string) || 'Ошибка генерации на сервере');
+        }
+
+        if (data.type === 'progress') {
+          setLargeGenerationProgress({
+            current: data.currentChapter as number,
+            total: data.totalChapters as number,
+            section: data.chapterTitle as string,
+          });
+          setGenerationProgress(data.percentComplete as number);
+
+          const progressMsg = `📝 **Генерация: ${data.percentComplete}%**\n\n` +
+            `📌 Фаза: ${data.phase === 'planning' ? 'Планирование структуры' : data.phase === 'generating' ? 'Написание текста' : data.phase === 'assembling' ? 'Сборка документа' : 'Готово!'}\n` +
+            `📑 Глава: ${data.currentChapter}/${data.totalChapters} — «${data.chapterTitle}»\n` +
+            `📊 Написано: ${(data.wordsGenerated as number).toLocaleString()} слов (~${data.pagesGenerated} стр.)\n` +
+            `⏱️ Осталось: ~${Math.ceil((data.estimatedTimeRemaining as number) / 60)} мин.`;
+
+          setAiMessages(prev => {
+            const updated = [...prev];
+            const lastIdx = updated.length - 1;
+            if (lastIdx >= 0 && updated[lastIdx].content.startsWith('📝 **Генерация:')) {
+              updated[lastIdx] = { ...updated[lastIdx], content: progressMsg };
+            } else {
+              updated.push({
+                id: `progress-${Date.now()}`,
+                role: 'assistant',
+                content: progressMsg,
+                timestamp: new Date(),
+              });
+            }
+            return updated;
+          });
+        }
+
+        if (data.type === 'result') {
+          const resultChapters = (data.chapters as Array<{ title: string; content: string; number: number }>) || [];
+          
+          setDissertation(prev => {
+            const newChapters = [...prev.chapters];
+            
+            for (const resultCh of resultChapters) {
+              const matchIdx = newChapters.findIndex(ch => {
+                const chLower = ch.title.toLowerCase();
+                const resLower = resultCh.title.toLowerCase();
+                return chLower.includes(resLower) || resLower.includes(chLower) ||
+                  chLower.replace(/глава \d+\.?\s*/i, '') === resLower.replace(/глава \d+\.?\s*/i, '');
+              });
+
+              if (matchIdx >= 0) {
+                newChapters[matchIdx] = {
+                  ...newChapters[matchIdx],
+                  content: resultCh.content,
+                };
+              } else if (resultCh.number > 0 && resultCh.number - 1 < newChapters.length) {
+                newChapters[resultCh.number - 1] = {
+                  ...newChapters[resultCh.number - 1],
+                  content: resultCh.content,
+                };
+              }
+            }
+
+            return {
+              ...prev,
+              chapters: newChapters,
+              updatedAt: new Date(),
+            };
+          });
+          setSaveStatus('unsaved');
+
+          subscription.incrementDissertationGenerations();
+          subscription.incrementLargeChapterGeneration();
+
+          setAiMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `🎉 **Диссертация сгенерирована!**\n\n` +
+              `📄 Объём: **${(data.totalWords as number)?.toLocaleString() || '?'} слов** (~${data.totalPages || '?'} стр.)\n` +
+              `📑 Глав: ${resultChapters.length}\n` +
+              `⏱️ Время: ${Math.round(((data.metadata as Record<string, number>)?.generationTime || 0) / 1000)} сек.\n` +
+              `🤖 Модель: ${(data.metadata as Record<string, string>)?.model || 'AI'}\n\n` +
+              `**Что дальше:**\n` +
+              `1. Проверьте и отредактируйте текст\n` +
+              `2. Запустите проверку на уникальность\n` +
+              `3. Экспортируйте в PDF`,
+            timestamp: new Date(),
+          }]);
+        }
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Последняя неполная строка остаётся в буфере
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          try {
-            const data = JSON.parse(line.slice(6));
-
-            if (data.type === 'progress') {
-              // Обновляем прогресс в UI
-              setLargeGenerationProgress({
-                current: data.currentChapter,
-                total: data.totalChapters,
-                section: data.chapterTitle,
-              });
-              setGenerationProgress(data.percentComplete);
-
-              // Обновляем сообщение о прогрессе
-              const progressMsg = `📝 **Генерация: ${data.percentComplete}%**\n\n` +
-                `📌 Фаза: ${data.phase === 'planning' ? 'Планирование структуры' : data.phase === 'generating' ? 'Написание текста' : data.phase === 'assembling' ? 'Сборка документа' : 'Готово!'}\n` +
-                `📑 Глава: ${data.currentChapter}/${data.totalChapters} — «${data.chapterTitle}»\n` +
-                `📊 Написано: ${data.wordsGenerated.toLocaleString()} слов (~${data.pagesGenerated} стр.)\n` +
-                `⏱️ Осталось: ~${Math.ceil(data.estimatedTimeRemaining / 60)} мин.`;
-
-              setAiMessages(prev => {
-                const updated = [...prev];
-                const lastIdx = updated.length - 1;
-                if (lastIdx >= 0 && updated[lastIdx].content.startsWith('📝 **Генерация:')) {
-                  updated[lastIdx] = { ...updated[lastIdx], content: progressMsg };
-                } else {
-                  updated.push({
-                    id: `progress-${Date.now()}`,
-                    role: 'assistant',
-                    content: progressMsg,
-                    timestamp: new Date(),
-                  });
-                }
-                return updated;
-              });
-            }
-
-            if (data.type === 'result') {
-              // Распределяем контент по главам
-              const resultChapters = data.chapters || [];
-              
-              setDissertation(prev => {
-                const newChapters = [...prev.chapters];
-                
-                // Заполняем главы контентом из бэкенда
-                for (const resultCh of resultChapters) {
-                  // Ищем подходящую главу по названию или индексу
-                  const matchIdx = newChapters.findIndex(ch => {
-                    const chLower = ch.title.toLowerCase();
-                    const resLower = resultCh.title.toLowerCase();
-                    return chLower.includes(resLower) || resLower.includes(chLower) ||
-                      chLower.replace(/глава \d+\.?\s*/i, '') === resLower.replace(/глава \d+\.?\s*/i, '');
-                  });
-
-                  if (matchIdx >= 0) {
-                    newChapters[matchIdx] = {
-                      ...newChapters[matchIdx],
-                      content: resultCh.content,
-                    };
-                  } else if (resultCh.number - 1 < newChapters.length) {
-                    // Фолбэк: по индексу
-                    newChapters[resultCh.number - 1] = {
-                      ...newChapters[resultCh.number - 1],
-                      content: resultCh.content,
-                    };
-                  }
-                }
-
-                return {
-                  ...prev,
-                  chapters: newChapters,
-                  updatedAt: new Date(),
-                };
-              });
-              setSaveStatus('unsaved');
-
-              // Счётчики подписки
-              subscription.incrementDissertationGenerations();
-              subscription.incrementLargeChapterGeneration();
-
-              setAiMessages(prev => [...prev, {
-                id: Date.now().toString(),
-                role: 'assistant',
-                content: `🎉 **Диссертация сгенерирована!**\n\n` +
-                  `📄 Объём: **${data.totalWords?.toLocaleString() || '?'} слов** (~${data.totalPages || '?'} стр.)\n` +
-                  `📑 Глав: ${resultChapters.length}\n` +
-                  `⏱️ Время: ${Math.round((data.metadata?.generationTime || 0) / 1000)} сек.\n` +
-                  `🤖 Модель: ${data.metadata?.model || 'AI'}\n\n` +
-                  `**Что дальше:**\n` +
-                  `1. Проверьте и отредактируйте текст\n` +
-                  `2. Запустите проверку на уникальность\n` +
-                  `3. Экспортируйте в PDF`,
-                timestamp: new Date(),
-              }]);
-            }
-
-            if (data.type === 'error') {
-              throw new Error(data.message || 'Ошибка генерации на сервере');
-            }
-          } catch (parseErr) {
-            // Пропускаем невалидные JSON-строки
-            if (line.trim().length > 6) {
-              console.warn('SSE parse error:', parseErr, 'line:', line);
-            }
-          }
+          processSSELine(line);
         }
+      }
+
+      // Flush TextDecoder и обработка оставшегося буфера
+      buffer += decoder.decode();
+      if (buffer.trim()) {
+        processSSELine(buffer);
       }
 
     } catch (error) {

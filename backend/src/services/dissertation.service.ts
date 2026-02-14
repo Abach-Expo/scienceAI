@@ -466,7 +466,7 @@ ${instructions ? `Дополнительные требования: ${instructi
       
       const partContext = isFirst
         ? previousContext
-        : `${previousContext}\n\n--- Уже написано в этой главе ---\n${parts[parts.length - 1]?.substring(-800) || ''}`;
+        : `${previousContext}\n\n--- Уже написано в этой главе ---\n${parts[parts.length - 1]?.slice(-800) || ''}`;
 
       const partInstructions = [
         instructions,

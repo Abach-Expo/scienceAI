@@ -22,7 +22,7 @@ router.post(
     body('topic').trim().notEmpty().withMessage('Тема обязательна'),
     body('type').isIn(['essay', 'referat', 'coursework', 'diploma', 'dissertation']).withMessage('Неверный тип работы'),
     body('targetPages').isInt({ min: 3, max: 200 }).withMessage('Количество страниц: 3-200'),
-    body('language').optional().isIn(['ru', 'en']),
+    body('language').optional().isIn(['ru', 'en', 'uk', 'kk', 'uz', 'de', 'fr', 'es', 'zh', 'ar']),
     body('additionalInstructions').optional().trim(),
     body('style').optional().isIn(['academic', 'scientific', 'popular']),
   ],
@@ -54,8 +54,13 @@ router.post(
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('X-Accel-Buffering', 'no'); // Для nginx
 
+      // Обработка отключения клиента — прекращаем генерацию
+      let clientDisconnected = false;
+      req.on('close', () => { clientDisconnected = true; });
+
       // Отправка прогресса через SSE
       const sendProgress = (progress: GenerationProgress) => {
+        if (clientDisconnected) throw new Error('Client disconnected');
         res.write(`data: ${JSON.stringify({ type: 'progress', ...progress })}\n\n`);
       };
 
