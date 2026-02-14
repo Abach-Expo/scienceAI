@@ -256,6 +256,20 @@ M-Pesa (mobile money, Kenya), Haier (Chinese management), Natura (Brazilian sust
 Tata Group (India), Amul (dairy cooperatives), UBI experiment Finland 2017-2018,
 Bolsa Família (Brazil), kibbutzim (Israel)
 
+BANNED SENSATIONAL AI-EPITHETS (real researchers write with restraint):
+"шокирующий" → "неожиданный" | "обескураживающий" → "неутешительный" |
+"колоссальный" → "значительный" | "грандиозный" → "масштабный" |
+"потрясающий" → "впечатляющий" | "ошеломляющий" → "неожиданный" |
+"сенсационный" → "примечательный" | "поразительный" → "любопытный" |
+"shocking" → "unexpected" | "groundbreaking" → "original" | "mind-blowing" → "notable"
+AI loves sensational epithets. Real researchers write with restraint.
+
+BANNED NUMBERED LISTS IN CONCLUSIONS:
+- NEVER write "Первое... Второе... Третье... Четвёртое... И последнее" — this is an AI pattern
+- Instead, WEAVE proposals into the text organically using varied connectors
+- If you must list, max 3 items and format as part of flowing prose
+- Final sentence of the text MUST be either an open question or a thought-provoking statement, NEVER an assertion
+
 RUSSIAN-SPECIFIC NATURAL WRITING TECHNIQUES (when writing in Russian):
 - Mix short sentences (3-7 words) with long ones (30-50 words) — Russian expects longer sentences than English
 - Use разговорные вставки sparingly but consistently: "если угодно", "к слову", "правда", "скажем", "собственно говоря", "по крайней мере"
@@ -598,6 +612,15 @@ OUTPUT RULES:
       [/\bцелью данной (?:статьи|работы) является\b/g, ['мы ставим целью', 'работа нацелена на', 'здесь мы стремимся']],
       [/\bпроведённый анализ показал\b/g, ['анализ указал на', 'мы обнаружили', 'данные свидетельствуют']],
       [/\bполученные результаты могут быть использованы\b/g, ['результаты применимы к', 'эти данные полезны для', 'на основе результатов можно']],
+      // === NEW: Сенсационные AI-эпитеты ===
+      [/\bшокирующ(?:ий|ая|ое|ие|их|им)\b/g, ['неожиданный', 'непредвиденный', 'нетипичный']],
+      [/\bобескураживающ(?:ий|ая|ое|ие|их|им)\b/g, ['неутешительный', 'тревожный', 'вызывающий вопросы']],
+      [/\bколоссальн(?:ый|ая|ое|ые|ых|ым)\b/g, ['значительный', 'заметный', 'существенный']],
+      [/\bграндиозн(?:ый|ая|ое|ые|ых|ым)\b/g, ['масштабный', 'крупный', 'внушительный']],
+      [/\bпотрясающ(?:ий|ая|ое|ие|их|им)\b/g, ['впечатляющий', 'примечательный', 'заслуживающий внимания']],
+      [/\bошеломляющ(?:ий|ая|ое|ие|их|им)\b/g, ['неожиданный', 'непривычный', 'выбивающий из колеи']],
+      [/\bсенсационн(?:ый|ая|ое|ые|ых|ым)\b/g, ['примечательный', 'нетривиальный', 'неординарный']],
+      [/\bпоразительн(?:ый|ая|ое|ые|о)\b/g, ['любопытный', 'неожиданный', 'нетривиальный']],
     ];
 
     for (const [pattern, alternatives] of replacements) {

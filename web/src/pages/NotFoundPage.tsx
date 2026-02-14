@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Home, ArrowLeft, Search, Sparkles } from 'lucide-react';
+import { Home, ArrowLeft, LayoutDashboard, Presentation, CreditCard } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const NotFoundPage = () => {
@@ -69,9 +69,9 @@ const NotFoundPage = () => {
           <p className="text-text-muted text-sm mb-4">Попробуй эти страницы:</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             {[
-              { label: 'Dashboard', path: '/dashboard', icon: Sparkles },
-              { label: 'Презентации', path: '/presentations', icon: Search },
-              { label: 'Тарифы', path: '/pricing', icon: Search },
+              { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+              { label: 'Презентации', path: '/presentations', icon: Presentation },
+              { label: 'Тарифы', path: '/pricing', icon: CreditCard },
             ].map((link) => (
               <button
                 key={link.path}

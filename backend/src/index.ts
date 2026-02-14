@@ -222,7 +222,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({
     success: false,
     message: 'Internal server error',
-    error: err.message,
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
