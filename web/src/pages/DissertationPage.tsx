@@ -953,6 +953,12 @@ const DissertationPage = () => {
 • Заверши переходом к следующему разделу`;
       };
 
+      // Определяем требуемое количество слов из промпта для динамического maxTokens
+      const wordCountMatch = prompt.match(/(\d{3,6})\s*(слов|word|words|символ|знак|character)/i);
+      const requestedWords = wordCountMatch ? parseInt(wordCountMatch[1]) : 800;
+      // ~1.5-2 токена на русское слово + запас
+      const dynamicMaxTokens = Math.min(Math.max(Math.ceil(requestedWords * 2), 4000), 16000);
+
       const userPrompt = `ТЕМА ДИССЕРТАЦИИ: "${dissertation.title}"
 НАУЧНАЯ ОБЛАСТЬ: ${scienceFieldName}
 ТЕКУЩИЙ РАЗДЕЛ: ${sectionTitle}
@@ -967,7 +973,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 КРИТИЧЕСКИ ВАЖНО ДЛЯ КАЧЕСТВА:
 ════════════════════════════════════════════════════════════════
 1. Пиши на ${SUPPORTED_LANGUAGES[writingLanguage].name.toUpperCase()} языке, научным стилем по стандарту ${SUPPORTED_LANGUAGES[writingLanguage].academicStyle}
-2. Минимум 800 слов для содержательного раздела
+2. ${requestedWords > 800 ? `ОБЯЗАТЕЛЬНО напиши НЕ МЕНЕЕ ${requestedWords} слов! Это критически важно. Считай слова. Если написал меньше — продолжай писать, пока не наберёшь ${requestedWords} слов.` : 'Минимум 800 слов для содержательного раздела'}
 3. Каждый абзац — 4-6 развёрнутых предложений
 4. Добавляй авторские ремарки: "На наш взгляд...", "Представляется важным..."
 5. Используй ссылки: [Автор, год] — минимум 5-7 на раздел
@@ -977,7 +983,6 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 9. Избегай шаблонных фраз AI ("В современном мире...")
 10. Добавь 1-2 риторических вопроса для живости текста`;
 
-      
       // Вызываем AI через бэкенд API (безопасно - ключ на сервере)
       const response = await fetch(`${API_URL}/ai/generate`, {
         method: 'POST',
@@ -987,7 +992,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
           systemPrompt,
           userPrompt,
           temperature: 0.85,
-          maxTokens: 4000,
+          maxTokens: dynamicMaxTokens,
         }),
       });
 
@@ -3687,7 +3692,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
 • Основные методы
 • Ключевые результаты
 • Практическая значимость"
-                  className="w-full min-h-[400px] bg-bg-secondary/30 border border-border-primary rounded-xl p-4 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed"
+                  className="w-full min-h-[400px] bg-bg-tertiary border border-border-primary rounded-xl p-4 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed"
                 />
               </div>
             ) : selectedChapter ? (
@@ -3735,7 +3740,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
 • *курсив* — выделите текст и нажмите I в toolbar  
 • # Заголовок — для заголовков разных уровней
 • > Цитата — для блочных цитат"
-                  className="w-full min-h-[600px] bg-bg-secondary/30 border border-border-primary rounded-xl p-6 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed text-base font-mono"
+                  className="w-full min-h-[600px] bg-bg-tertiary border border-border-primary rounded-xl p-6 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed text-base font-mono"
                 />
                 <div className="mt-2 text-xs text-text-muted text-right">
                   {getSelectedContent().content.split(/\s+/).filter(w => w).length} слов в этом разделе
