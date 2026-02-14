@@ -7,31 +7,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Основные цвета (CSS variables for theming)
-        'bg-primary': 'var(--bg-primary)',
-        'bg-secondary': 'var(--bg-secondary)',
-        'bg-tertiary': 'var(--bg-tertiary)',
+        // Основные цвета (CSS variables for theming — RGB channels for opacity support)
+        'bg-primary': 'rgb(var(--bg-primary) / <alpha-value>)',
+        'bg-secondary': 'rgb(var(--bg-secondary) / <alpha-value>)',
+        'bg-tertiary': 'rgb(var(--bg-tertiary) / <alpha-value>)',
         
         // Цвета текста
-        'text-primary': 'var(--text-primary)',
-        'text-secondary': 'var(--text-secondary)',
-        'text-muted': 'var(--text-muted)',
+        'text-primary': 'rgb(var(--text-primary) / <alpha-value>)',
+        'text-secondary': 'rgb(var(--text-secondary) / <alpha-value>)',
+        'text-muted': 'rgb(var(--text-muted) / <alpha-value>)',
         
         // Акцентные цвета
-        'accent-primary': 'var(--accent-primary)',
-        'accent-secondary': 'var(--accent-secondary)',
+        'accent-primary': 'rgb(var(--accent-primary) / <alpha-value>)',
+        'accent-secondary': 'rgb(var(--accent-secondary) / <alpha-value>)',
         'accent-success': '#10B981',
         'accent-warning': '#F59E0B',
         'accent-error': '#EF4444',
         'accent-info': '#3B82F6',
         
         // Фон
-        'background-primary': 'var(--bg-primary)',
-        'background-secondary': 'var(--bg-secondary)',
+        'background-primary': 'rgb(var(--bg-primary) / <alpha-value>)',
+        'background-secondary': 'rgb(var(--bg-secondary) / <alpha-value>)',
         
         // Границы
-        'border-primary': 'var(--border-primary)',
-        'border-secondary': 'var(--border-secondary)',
+        'border-primary': 'rgb(var(--border-primary) / <alpha-value>)',
+        'border-secondary': 'rgb(var(--border-secondary) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -95,8 +95,8 @@ export default {
           '50%': { boxShadow: '0 0 30px rgba(139, 92, 246, 0.5)' },
         },
         borderFlow: {
-          '0%, 100%': { borderColor: 'var(--accent-primary)' },
-          '50%': { borderColor: 'var(--accent-secondary)' },
+          '0%, 100%': { borderColor: 'rgb(var(--accent-primary))' },
+          '50%': { borderColor: 'rgb(var(--accent-secondary))' },
         },
         textReveal: {
           '0%': { opacity: '0', transform: 'translateY(10px)', filter: 'blur(4px)' },

@@ -6,46 +6,46 @@
 
 :root,
 [data-theme='dark'] {
-  --bg-primary: #0A0A0F;
-  --bg-secondary: #12121A;
-  --bg-tertiary: #1A1A25;
-  --text-primary: #FFFFFF;
-  --text-secondary: #A0A0B0;
-  --text-muted: #606070;
-  --accent-primary: #8B5CF6;
-  --accent-secondary: #EC4899;
-  --border-primary: #2A2A35;
-  --border-secondary: #3A3A45;
+  --bg-primary: 10 10 15;
+  --bg-secondary: 18 18 26;
+  --bg-tertiary: 26 26 37;
+  --text-primary: 255 255 255;
+  --text-secondary: 160 160 176;
+  --text-muted: 96 96 112;
+  --accent-primary: 139 92 246;
+  --accent-secondary: 236 72 153;
+  --border-primary: 42 42 53;
+  --border-secondary: 58 58 69;
   --scrollbar-track: #12121A;
   --glass-bg: rgba(18, 18, 26, 0.8);
 }
 
 [data-theme='light'] {
-  --bg-primary: #F5F5F7;
-  --bg-secondary: #FFFFFF;
-  --bg-tertiary: #E8E8ED;
-  --text-primary: #1A1A2E;
-  --text-secondary: #4A4A5A;
-  --text-muted: #8A8A9A;
-  --accent-primary: #7C3AED;
-  --accent-secondary: #DB2777;
-  --border-primary: #D1D5DB;
-  --border-secondary: #B0B0C0;
+  --bg-primary: 245 245 247;
+  --bg-secondary: 255 255 255;
+  --bg-tertiary: 232 232 237;
+  --text-primary: 26 26 46;
+  --text-secondary: 74 74 90;
+  --text-muted: 138 138 154;
+  --accent-primary: 124 58 237;
+  --accent-secondary: 219 39 119;
+  --border-primary: 209 213 219;
+  --border-secondary: 176 176 192;
   --scrollbar-track: #E8E8ED;
   --glass-bg: rgba(255, 255, 255, 0.85);
 }
 
 [data-theme='midnight'] {
-  --bg-primary: #0D1117;
-  --bg-secondary: #161B22;
-  --bg-tertiary: #21262D;
-  --text-primary: #F0F6FC;
-  --text-secondary: #8B949E;
-  --text-muted: #484F58;
-  --accent-primary: #58A6FF;
-  --accent-secondary: #BC8CFF;
-  --border-primary: #30363D;
-  --border-secondary: #484F58;
+  --bg-primary: 13 17 23;
+  --bg-secondary: 22 27 34;
+  --bg-tertiary: 33 38 45;
+  --text-primary: 240 246 252;
+  --text-secondary: 139 148 158;
+  --text-muted: 72 79 88;
+  --accent-primary: 88 166 255;
+  --accent-secondary: 188 140 255;
+  --border-primary: 48 54 61;
+  --border-secondary: 72 79 88;
   --scrollbar-track: #161B22;
   --glass-bg: rgba(22, 27, 34, 0.85);
 }
@@ -64,8 +64,8 @@ html {
 
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: rgb(var(--bg-primary));
+  color: rgb(var(--text-primary));
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -92,25 +92,25 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(135deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 80%, white), color-mix(in srgb, var(--accent-secondary) 80%, white));
+  background: linear-gradient(135deg, color-mix(in srgb, rgb(var(--accent-primary)) 80%, white), color-mix(in srgb, rgb(var(--accent-secondary)) 80%, white));
 }
 
 /* ==================== SELECTION ==================== */
 
 ::selection {
-  background: color-mix(in srgb, var(--accent-primary) 30%, transparent);
-  color: var(--text-primary);
+  background: color-mix(in srgb, rgb(var(--accent-primary)) 30%, transparent);
+  color: rgb(var(--text-primary));
 }
 
 /* ==================== FOCUS STYLES ==================== */
 
 :focus-visible {
-  outline: 2px solid var(--accent-primary);
+  outline: 2px solid rgb(var(--accent-primary));
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -124,7 +124,7 @@ body {
   position: absolute;
   top: -40px;
   left: 0;
-  background: var(--accent-primary);
+  background: rgb(var(--accent-primary));
   color: white;
   padding: 8px 16px;
   z-index: 100;
@@ -145,13 +145,13 @@ body {
 }
 
 .glass-strong {
-  background: color-mix(in srgb, var(--bg-secondary) 95%, transparent);
+  background: color-mix(in srgb, rgb(var(--bg-secondary)) 95%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 
 .glass-light {
-  background: color-mix(in srgb, var(--bg-tertiary) 15%, transparent);
+  background: color-mix(in srgb, rgb(var(--bg-tertiary)) 15%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -167,8 +167,8 @@ body {
 
 .gradient-border {
   position: relative;
-  background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
-              linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) border-box;
+  background: linear-gradient(rgb(var(--bg-secondary)), rgb(var(--bg-secondary))) padding-box,
+              linear-gradient(135deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary))) border-box;
   border: 1px solid transparent;
 }
 
@@ -191,15 +191,15 @@ body {
 /* ==================== GLOW EFFECTS ==================== */
 
 .glow {
-  box-shadow: 0 0 20px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, rgb(var(--accent-primary)) 30%, transparent);
 }
 
 .glow-hover:hover {
-  box-shadow: 0 0 30px color-mix(in srgb, var(--accent-primary) 50%, transparent);
+  box-shadow: 0 0 30px color-mix(in srgb, rgb(var(--accent-primary)) 50%, transparent);
 }
 
 .glow-text {
-  text-shadow: 0 0 20px color-mix(in srgb, var(--accent-primary) 50%, transparent);
+  text-shadow: 0 0 20px color-mix(in srgb, rgb(var(--accent-primary)) 50%, transparent);
 }
 
 /* ==================== ANIMATIONS ==================== */
@@ -242,7 +242,7 @@ body {
 
 .btn-primary:hover {
   @apply scale-105;
-  box-shadow: 0 10px 40px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+  box-shadow: 0 10px 40px color-mix(in srgb, rgb(var(--accent-primary)) 40%, transparent);
 }
 
 .btn-primary:active {
@@ -256,7 +256,7 @@ body {
 
 .btn-secondary:hover {
   @apply border-accent-primary;
-  background-color: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  background-color: color-mix(in srgb, rgb(var(--accent-primary)) 10%, transparent);
 }
 
 /* ==================== CARDS ==================== */
@@ -267,8 +267,8 @@ body {
 }
 
 .card:hover {
-  border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent);
-  box-shadow: 0 20px 60px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  border-color: color-mix(in srgb, rgb(var(--accent-primary)) 50%, transparent);
+  box-shadow: 0 20px 60px color-mix(in srgb, rgb(var(--accent-primary)) 15%, transparent);
 }
 
 /* ==================== INPUTS ==================== */
@@ -278,11 +278,11 @@ body {
   @apply bg-bg-tertiary border border-border-primary text-text-primary;
   @apply placeholder-text-muted;
   @apply focus:outline-none focus:border-accent-primary focus:ring-2;
-  --tw-ring-color: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  --tw-ring-color: color-mix(in srgb, rgb(var(--accent-primary)) 20%, transparent);
 }
 
 .input:focus {
-  box-shadow: 0 0 20px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, rgb(var(--accent-primary)) 20%, transparent);
 }
 
 /* ==================== TOOLTIPS ==================== */
@@ -307,8 +307,8 @@ body {
 .loader {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--border-primary);
-  border-top-color: var(--accent-primary);
+  border: 3px solid rgb(var(--border-primary));
+  border-top-color: rgb(var(--accent-primary));
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -378,7 +378,7 @@ body {
 
 /* Gradient text with theme awareness */
 .gradient-text-theme {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(135deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -387,10 +387,10 @@ body {
 /* Mesh gradient background */
 .mesh-gradient {
   background:
-    radial-gradient(at 40% 20%, color-mix(in srgb, var(--accent-primary) 15%, transparent) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, color-mix(in srgb, var(--accent-secondary) 10%, transparent) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, color-mix(in srgb, var(--accent-primary) 8%, transparent) 0px, transparent 50%),
-    var(--bg-primary);
+    radial-gradient(at 40% 20%, color-mix(in srgb, rgb(var(--accent-primary)) 15%, transparent) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, color-mix(in srgb, rgb(var(--accent-secondary)) 10%, transparent) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, color-mix(in srgb, rgb(var(--accent-primary)) 8%, transparent) 0px, transparent 50%),
+    rgb(var(--bg-primary));
 }
 
 /* Card with animated border on hover */
@@ -401,10 +401,10 @@ body {
 }
 
 .card-animated:hover {
-  border-color: color-mix(in srgb, var(--accent-primary) 60%, transparent);
+  border-color: color-mix(in srgb, rgb(var(--accent-primary)) 60%, transparent);
   box-shadow: 
-    0 20px 60px color-mix(in srgb, var(--accent-primary) 12%, transparent),
-    0 0 1px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+    0 20px 60px color-mix(in srgb, rgb(var(--accent-primary)) 12%, transparent),
+    0 0 1px color-mix(in srgb, rgb(var(--accent-primary)) 30%, transparent);
   transform: translateY(-2px);
 }
 
@@ -418,8 +418,8 @@ body {
 .rotating-border {
   --angle: 0deg;
   border: 2px solid transparent;
-  background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
-              conic-gradient(from var(--angle), var(--accent-primary), var(--accent-secondary), var(--accent-primary)) border-box;
+  background: linear-gradient(rgb(var(--bg-secondary)), rgb(var(--bg-secondary))) padding-box,
+              conic-gradient(from var(--angle), rgb(var(--accent-primary)), rgb(var(--accent-secondary)), rgb(var(--accent-primary))) border-box;
   animation: rotate-border 4s linear infinite;
 }
 
@@ -460,16 +460,16 @@ body {
 /* Auto theme detection */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --bg-primary: #F5F5F7;
-    --bg-secondary: #FFFFFF;
-    --bg-tertiary: #E8E8ED;
-    --text-primary: #1A1A2E;
-    --text-secondary: #4A4A5A;
-    --text-muted: #8A8A9A;
-    --accent-primary: #7C3AED;
-    --accent-secondary: #DB2777;
-    --border-primary: #D1D5DB;
-    --border-secondary: #B0B0C0;
+    --bg-primary: 245 245 247;
+    --bg-secondary: 255 255 255;
+    --bg-tertiary: 232 232 237;
+    --text-primary: 26 26 46;
+    --text-secondary: 74 74 90;
+    --text-muted: 138 138 154;
+    --accent-primary: 124 58 237;
+    --accent-secondary: 219 39 119;
+    --border-primary: 209 213 219;
+    --border-secondary: 176 176 192;
     --scrollbar-track: #E8E8ED;
     --glass-bg: rgba(255, 255, 255, 0.85);
   }
