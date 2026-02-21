@@ -51,6 +51,7 @@ import {
   X,
   Crown,
   ShieldAlert,
+  Layers,
 } from 'lucide-react';
 import { useTranslation } from '../store/languageStore';
 import { useSubscriptionStore } from '../store/subscriptionStore';
@@ -956,6 +957,7 @@ const AcademicWorksPage = () => {
 
   const [showPlagiarismPanel, setShowPlagiarismPanel] = useState(false);
   const [plagiarismTab, setPlagiarismTab] = useState<'check' | 'detect'>('check');
+  const [showMobileSections, setShowMobileSections] = useState(false);
   
   // Ретрай
   const [retryCount, setRetryCount] = useState(0);
@@ -1823,14 +1825,23 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
   if (step === 'editor' && document && selectedType) {
     return (
       <div className="h-screen bg-bg-primary flex overflow-hidden">
-        {/* Sidebar - Sources */}
+        {/* Sidebar - Sources — full-screen overlay on mobile, side panel on desktop */}
         <AnimatePresence>
           {showSourcePanel && (
+            <>
+            {/* Mobile backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSourcePanel(false)}
+              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            />
             <motion.aside
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              className="bg-bg-secondary border-r border-border-primary flex flex-col overflow-hidden"
+              className="fixed inset-y-0 left-0 z-50 md:relative md:z-auto bg-bg-secondary border-r border-border-primary flex flex-col overflow-hidden w-[85vw] max-w-[320px] md:w-auto md:max-w-none"
             >
               <div className="p-4 border-b border-border-primary">
                 <div className="flex items-center justify-between mb-4">
@@ -1941,13 +1952,14 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 </select>
               </div>
             </motion.aside>
+          </>
           )}
         </AnimatePresence>
 
         {/* Main editor */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Toolbar */}
-          <header className="flex-shrink-0 px-6 py-2.5 border-b border-border-primary bg-bg-primary/90 backdrop-blur-sm flex items-center justify-between">
+          <header className="flex-shrink-0 px-3 md:px-6 py-2 md:py-2.5 border-b border-border-primary bg-bg-primary/90 backdrop-blur-sm flex items-center justify-between gap-2 overflow-x-auto">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => { setStep('select'); setDocument(null); }}
@@ -2051,8 +2063,22 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
 
           {/* Content */}
           <div className="flex-1 overflow-hidden flex">
-            {/* Sections sidebar */}
-            <div className="w-52 bg-bg-secondary/30 border-r border-border-primary flex flex-col overflow-hidden">
+            {/* Sections sidebar — hidden on mobile, overlay when toggled */}
+            {/* Mobile sections toggle button */}
+            <button
+              onClick={() => setShowMobileSections(!showMobileSections)}
+              className="md:hidden fixed bottom-4 left-4 z-30 p-3 rounded-full bg-purple-500 text-white shadow-lg shadow-purple-500/30 hover:bg-purple-600 transition-colors"
+            >
+              <Layers size={20} />
+            </button>
+            {/* Mobile sections backdrop */}
+            {showMobileSections && (
+              <div
+                onClick={() => setShowMobileSections(false)}
+                className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              />
+            )}
+            <div className={`fixed inset-y-0 left-0 z-50 w-64 md:relative md:z-auto md:w-52 bg-bg-secondary/95 md:bg-bg-secondary/30 border-r border-border-primary flex flex-col overflow-hidden transition-transform duration-200 ${showMobileSections ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
               <div className="p-4 pb-2">
                 <h3 className="text-[11px] text-text-muted/50 uppercase tracking-widest font-semibold mb-1">
                   {language === 'ru' ? 'Разделы' : 'Sections'}
@@ -2112,8 +2138,8 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
             </div>
 
             {/* Editor + plagiarism panel area */}
-            <div className="flex-1 flex overflow-hidden">
-            <div className="flex-1 p-8 overflow-y-auto">
+            <div className="flex-1 flex overflow-hidden min-w-0">
+            <div className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
               <div className="max-w-3xl mx-auto">
                 <div className="mb-8">
                   <h1 className="text-2xl font-bold text-text-primary mb-1">{document.title}</h1>
@@ -2216,11 +2242,20 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
             {/* Plagiarism/AI Detection Panel */}
             <AnimatePresence>
               {showPlagiarismPanel && (
+                <>
+                {/* Mobile backdrop for plagiarism panel */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowPlagiarismPanel(false)}
+                  className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                />
                 <motion.div
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: 380, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
-                  className="border-l border-border-primary bg-bg-secondary/50 overflow-hidden flex flex-col"
+                  className="fixed inset-y-0 right-0 z-50 w-[90vw] max-w-[380px] md:relative md:z-auto md:w-auto md:max-w-none border-l border-border-primary bg-bg-secondary/95 md:bg-bg-secondary/50 overflow-hidden flex flex-col"
                 >
                   <div className="p-4 border-b border-border-primary flex-shrink-0">
                     <div className="flex items-center justify-between mb-3">
@@ -2269,6 +2304,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     )}
                   </div>
                 </motion.div>
+                </>
               )}
             </AnimatePresence>
             </div>

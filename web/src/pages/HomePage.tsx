@@ -295,7 +295,7 @@ const HomePage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8"
+              className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8"
             >
               {stats.map((stat, index) => (
                 <div key={index} className="text-center">
@@ -365,7 +365,7 @@ const HomePage = () => {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
+          <div className="grid md:grid-cols-3 gap-4 md:gap-8 mb-12">
             {[
               { step: '01', title: 'Выберите тип работы', desc: 'Диссертация, курсовая, реферат или презентация', icon: FileText },
               { step: '02', title: 'Опишите тему', desc: 'AI задаст уточняющие вопросы и предложит структуру', icon: MessageSquare },
@@ -710,7 +710,7 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-border-primary bg-bg-secondary/30">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-4 md:gap-8 mb-8">
             {/* Brand */}
             <div>
               <div className="flex items-center gap-3 mb-4">

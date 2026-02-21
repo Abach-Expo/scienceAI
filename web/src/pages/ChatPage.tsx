@@ -32,6 +32,7 @@ import {
   MessageSquare,
   PlusCircle,
   History,
+  Menu,
   Search,
   Filter,
   AlertTriangle,
@@ -1034,7 +1035,7 @@ const ChatPage = () => {
                 onClick={() => setShowSidebar(!showSidebar)}
                 className="p-2 hover:bg-bg-secondary rounded-xl transition-colors text-text-muted hover:text-text-primary"
               >
-                <History size={18} />
+                <Menu size={18} />
               </button>
               
               {editingTitle ? (

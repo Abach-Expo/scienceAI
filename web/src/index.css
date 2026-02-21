@@ -262,8 +262,14 @@ body {
 /* ==================== CARDS ==================== */
 
 .card {
-  @apply rounded-2xl p-6 transition-all duration-300;
+  @apply rounded-2xl p-4 transition-all duration-300;
   @apply bg-bg-secondary border border-border-primary;
+}
+
+@media (min-width: 768px) {
+  .card {
+    @apply p-6;
+  }
 }
 
 .card:hover {
@@ -395,9 +401,15 @@ body {
 
 /* Card with animated border on hover */
 .card-animated {
-  @apply rounded-2xl p-6 transition-all duration-500;
+  @apply rounded-2xl p-4 transition-all duration-500;
   @apply bg-bg-secondary border border-border-primary;
   background-size: 200% 200%;
+}
+
+@media (min-width: 768px) {
+  .card-animated {
+    @apply p-6;
+  }
 }
 
 .card-animated:hover {

@@ -3789,28 +3789,28 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowPlagiarismPanel(!showPlagiarismPanel)}
-            className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${
+            className={`px-3 md:px-4 py-2 rounded-xl font-medium flex items-center gap-2 text-sm ${
               showPlagiarismPanel 
                 ? 'bg-cyan-500 text-white' 
                 : 'bg-bg-tertiary text-text-secondary hover:text-text-primary border border-border-primary'
             }`}
           >
             <Search size={18} />
-            Антиплагиат
+            <span className="hidden sm:inline">Антиплагиат</span>
           </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowAIPanel(!showAIPanel)}
-            className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${
+            className={`px-3 md:px-4 py-2 rounded-xl font-medium flex items-center gap-2 text-sm ${
               showAIPanel 
                 ? 'bg-purple-500 text-white' 
                 : 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
             }`}
           >
             <Brain size={18} />
-            AI Помощник
+            <span className="hidden sm:inline">AI Помощник</span>
           </motion.button>
           
           <button 
@@ -3842,7 +3842,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
 
         {/* Editor */}
         <div className="flex-1 flex">
-          <div className="flex-1 overflow-y-auto p-8">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8">
             {selectedChapter === 'abstract' ? (
               <div className="max-w-3xl mx-auto">
                 <h2 className="text-2xl font-bold text-text-primary mb-4">Аннотация</h2>
@@ -3937,13 +3937,22 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
           {/* Plagiarism & Anti-AI Detection Panel */}
           <AnimatePresence>
             {showPlagiarismPanel && (
+              <>
+              {/* Mobile backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowPlagiarismPanel(false)}
+                className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              />
               <motion.aside
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: 420, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
-                className="border-l border-border-primary bg-bg-secondary/50 overflow-hidden flex flex-col"
+                className="fixed inset-y-0 right-0 z-50 w-[90vw] max-w-[420px] md:relative md:z-auto md:w-auto md:max-w-none border-l border-border-primary bg-bg-secondary/95 md:bg-bg-secondary/50 overflow-hidden flex flex-col"
               >
-                <div className="w-[420px] flex flex-col h-full">
+                <div className="w-full md:w-[420px] flex flex-col h-full">
                   {/* Header */}
                   <div className="p-4 border-b border-border-primary">
                     <h3 className="font-semibold text-text-primary flex items-center gap-2">
@@ -4049,20 +4058,30 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   </div>
                 </div>
               </motion.aside>
+              </>
             )}
           </AnimatePresence>
 
           {/* AI Panel */}
           <AnimatePresence>
             {showAIPanel && (
+              <>
+              {/* Mobile backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowAIPanel(false)}
+                className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              />
               <motion.aside
                 data-tour="ai-panel"
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: 400, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
-                className="border-l border-border-primary bg-bg-secondary/50 overflow-hidden flex flex-col"
+                className="fixed inset-y-0 right-0 z-50 w-[90vw] max-w-[400px] md:relative md:z-auto md:w-auto md:max-w-none border-l border-border-primary bg-bg-secondary/95 md:bg-bg-secondary/50 overflow-hidden flex flex-col"
               >
-                <div className="w-[400px] flex flex-col h-full">
+                <div className="w-full md:w-[400px] flex flex-col h-full">
                   {/* Header */}
                   <div className="p-4 border-b border-border-primary">
                     <h3 className="font-semibold text-text-primary flex items-center gap-2">
@@ -4293,6 +4312,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   </div>
                 </div>
               </motion.aside>
+              </>
             )}
           </AnimatePresence>
         </div>

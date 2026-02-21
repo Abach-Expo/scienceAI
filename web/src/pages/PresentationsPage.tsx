@@ -82,6 +82,7 @@ import {
   Lightbulb,
   Quote,
   BarChart,
+  Menu,
 } from 'lucide-react';
 
 // ==================== ТЕМЫ ПРЕЗЕНТАЦИЙ (20+ ТЕМАТИЧЕСКИХ ТЕМ) ====================
@@ -1216,6 +1217,7 @@ export function PresentationsPage() {
   const [aiEditCommand, setAiEditCommand] = useState('');
   const [isAiEditing, setIsAiEditing] = useState(false);
   const [showAiEditor, setShowAiEditor] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   
   // Шаблоны
   const [showTemplates, setShowTemplates] = useState(false);
@@ -6205,7 +6207,7 @@ Layout: ${slide.layout}`
             {/* Навигация */}
             <div className="mt-4 flex items-center justify-between">
               {/* Миниатюры слайдов */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 max-w-[500px]">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 max-w-full sm:max-w-[500px]">
                 {currentPresentation.slides.slice(
                   Math.max(0, currentSlideIndex - 2),
                   Math.min(currentPresentation.slides.length, currentSlideIndex + 4)
@@ -6278,9 +6280,9 @@ Layout: ${slide.layout}`
           </div>
           
           {/* Правая панель - информация */}
-          <div className="w-[420px] bg-bg-tertiary p-6 flex flex-col">
+          <div className="w-full md:w-[420px] bg-bg-tertiary p-4 md:p-6 flex flex-col overflow-y-auto">
             {/* Таймеры */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
               <div className="text-center p-3 bg-bg-tertiary/50 rounded-xl">
                 <div className="text-3xl font-mono font-bold text-text-primary">
                   {formatTime(presentationTimer)}
@@ -6385,7 +6387,7 @@ Layout: ${slide.layout}`
             {/* Горячие клавиши (улучшенные) */}
             <div className="mt-4 p-3 bg-bg-tertiary/30 rounded-xl">
               <div className="text-xs text-text-secondary mb-2 font-medium">⌨️ Горячие клавиши</div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-text-muted">← →</span>
                   <span className="text-text-secondary">навигация</span>
@@ -6497,8 +6499,26 @@ Layout: ${slide.layout}`
   
   const renderChatInterface = () => (
     <div className="h-full flex bg-gradient-to-br from-background-primary via-background-secondary to-background-primary">
+      {/* Mobile sidebar toggle */}
+      <button
+        onClick={() => setShowMobileSidebar(true)}
+        className="fixed bottom-4 left-4 z-30 p-3 rounded-full bg-fuchsia-500 text-white shadow-lg md:hidden"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile sidebar backdrop */}
+      {showMobileSidebar && (
+        <div
+          onClick={() => setShowMobileSidebar(false)}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        />
+      )}
+
       {/* Sidebar с историей презентаций */}
-      <aside className="w-72 border-r border-border-primary bg-background-secondary/50 flex flex-col">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform transition-transform duration-300 md:static md:translate-x-0 md:z-auto ${
+        showMobileSidebar ? 'translate-x-0' : '-translate-x-full'
+      } border-r border-border-primary bg-background-secondary/95 md:bg-background-secondary/50 flex flex-col`}>
         <div className="p-4 border-b border-border-primary">
           <h3 className="font-semibold text-text-primary flex items-center gap-2">
             <Layers size={18} className="text-accent-primary" />
@@ -6654,7 +6674,7 @@ Layout: ${slide.layout}`
               <Sparkles size={12} className="text-accent-primary" />
               Примеры запросов для вдохновения:
             </p>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
               {[
                 { emoji: '🧬', text: 'ДНК и генетика', full: 'Презентация о ДНК и генетике на 8 слайдов с научными иллюстрациями' },
                 { emoji: '🚀', text: 'Стартап питч', full: 'Питч для инвесторов EdTech стартапа с данными о рынке' },
@@ -6720,7 +6740,7 @@ Layout: ${slide.layout}`
           </div>
           
           {/* Быстрые настройки */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-text-muted">
+          <div className="flex items-center gap-4 mt-3 text-xs text-text-muted flex-wrap">
             <select
               value={slideCount}
               onChange={(e) => setSlideCount(Number(e.target.value))}
@@ -6883,8 +6903,26 @@ Layout: ${slide.layout}`
   
   const renderWorkspaceInterface = () => (
     <div className="h-full flex bg-background-primary">
+      {/* Mobile workspace toggle */}
+      <button
+        onClick={() => setShowMobileSidebar(true)}
+        className="fixed bottom-4 left-4 z-30 p-3 rounded-full bg-fuchsia-500 text-white shadow-lg md:hidden"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile sidebar backdrop */}
+      {showMobileSidebar && (
+        <div
+          onClick={() => setShowMobileSidebar(false)}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        />
+      )}
+
       {/* Левая панель - шаги */}
-      <div className="w-80 border-r border-border-primary bg-background-secondary/50 p-6 overflow-y-auto">
+      <div className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] transform transition-transform duration-300 md:static md:translate-x-0 md:z-auto ${
+        showMobileSidebar ? 'translate-x-0' : '-translate-x-full'
+      } border-r border-border-primary bg-background-secondary/95 md:bg-background-secondary/50 p-6 overflow-y-auto`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center">
             <Brain className="text-text-primary" size={20} />
@@ -6979,7 +7017,7 @@ Layout: ${slide.layout}`
       </div>
       
       {/* Правая панель - превью */}
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
           {/* Запрос пользователя */}
           <div className="glass rounded-2xl p-6 border border-border-primary mb-6">
@@ -6995,7 +7033,7 @@ Layout: ${slide.layout}`
                 Превью презентации
               </h3>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {currentPresentation.slides.slice(0, 4).map((slide, index) => (
                   <motion.div
                     key={slide.id}
@@ -7296,7 +7334,7 @@ Layout: ${slide.layout}`
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full right-0 mt-2 w-80 z-[100] max-h-[calc(100vh-120px)]"
+                      className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 z-[100] max-h-[calc(100vh-120px)]"
                     >
                       <div className="glass rounded-2xl border border-border-primary shadow-2xl overflow-hidden max-h-[calc(100vh-130px)] flex flex-col">
                         {/* Заголовок */}
