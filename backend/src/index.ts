@@ -14,6 +14,7 @@ import { PrismaClient } from '@prisma/client';
 import { logger } from './utils/logger';
 import { initSentry, sentryErrorHandler, Sentry } from './lib/sentry';
 import { initWebSocket } from './services/websocket.service';
+import { cleanupExpiredTokens } from './utils/tokens';
 
 // Route imports
 import authRoutes from './routes/auth.routes';
@@ -60,6 +61,9 @@ export const prisma = new PrismaClient();
 // Create Express app
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
+
+// Trust proxy (for correct req.ip behind Vercel/nginx/load balancer)
+app.set('trust proxy', 1);
 
 // Initialize Sentry (before other middleware)
 initSentry(app);
@@ -259,6 +263,16 @@ const startServer = async () => {
       logger.info(`📡 WebSocket server ready`);
       logger.info(`📚 Scientific AI Assistant API ready`);
     });
+
+    // Clean up expired refresh tokens every 6 hours
+    setInterval(async () => {
+      try {
+        const count = await cleanupExpiredTokens();
+        if (count > 0) logger.info(`Cleaned up ${count} expired refresh tokens`);
+      } catch (e) {
+        logger.error('Token cleanup error:', e);
+      }
+    }, 6 * 60 * 60 * 1000);
   } catch (error) {
     logger.error('Failed to start server:', error);
     if (!process.env.VERCEL) {

@@ -212,7 +212,7 @@ const SettingsPage = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold text-text-primary">{t('settings.title')}</h1>
-              <p className="text-xs text-text-muted">{language === 'ru' ? 'Конфигурация приложения' : 'App configuration'}</p>
+              <p className="text-xs text-text-muted">{t('settings.appConfiguration')}</p>
             </div>
           </div>
         </div>
@@ -241,10 +241,11 @@ const SettingsPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
+              <label htmlFor="firstName" className="block text-sm font-medium text-text-secondary mb-2">
                 {t('settings.firstName')}
               </label>
               <input
+                id="firstName"
                 type="text"
                 value={profileForm.firstName}
                 onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
@@ -253,10 +254,11 @@ const SettingsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
+              <label htmlFor="lastName" className="block text-sm font-medium text-text-secondary mb-2">
                 {t('settings.lastName')}
               </label>
               <input
+                id="lastName"
                 type="text"
                 value={profileForm.lastName}
                 onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
@@ -268,11 +270,12 @@ const SettingsPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
+              <label htmlFor="organization" className="block text-sm font-medium text-text-secondary mb-2">
                 <Building size={14} className="inline mr-1" />
                 {t('settings.organization')}
               </label>
               <input
+                id="organization"
                 type="text"
                 value={profileForm.organization}
                 onChange={(e) => setProfileForm({ ...profileForm, organization: e.target.value })}
@@ -281,11 +284,12 @@ const SettingsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
+              <label htmlFor="position" className="block text-sm font-medium text-text-secondary mb-2">
                 <Briefcase size={14} className="inline mr-1" />
                 {t('settings.position')}
               </label>
               <input
+                id="position"
                 type="text"
                 value={profileForm.position}
                 onChange={(e) => setProfileForm({ ...profileForm, position: e.target.value })}
@@ -297,12 +301,13 @@ const SettingsPage = () => {
 
           {/* Email (readonly) */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-text-secondary mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
               <Mail size={14} className="inline mr-1" />
               {t('settings.email')}
             </label>
             <div className="flex items-center gap-2">
               <input
+                id="email"
                 type="email"
                 value={userData?.email || ''}
                 disabled
@@ -357,8 +362,8 @@ const SettingsPage = () => {
                 <KeyRound size={24} className="text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text-primary">{language === 'ru' ? 'Изменить пароль' : 'Change Password'}</h2>
-                <p className="text-sm text-text-muted">{language === 'ru' ? 'Обновите пароль для вашего аккаунта' : 'Update your account password'}</p>
+                <h2 className="text-xl font-bold text-text-primary">{t('settings.changePassword')}</h2>
+                <p className="text-sm text-text-muted">{t('settings.changePasswordDesc')}</p>
               </div>
             </div>
 
@@ -371,18 +376,19 @@ const SettingsPage = () => {
             {passwordSuccess && (
               <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
                 <Check size={16} />
-                {language === 'ru' ? 'Пароль успешно изменён!' : 'Password changed successfully!'}
+                {t('settings.passwordChanged')}
               </div>
             )}
 
             <div className="space-y-3 mb-4">
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  {language === 'ru' ? 'Текущий пароль' : 'Current Password'}
+                <label htmlFor="current-password" className="block text-sm font-medium text-text-secondary mb-1.5">
+                  {t('settings.currentPassword')}
                 </label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
                   <input
+                    id="current-password"
                     type={showPasswords ? 'text' : 'password'}
                     value={passwordForm.current}
                     onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
@@ -399,31 +405,33 @@ const SettingsPage = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  {language === 'ru' ? 'Новый пароль' : 'New Password'}
+                <label htmlFor="new-password" className="block text-sm font-medium text-text-secondary mb-1.5">
+                  {t('settings.newPassword')}
                 </label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
                   <input
+                    id="new-password"
                     type={showPasswords ? 'text' : 'password'}
                     value={passwordForm.newPass}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPass: e.target.value })}
-                    placeholder={language === 'ru' ? 'Минимум 6 символов' : 'At least 6 characters'}
+                    placeholder={t('auth.passwordPlaceholder')}
                     className="w-full pl-12 pr-4 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  {language === 'ru' ? 'Подтвердите пароль' : 'Confirm Password'}
+                <label htmlFor="confirm-password" className="block text-sm font-medium text-text-secondary mb-1.5">
+                  {t('auth.confirmPassword')}
                 </label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
                   <input
+                    id="confirm-password"
                     type={showPasswords ? 'text' : 'password'}
                     value={passwordForm.confirm}
                     onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
-                    placeholder={language === 'ru' ? 'Повторите пароль' : 'Repeat password'}
+                    placeholder={t('settings.repeatPasswordPlaceholder')}
                     className="w-full pl-12 pr-4 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
                   />
                 </div>
@@ -438,11 +446,11 @@ const SettingsPage = () => {
                 setPasswordError('');
                 setPasswordSuccess(false);
                 if (passwordForm.newPass.length < 6) {
-                  setPasswordError(language === 'ru' ? 'Минимум 6 символов' : 'At least 6 characters');
+                  setPasswordError(t('auth.validationPasswordShort'));
                   return;
                 }
                 if (passwordForm.newPass !== passwordForm.confirm) {
-                  setPasswordError(language === 'ru' ? 'Пароли не совпадают' : 'Passwords do not match');
+                  setPasswordError(t('auth.validationPasswordsMismatch'));
                   return;
                 }
                 setPasswordSaving(true);
@@ -461,7 +469,7 @@ const SettingsPage = () => {
                   setPasswordForm({ current: '', newPass: '', confirm: '' });
                   setTimeout(() => setPasswordSuccess(false), 5000);
                 } catch (err: unknown) {
-                  const message = err instanceof Error ? err.message : (language === 'ru' ? 'Ошибка смены пароля' : 'Password change error');
+                  const message = err instanceof Error ? err.message : t('settings.passwordChangeError');
                   setPasswordError(message);
                 } finally {
                   setPasswordSaving(false);
@@ -474,7 +482,7 @@ const SettingsPage = () => {
               ) : (
                 <KeyRound size={18} />
               )}
-              {language === 'ru' ? 'Изменить пароль' : 'Change Password'}
+              {t('settings.changePassword')}
             </motion.button>
           </motion.div>
         )}
@@ -754,7 +762,7 @@ const SettingsPage = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-text-primary">{t('settings.language')}</h2>
-              <p className="text-sm text-text-muted">{language === 'ru' ? 'Язык интерфейса приложения' : 'Interface language'}</p>
+              <p className="text-sm text-text-muted">{t('settings.languageDesc')}</p>
             </div>
           </div>
 
@@ -782,7 +790,7 @@ const SettingsPage = () => {
                   {language === lang.code && (
                     <span className="text-xs text-accent-primary flex items-center gap-1">
                       <Check size={12} />
-                      {t('common.selected') || (language === 'ru' ? 'Выбран' : 'Selected')}
+                      {t('common.selected')}
                     </span>
                   )}
                 </div>
@@ -810,9 +818,9 @@ const SettingsPage = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
-              { id: 'dark', name: language === 'ru' ? 'Тёмная' : 'Dark', colors: ['#0A0A0F', '#8B5CF6'] },
-              { id: 'light', name: language === 'ru' ? 'Светлая' : 'Light', colors: ['#FFFFFF', '#8B5CF6'] },
-              { id: 'midnight', name: language === 'ru' ? 'Полночь' : 'Midnight', colors: ['#0D1117', '#58A6FF'] },
+              { id: 'dark', name: t('settings.darkTheme'), colors: ['#0A0A0F', '#8B5CF6'] },
+              { id: 'light', name: t('settings.lightTheme'), colors: ['#FFFFFF', '#8B5CF6'] },
+              { id: 'midnight', name: t('settings.midnightTheme'), colors: ['#0D1117', '#58A6FF'] },
             ].map((themeItem) => (
               <button
                 key={themeItem.id}
@@ -862,7 +870,7 @@ const SettingsPage = () => {
           <div className="flex items-center justify-between p-4 rounded-xl bg-bg-secondary border border-border-primary">
             <div>
               <p className="text-text-primary font-medium">{notifications ? t('settings.enabled') : t('settings.disabled')}</p>
-              <p className="text-sm text-text-muted">{language === 'ru' ? 'Получать уведомления о завершении задач' : 'Get notifications when tasks complete'}</p>
+              <p className="text-sm text-text-muted">{t('settings.notificationsToggle')}</p>
             </div>
             <button
               onClick={() => setNotifications(!notifications)}
@@ -969,7 +977,7 @@ const SettingsPage = () => {
         onConfirm={confirmClearData}
         title={t('settings.confirmClearTitle')}
         message={t('settings.confirmClearMessage')}
-        confirmText={language === 'ru' ? 'Удалить всё' : 'Delete All'}
+        confirmText={t('settings.deleteAll')}
         cancelText={t('common.cancel')}
         type="danger"
       />
@@ -982,28 +990,26 @@ const SettingsPage = () => {
             subscription.setPlan(upgradeModal.planId);
             setSuccessModal({
               open: true,
-              title: language === 'ru' ? 'План активирован! 🎉' : 'Plan Activated! 🎉',
-              message: language === 'ru' 
-                ? `Вы успешно перешли на план "${upgradeModal.plan?.name}". Все функции уже доступны.`
-                : `You successfully upgraded to "${upgradeModal.plan?.name}". All features are now available.`
+              title: t('settings.planActivated'),
+              message: t('settings.planActivatedMessage').replace('{plan}', upgradeModal.plan?.name || '')
             });
           }
         }}
-        title={language === 'ru' ? `Перейти на ${upgradeModal.plan?.name}?` : `Upgrade to ${upgradeModal.plan?.name}?`}
+        title={`${t('settings.upgradeTo')} ${upgradeModal.plan?.name}?`}
         message={
           <div className="space-y-2">
-            <p>{language === 'ru' ? 'Вы получите доступ к:' : 'You will get access to:'}</p>
+            <p>{t('settings.youWillGetAccess')}</p>
             <ul className="list-disc list-inside text-text-secondary space-y-1">
-              <li>{language === 'ru' ? 'Расширенные лимиты презентаций' : 'Extended presentation limits'}</li>
-              <li>{language === 'ru' ? 'Премиум шаблоны' : 'Premium templates'}</li>
-              <li>{language === 'ru' ? 'Приоритетная генерация' : 'Priority generation'}</li>
+              <li>{t('settings.extendedLimits')}</li>
+              <li>{t('settings.premiumTemplates')}</li>
+              <li>{t('settings.priorityGeneration')}</li>
             </ul>
             <p className="text-lg font-bold text-purple-400 mt-3">
-              ${upgradeModal.plan?.price}/{language === 'ru' ? 'месяц' : 'month'}
+              ${upgradeModal.plan?.price}/{t('settings.perMonth')}
             </p>
           </div>
         }
-        confirmText={language === 'ru' ? 'Оформить подписку' : 'Subscribe Now'}
+        confirmText={t('settings.subscribeNow')}
         cancelText={t('common.cancel')}
         type="info"
       />
@@ -1018,15 +1024,11 @@ const SettingsPage = () => {
           setSuccessModal({
             open: true,
             title: paymentModal.isRenewal 
-              ? (language === 'ru' ? 'Подписка обновлена! 🔄' : 'Subscription Renewed! 🔄')
-              : (language === 'ru' ? 'Подписка активирована! 🎉' : 'Subscription Activated! 🎉'),
+              ? t('settings.subscriptionRenewed')
+              : t('settings.subscriptionActivated'),
             message: paymentModal.isRenewal
-              ? (language === 'ru' 
-                  ? 'Все лимиты сброшены. Теперь у вас полный доступ на новый период!'
-                  : 'All limits reset. You now have full access for a new period!')
-              : (language === 'ru' 
-                  ? `Вы успешно оформили подписку "${SUBSCRIPTION_PLANS[paymentModal.planId].name}". Все функции уже доступны.`
-                  : `You successfully subscribed to "${SUBSCRIPTION_PLANS[paymentModal.planId].name}". All features are now available.`)
+              ? t('settings.limitsReset')
+              : t('settings.subscriptionSuccessMessage').replace('{plan}', SUBSCRIPTION_PLANS[paymentModal.planId].name)
           });
         }}
       />
@@ -1036,7 +1038,7 @@ const SettingsPage = () => {
         onClose={() => setSuccessModal({ open: false, title: '', message: '' })}
         title={successModal.title}
         message={successModal.message}
-        buttonText={language === 'ru' ? 'Отлично!' : 'Great!'}
+        buttonText={t('settings.great')}
         type="success"
       />
     </div>

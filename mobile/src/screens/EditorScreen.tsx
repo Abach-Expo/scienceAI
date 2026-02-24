@@ -14,9 +14,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { theme } from '../../theme';
-import { Button, Card, LoadingOverlay, ModalSheet } from '../../components/ui';
-import { useProjectStore } from '../../store/projectStore';
+import { theme } from '../theme';
+import { Button, Card, LoadingOverlay, ModalSheet } from '../components/ui';
+import { useProjectStore } from '../store/projectStore';
 
 export const EditorScreen: React.FC = () => {
   const route = useRoute<any>();

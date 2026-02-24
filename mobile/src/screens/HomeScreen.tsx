@@ -12,15 +12,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown, SlideInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { theme } from '../../theme';
-import { Button, Card, ProjectCard, Input, AnalyticsSummary, ModalSheet } from '../../components/ui';
-import { useProjectStore } from '../../store/projectStore';
-import { useAuthStore } from '../../store/authStore';
+import { theme } from '../theme';
+import { Button, Card, ProjectCard, Input, AnalyticsSummary, ModalSheet } from '../components/ui';
+import { useProjectStore } from '../store/projectStore';
+import { useAuthStore } from '../store/authStore';
+import { useLanguageStore } from '../i18n/translations';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuthStore();
   const { projects, isLoading, fetchProjects, createProject } = useProjectStore();
+  const { t } = useLanguageStore();
   
   const [refreshing, setRefreshing] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
@@ -83,7 +85,7 @@ export const HomeScreen: React.FC = () => {
         {/* Header */}
         <Animated.View entering={FadeIn.duration(500)} style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Welcome back,</Text>
+            <Text style={styles.greeting}>{t.welcomeBack}</Text>
             <Text style={styles.userName}>{user?.name || 'Researcher'}</Text>
           </View>
           <TouchableOpacity
@@ -103,12 +105,12 @@ export const HomeScreen: React.FC = () => {
             style={styles.quickActionCard}
           >
             <View style={styles.quickActionContent}>
-              <Text style={styles.quickActionTitle}>Start Your Research</Text>
+              <Text style={styles.quickActionTitle}>{t.startResearch}</Text>
               <Text style={styles.quickActionSubtitle}>
-                Enter your thesis topic and let AI create a structured plan
+                {t.startResearchDesc}
               </Text>
               <Button
-                title="New Project"
+                title={t.newProject}
                 variant="secondary"
                 onPress={() => setShowNewProjectModal(true)}
                 style={styles.quickActionButton}
@@ -129,21 +131,21 @@ export const HomeScreen: React.FC = () => {
         {/* Recent Projects */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Projects</Text>
+            <Text style={styles.sectionTitle}>{t.recentProjects}</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Projects')}>
-              <Text style={styles.seeAll}>See All</Text>
+              <Text style={styles.seeAll}>{t.seeAll}</Text>
             </TouchableOpacity>
           </View>
 
           {projects.length === 0 ? (
             <Card variant="glass" style={styles.emptyState}>
               <Ionicons name="document-text-outline" size={48} color={theme.colors.text.muted} />
-              <Text style={styles.emptyTitle}>No projects yet</Text>
+              <Text style={styles.emptyTitle}>{t.noProjectsYet}</Text>
               <Text style={styles.emptySubtitle}>
-                Create your first research project to get started
+                {t.createFirst}
               </Text>
               <Button
-                title="Create Project"
+                title={t.create}
                 variant="gradient"
                 onPress={() => setShowNewProjectModal(true)}
                 style={{ marginTop: theme.spacing.md }}
@@ -166,7 +168,7 @@ export const HomeScreen: React.FC = () => {
 
         {/* Quick Actions Grid */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitle}>{t.quickActions}</Text>
           <View style={styles.actionsGrid}>
             <TouchableOpacity
               style={styles.actionItem}
@@ -175,37 +177,37 @@ export const HomeScreen: React.FC = () => {
               <View style={[styles.actionIcon, { backgroundColor: `${theme.colors.info}20` }]}>
                 <Ionicons name="search" size={24} color={theme.colors.info} />
               </View>
-              <Text style={styles.actionLabel}>Search Articles</Text>
+              <Text style={styles.actionLabel}>{t.searchArticles}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => navigation.navigate('Drafts')}
+              onPress={() => navigation.navigate('Projects')}
             >
               <View style={[styles.actionIcon, { backgroundColor: `${theme.colors.success}20` }]}>
                 <Ionicons name="document-text" size={24} color={theme.colors.success} />
               </View>
-              <Text style={styles.actionLabel}>My Drafts</Text>
+              <Text style={styles.actionLabel}>{t.myDrafts}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => navigation.navigate('Analytics')}
+              onPress={() => navigation.navigate('Profile')}
             >
               <View style={[styles.actionIcon, { backgroundColor: `${theme.colors.warning}20` }]}>
                 <Ionicons name="analytics" size={24} color={theme.colors.warning} />
               </View>
-              <Text style={styles.actionLabel}>Analytics</Text>
+              <Text style={styles.actionLabel}>{t.analytics}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionItem}
-              onPress={() => navigation.navigate('Export')}
+              onPress={() => navigation.navigate('Projects')}
             >
               <View style={[styles.actionIcon, { backgroundColor: `${theme.colors.accent.primary}20` }]}>
                 <Ionicons name="download" size={24} color={theme.colors.accent.primary} />
               </View>
-              <Text style={styles.actionLabel}>Export</Text>
+              <Text style={styles.actionLabel}>{t.export}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -218,14 +220,14 @@ export const HomeScreen: React.FC = () => {
         title="New Research Project"
       >
         <Input
-          label="Project Title"
-          placeholder="Enter your thesis or dissertation topic..."
+          label={t.projectTitle}
+          placeholder={t.startResearchDesc}
           value={newProjectTitle}
           onChangeText={setNewProjectTitle}
           multiline
         />
 
-        <Text style={styles.typeLabel}>Project Type</Text>
+        <Text style={styles.typeLabel}>{t.projectType}</Text>
         <View style={styles.typeOptions}>
           {projectTypes.map((type) => (
             <TouchableOpacity
@@ -249,7 +251,7 @@ export const HomeScreen: React.FC = () => {
         </View>
 
         <Button
-          title="Create & Generate Outline"
+          title={t.createAndGenerate}
           variant="gradient"
           onPress={handleCreateProject}
           disabled={!newProjectTitle.trim()}

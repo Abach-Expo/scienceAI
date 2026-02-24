@@ -68,17 +68,14 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
 
     // Connection events
     socket.on('connect', () => {
-      console.log('✅ WebSocket connected');
       set({ isConnected: true });
     });
 
-    socket.on('disconnect', (reason) => {
-      console.log('❌ WebSocket disconnected:', reason);
+    socket.on('disconnect', (_reason) => {
       set({ isConnected: false });
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error.message);
+    socket.on('connect_error', (_error) => {
       set({ isConnected: false });
     });
 

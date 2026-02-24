@@ -18,8 +18,10 @@ import {
 } from 'lucide-react';
 import { useWebSocketStore, useUnreadNotifications, Notification } from '../services/websocket';
 import { useAuthStore } from '../store/authStore';
+import { useTranslation } from '../store/languageStore';
 
 export default function NotificationCenter() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const { 
     notifications, 
@@ -89,7 +91,7 @@ export default function NotificationCenter() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-xl bg-bg-tertiary hover:bg-bg-secondary transition-colors"
-        aria-label="Уведомления"
+        aria-label={t('settings.notifications')}
       >
         <Bell className="w-5 h-5 text-text-secondary" />
         

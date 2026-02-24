@@ -11,9 +11,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { theme } from '../../theme';
-import { Input, Button, Card, LoadingOverlay } from '../../components/ui';
-import { searchService } from '../../services/api';
+import { theme } from '../theme';
+import { Input, Button, Card, LoadingOverlay } from '../components/ui';
+import { searchService } from '../services/api';
 
 interface SearchResult {
   id: string;

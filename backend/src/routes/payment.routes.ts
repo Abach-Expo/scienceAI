@@ -15,6 +15,7 @@ import { body, validationResult } from 'express-validator';
 import { prisma } from '../index';
 import { logger } from '../utils/logger';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { SUBSCRIPTION_LIMITS } from '../middleware/usage.middleware';
 import {
   createLSCheckout,
   getLSSubscription,
@@ -27,21 +28,19 @@ import {
 
 const router = Router();
 
-// ================== PLAN TOKEN MAPPING ==================
+// ================== PLAN LIMIT HELPERS ==================
 
-const PLAN_TOKENS: Record<string, number> = {
-  free: 100,
-  starter: 2000,
-  pro: 5000,
-  premium: 15000,
-};
+type PlanId = keyof typeof SUBSCRIPTION_LIMITS;
 
-const PLAN_AI_LIMITS: Record<string, number> = {
-  free: 5,
-  starter: 40,
-  pro: 100,
-  premium: 999,
-};
+function getTokensLimit(planId: string): number {
+  const plan = SUBSCRIPTION_LIMITS[planId as PlanId];
+  return plan ? plan.tokensLimit : SUBSCRIPTION_LIMITS.starter.tokensLimit;
+}
+
+function getAiGenerationsLimit(planId: string): number {
+  const plan = SUBSCRIPTION_LIMITS[planId as PlanId];
+  return plan ? plan.aiGenerations : SUBSCRIPTION_LIMITS.starter.aiGenerations;
+}
 
 // ================== CREATE CHECKOUT ==================
 
@@ -147,10 +146,10 @@ router.post('/webhook', async (req: Request, res: Response) => {
             subscriptionExpiry: renewsAt || endsAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             lemonSqueezyCustomerId: lsCustomerId || undefined,
             lemonSqueezySubscriptionId: subscriptionId || undefined,
-            tokensLimit: PLAN_TOKENS[planId] || 2000,
+            tokensLimit: getTokensLimit(planId),
             tokensUsed: 0,
             aiGenerationsUsed: 0,
-            aiGenerationsLimit: PLAN_AI_LIMITS[planId] || 40,
+            aiGenerationsLimit: getAiGenerationsLimit(planId),
             currentPeriodStart: new Date(),
             currentPeriodEnd: renewsAt || endsAt,
           },
@@ -178,8 +177,8 @@ router.post('/webhook', async (req: Request, res: Response) => {
             subscriptionStatus: mappedStatus,
             subscriptionExpiry: renewsAt || undefined,
             lemonSqueezySubscriptionId: subscriptionId || undefined,
-            tokensLimit: PLAN_TOKENS[planId] || 2000,
-            aiGenerationsLimit: PLAN_AI_LIMITS[planId] || 40,
+            tokensLimit: getTokensLimit(planId),
+            aiGenerationsLimit: getAiGenerationsLimit(planId),
           },
         });
 
@@ -208,8 +207,8 @@ router.post('/webhook', async (req: Request, res: Response) => {
           data: {
             subscriptionPlan: 'starter',
             subscriptionStatus: 'expired',
-            tokensLimit: PLAN_TOKENS.starter,
-            aiGenerationsLimit: PLAN_AI_LIMITS.starter,
+            tokensLimit: getTokensLimit('starter'),
+            aiGenerationsLimit: getAiGenerationsLimit('starter'),
           },
         });
 

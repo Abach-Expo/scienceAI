@@ -35,10 +35,12 @@ import { AlertModal } from '../components/ConfirmModal';
 import { API_URL } from '../config';
 import { GOOGLE_CLIENT_ID } from '../config';
 import { useAuthStore } from '../store/authStore';
+import { useTranslation } from '../store/languageStore';
 
 // Интерфейс для ответа API
 interface AuthResponse {
   token: string;
+  refreshToken?: string;
   user: {
     id: string;
     email: string;
@@ -51,9 +53,10 @@ interface AuthResponse {
 }
 
 const AuthPage = () => {
-  useDocumentTitle('Вход');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  useDocumentTitle(mode === 'login' ? t('auth.authTitle') : t('auth.registerTitle'));
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -79,7 +82,7 @@ const AuthPage = () => {
 
   // Сохранение данных авторизации
   const saveAuthData = useCallback((data: AuthResponse) => {
-    useAuthStore.getState().login(data.token, data.user);
+    useAuthStore.getState().login(data.token, data.user, data.refreshToken);
   }, []);
 
   // Callback после успешной авторизации через Google
@@ -98,7 +101,7 @@ const AuthPage = () => {
 
       if (!res.ok) {
         const debugInfo = data.debug ? ` [Debug: ${data.debug}]` : '';
-        throw new Error((data.message || data.error || 'Ошибка авторизации через Google') + debugInfo);
+        throw new Error((data.message || data.error || t('auth.googleAuthError')) + debugInfo);
       }
 
       // Сохраняем токен и данные пользователя
@@ -112,7 +115,7 @@ const AuthPage = () => {
       }
     } catch (error: unknown) {
       console.error('Google auth error:', error);
-      const message = error instanceof Error ? error.message : 'Не удалось войти через Google';
+      const message = error instanceof Error ? error.message : t('auth.googleAuthFailed');
       setServerError(message);
     } finally {
       setIsLoading(false);
@@ -180,23 +183,23 @@ const AuthPage = () => {
     const newErrors: Record<string, string> = {};
     
     if (mode === 'register' && !formData.name.trim()) {
-      newErrors.name = 'Введите имя';
+      newErrors.name = t('auth.validationNameRequired');
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Введите email';
+      newErrors.email = t('auth.validationEmailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Некорректный email';
+      newErrors.email = t('auth.validationEmailInvalid');
     }
     
     if (!formData.password) {
-      newErrors.password = 'Введите пароль';
+      newErrors.password = t('auth.validationPasswordRequired');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Минимум 6 символов';
+      newErrors.password = t('auth.validationPasswordShort');
     }
     
     if (mode === 'register' && formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Пароли не совпадают';
+      newErrors.confirmPassword = t('auth.validationPasswordsMismatch');
     }
     
     setErrors(newErrors);
@@ -226,7 +229,7 @@ const AuthPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || 'Ошибка авторизации');
+        throw new Error(data.message || data.error || t('auth.authError'));
       }
 
       // Сохраняем токен и данные пользователя (формат: {success, data: {user, token}})
@@ -235,7 +238,7 @@ const AuthPage = () => {
       navigate('/dashboard');
     } catch (error: unknown) {
       console.error('Auth error:', error);
-      const message = error instanceof Error ? error.message : 'Произошла ошибка. Попробуйте позже.';
+      const message = error instanceof Error ? error.message : t('auth.genericError');
       setServerError(message);
     } finally {
       setIsLoading(false);
@@ -247,7 +250,7 @@ const AuthPage = () => {
     
     if (provider === 'GitHub') {
       // GitHub OAuth - будет доступен позже
-      setServerError('GitHub авторизация будет доступна в следующей версии');
+      setServerError(t('auth.githubComingSoon'));
     }
   };
 
@@ -270,12 +273,12 @@ const AuthPage = () => {
 
           {/* Заголовок */}
           <h1 className="text-3xl font-bold text-text-primary mb-2">
-            {mode === 'login' ? 'Добро пожаловать!' : 'Создать аккаунт'}
+            {mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}
           </h1>
           <p className="text-text-muted mb-8">
             {mode === 'login' 
-              ? 'Войдите, чтобы продолжить работу' 
-              : 'Зарегистрируйтесь для доступа к AI-инструментам'}
+              ? t('auth.loginSubtitle') 
+              : t('auth.registerSubtitle')}
           </p>
 
           {/* Социальные кнопки */}
@@ -283,14 +286,14 @@ const AuthPage = () => {
             {/* Google Sign-In кнопка с оверлеем */}
             <div className="relative w-full">
               {/* Визуальная кнопка (декоративная) */}
-              <div className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 font-medium shadow-sm pointer-events-none">
+              <div className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-white border border-gray-200 text-gray-700 font-medium shadow-sm pointer-events-none" aria-label={t('auth.loginWithGoogle')}>
                 <svg width="20" height="20" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Войти через Google
+                {t('auth.loginWithGoogle')}
               </div>
               {/* Настоящая кнопка Google поверх (невидимая, но кликабельная) */}
               <div
@@ -304,7 +307,7 @@ const AuthPage = () => {
           {/* Разделитель */}
           <div className="flex items-center gap-4 mb-6">
             <div className="flex-1 h-px bg-border-primary" />
-            <span className="text-text-muted text-sm">или</span>
+            <span className="text-text-muted text-sm">{t('auth.or')}</span>
             <div className="flex-1 h-px bg-border-primary" />
           </div>
 
@@ -324,7 +327,7 @@ const AuthPage = () => {
                     onClick={() => setServerError(null)}
                     className="text-red-300 text-xs hover:underline mt-1"
                   >
-                    Закрыть
+                    {t('common.close')}
                   </button>
                 </div>
               </motion.div>
@@ -332,7 +335,7 @@ const AuthPage = () => {
           </AnimatePresence>
 
           {/* Форма */}
-          <form onSubmit={handleSubmit} className="space-y-4" aria-label={mode === 'login' ? 'Форма входа' : 'Форма регистрации'}>
+          <form onSubmit={handleSubmit} className="space-y-4" aria-label={mode === 'login' ? t('auth.loginFormLabel') : t('auth.registerFormLabel')}>
             <AnimatePresence mode="wait">
               {mode === 'register' && (
                 <motion.div
@@ -341,7 +344,7 @@ const AuthPage = () => {
                   exit={{ opacity: 0, height: 0 }}
                 >
                   <label htmlFor="auth-name" className="block text-sm font-medium text-text-secondary mb-2">
-                    Имя
+                    {t('auth.name')}
                   </label>
                   <div className="relative">
                     <User size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -350,7 +353,7 @@ const AuthPage = () => {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Ваше имя"
+                      placeholder={t('auth.namePlaceholder')}
                       className={`w-full pl-12 pr-4 py-3 rounded-xl glass border ${errors.name ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all`}
                     />
                   </div>
@@ -361,7 +364,7 @@ const AuthPage = () => {
 
             <div>
               <label htmlFor="auth-email" className="block text-sm font-medium text-text-secondary mb-2">
-                Email
+                {t('auth.email')}
               </label>
               <div className="relative">
                 <Mail size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -380,7 +383,7 @@ const AuthPage = () => {
 
             <div>
               <label htmlFor="auth-password" className="block text-sm font-medium text-text-secondary mb-2">
-                Пароль
+                {t('auth.password')}
               </label>
               <div className="relative">
                 <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -397,7 +400,7 @@ const AuthPage = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   data-testid="toggle-password"
-                  aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -414,7 +417,7 @@ const AuthPage = () => {
                   exit={{ opacity: 0, height: 0 }}
                 >
                   <label htmlFor="auth-confirm-password" className="block text-sm font-medium text-text-secondary mb-2">
-                    Подтвердите пароль
+                    {t('auth.confirmPassword')}
                   </label>
                   <div className="relative">
                     <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -439,7 +442,7 @@ const AuthPage = () => {
                   onClick={() => setForgotPasswordModal(true)}
                   className="text-sm text-accent-primary hover:underline"
                 >
-                  Забыли пароль?
+                  {t('auth.forgotPassword')}
                 </button>
               </div>
             )}
@@ -456,7 +459,7 @@ const AuthPage = () => {
                 <Loader2 size={20} className="animate-spin" />
               ) : (
                 <>
-                  {mode === 'login' ? 'Войти' : 'Создать аккаунт'}
+                  {mode === 'login' ? t('auth.loginButton') : t('auth.createAccount')}
                   <ArrowRight size={20} />
                 </>
               )}
@@ -465,7 +468,7 @@ const AuthPage = () => {
 
           {/* Переключение режима */}
           <p className="text-center text-text-muted mt-6">
-            {mode === 'login' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}
+            {mode === 'login' ? t('auth.dontHaveAccount') : t('auth.alreadyHaveAccount')}
             <button
               onClick={() => {
                 setMode(mode === 'login' ? 'register' : 'login');
@@ -473,7 +476,7 @@ const AuthPage = () => {
               }}
               className="text-accent-primary hover:underline ml-2"
             >
-              {mode === 'login' ? 'Зарегистрироваться' : 'Войти'}
+              {mode === 'login' ? t('auth.registerButton') : t('auth.loginButton')}
             </button>
           </p>
         </motion.div>
@@ -494,21 +497,21 @@ const AuthPage = () => {
             transition={{ delay: 0.2 }}
           >
             <h2 className="text-4xl font-bold text-text-primary mb-4">
-              AI для студентов
-              <span className="block text-2xl text-text-secondary mt-2">Диссертации, курсовые, презентации</span>
+              {t('auth.heroTitle')}
+              <span className="block text-2xl text-text-secondary mt-2">{t('auth.heroSubtitleLine')}</span>
             </h2>
             <p className="text-text-secondary text-lg mb-8">
-              AI пишет научные работы за минуты. Проходит антиплагиат 94%+
+              {t('auth.heroDescription')}
             </p>
 
             {/* Features */}
             <div className="space-y-4 text-left">
               {[
-                'Диссертация за 15 минут',
-                'Антиплагиат 94%+ гарантия',
-                'Обход AI-детекторов',
-                'Презентации с анимациями',
-                'Курсовые по ГОСТу',
+                t('auth.feature1'),
+                t('auth.feature2'),
+                t('auth.feature3'),
+                t('auth.feature4'),
+                t('auth.feature5'),
               ].map((feature, index) => (
                 <motion.div
                   key={feature}
@@ -558,9 +561,9 @@ const AuthPage = () => {
               {/* Step 1: Enter email */}
               {forgotPasswordStep === 'email' && (
                 <>
-                  <h3 className="text-xl font-bold text-text-primary mb-2">Восстановление пароля</h3>
+                  <h3 className="text-xl font-bold text-text-primary mb-2">{t('auth.passwordRecovery')}</h3>
                   <p className="text-text-muted text-sm mb-4">
-                    Введите email, указанный при регистрации. Мы отправим вам 6-значный код для сброса пароля.
+                    {t('auth.passwordRecoveryDesc')}
                   </p>
                   {resetError && (
                     <div className="mb-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
@@ -588,7 +591,7 @@ const AuthPage = () => {
                       }}
                       className="flex-1 py-3 rounded-xl bg-bg-tertiary hover:bg-bg-secondary text-text-primary font-medium transition-all"
                     >
-                      Отмена
+                      {t('common.cancel')}
                     </button>
                     <button
                       id="btn-send-code"
@@ -613,7 +616,7 @@ const AuthPage = () => {
                       className="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {resetLoading ? <Loader2 size={18} className="animate-spin" /> : null}
-                      Отправить код
+                      {t('auth.sendCode')}
                     </button>
                   </div>
                 </>
@@ -622,9 +625,9 @@ const AuthPage = () => {
               {/* Step 2: Enter code + new password */}
               {forgotPasswordStep === 'code' && (
                 <>
-                  <h3 className="text-xl font-bold text-text-primary mb-2">Введите код</h3>
+                  <h3 className="text-xl font-bold text-text-primary mb-2">{t('auth.enterCode')}</h3>
                   <p className="text-text-muted text-sm mb-4">
-                    Мы отправили 6-значный код на <span className="text-accent-primary">{forgotPasswordEmail}</span>. Введите его ниже и задайте новый пароль.
+                    {t('auth.codeSentTo')} <span className="text-accent-primary">{forgotPasswordEmail}</span>{t('auth.codeSentSuffix')}
                   </p>
                   {resetError && (
                     <div className="mb-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
@@ -635,7 +638,7 @@ const AuthPage = () => {
                   
                   {/* Code input */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-text-secondary mb-2">Код подтверждения</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">{t('auth.confirmationCode')}</label>
                     <input
                       type="text"
                       value={resetCode}
@@ -648,14 +651,14 @@ const AuthPage = () => {
 
                   {/* New password */}
                   <div className="mb-3">
-                    <label className="block text-sm font-medium text-text-secondary mb-2">Новый пароль</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">{t('auth.newPassword')}</label>
                     <div className="relative">
                       <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
                       <input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Минимум 6 символов"
+                        placeholder={t('auth.validationPasswordShort')}
                         className="w-full pl-12 pr-4 py-3 rounded-xl glass border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
                       />
                     </div>
@@ -663,14 +666,14 @@ const AuthPage = () => {
 
                   {/* Confirm password */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-text-secondary mb-2">Подтвердите пароль</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">{t('auth.confirmPassword')}</label>
                     <div className="relative">
                       <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
                       <input
                         type="password"
                         value={newPasswordConfirm}
                         onChange={(e) => setNewPasswordConfirm(e.target.value)}
-                        placeholder="Повторите пароль"
+                        placeholder={t('auth.repeatPassword')}
                         className="w-full pl-12 pr-4 py-3 rounded-xl glass border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
                       />
                     </div>
@@ -687,18 +690,18 @@ const AuthPage = () => {
                       }}
                       className="flex-1 py-3 rounded-xl bg-bg-tertiary hover:bg-bg-secondary text-text-primary font-medium transition-all"
                     >
-                      Назад
+                      {t('common.back')}
                     </button>
                     <button
                       disabled={resetLoading || resetCode.length !== 6 || newPassword.length < 6 || newPassword !== newPasswordConfirm}
                       onClick={async () => {
                         setResetError('');
                         if (newPassword !== newPasswordConfirm) {
-                          setResetError('Пароли не совпадают');
+                          setResetError(t('auth.validationPasswordsMismatch'));
                           return;
                         }
                         if (newPassword.length < 6) {
-                          setResetError('Минимум 6 символов');
+                          setResetError(t('auth.validationPasswordShort'));
                           return;
                         }
                         setResetLoading(true);
@@ -710,11 +713,11 @@ const AuthPage = () => {
                           });
                           const data = await res.json();
                           if (!res.ok) {
-                            throw new Error(data.message || 'Ошибка сброса пароля');
+                            throw new Error(data.message || t('auth.resetPasswordError'));
                           }
                           setForgotPasswordStep('done');
                         } catch (error: unknown) {
-                          const message = error instanceof Error ? error.message : 'Неверный код или срок действия истёк';
+                          const message = error instanceof Error ? error.message : t('auth.invalidCode');
                           setResetError(message);
                         } finally {
                           setResetLoading(false);
@@ -723,7 +726,7 @@ const AuthPage = () => {
                       className="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {resetLoading ? <Loader2 size={18} className="animate-spin" /> : null}
-                      Сбросить пароль
+                      {t('auth.resetPassword')}
                     </button>
                   </div>
 
@@ -741,7 +744,7 @@ const AuthPage = () => {
                     }}
                     className="w-full mt-3 text-sm text-accent-primary hover:underline text-center"
                   >
-                    Отправить код повторно
+                    {t('auth.resendCode')}
                   </button>
                 </>
               )}
@@ -752,9 +755,9 @@ const AuthPage = () => {
                   <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
                     <Check size={32} className="text-green-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-text-primary mb-2">Пароль изменён!</h3>
+                  <h3 className="text-xl font-bold text-text-primary mb-2">{t('auth.passwordChanged')}</h3>
                   <p className="text-text-muted text-sm mb-4">
-                    Ваш пароль успешно сброшен. Теперь вы можете войти с новым паролем.
+                    {t('auth.passwordChangedDesc')}
                   </p>
                   <button
                     onClick={() => {
@@ -767,7 +770,7 @@ const AuthPage = () => {
                     }}
                     className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium transition-all"
                   >
-                    Войти
+                    {t('auth.loginButton')}
                   </button>
                 </div>
               )}

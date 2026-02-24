@@ -7,6 +7,7 @@ import { API_URL } from '../config';
 import { useAuthStore } from '../store/authStore';
 type RequestOptions = Omit<RequestInit, 'headers'> & {
   headers?: Record<string, string>;
+  _isRetry?: boolean; // internal flag to prevent infinite retry loops
 };
 
 /**
@@ -16,6 +17,45 @@ function getAuthHeaders(): Record<string, string> {
   const token = useAuthStore.getState().token;
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
+}
+
+/**
+ * Attempt to refresh the access token using the stored refresh token.
+ * Returns true if refresh succeeded.
+ */
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  // Deduplicate concurrent refresh calls
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = useAuthStore.getState().getRefreshToken();
+      if (!refreshToken) return false;
+
+      const response = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) return false;
+
+      const data = await response.json();
+      if (data.success && data.data?.token && data.data?.refreshToken) {
+        useAuthStore.getState().setTokens(data.data.token, data.data.refreshToken);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 /**
@@ -39,6 +79,16 @@ async function request<T = any>(
   });
 
   if (!response.ok) {
+    // Auto-refresh on 401 (token expired) — retry once
+    if (response.status === 401 && !options._isRetry && useAuthStore.getState().isAuthenticated) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        return request<T>(endpoint, { ...options, _isRetry: true });
+      }
+      // Refresh failed — log the user out
+      useAuthStore.getState().logout();
+    }
+
     const errorData = await response.json().catch(() => ({}));
     const error: Error & { status?: number; data?: unknown } = new Error(errorData.message || errorData.error || `HTTP ${response.status}`);
     error.status = response.status;

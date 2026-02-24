@@ -69,8 +69,9 @@ router.get('/sync', async (req: AuthRequest, res: Response) => {
 });
 
 /**
- * Sync usage stats to database
+ * Sync usage stats to database (server-authoritative)
  * POST /api/usage/sync
+ * Only allows incrementing counters, never setting arbitrary values
  */
 router.post('/sync', async (req: AuthRequest, res: Response) => {
   try {
@@ -79,50 +80,64 @@ router.post('/sync', async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const {
-      presentationsCreated,
-      academicWorksCreated,
-      academicGenerationsToday,
-      chatMessagesToday,
-      dalleImagesUsed,
-      plagiarismChecksUsed,
-      dissertationGenerationsUsed,
-      largeChapterGenerationsUsed,
-      lastResetDate,
-      lastMonthlyReset,
-    } = req.body;
+    // Only allow specific increment operations, not direct value setting
+    const { increments } = req.body;
 
-    // Get current values for logging
-    const currentUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        presentationsCreated: true,
-        academicWorksCreated: true,
-        academicGenerationsToday: true,
-        chatMessagesToday: true,
-      },
-    });
+    if (!increments || typeof increments !== 'object') {
+      return res.status(400).json({ success: false, message: 'Invalid request: expected { increments: { field: amount } }' });
+    }
 
-    logger.info(`[USAGE SYNC] POST for user ${userId}: ` +
-      `presentations ${currentUser?.presentationsCreated || 0} → ${presentationsCreated ?? 0}, ` +
-      `academic ${currentUser?.academicWorksCreated || 0} → ${academicWorksCreated ?? 0}, ` +
-      `chatToday ${currentUser?.chatMessagesToday || 0} → ${chatMessagesToday ?? 0}`
-    );
+    const validFields = [
+      'presentationsCreated',
+      'academicWorksCreated',
+      'academicGenerationsToday',
+      'chatMessagesToday',
+      'dalleImagesUsed',
+      'plagiarismChecksUsed',
+      'dissertationGenerationsUsed',
+      'largeChapterGenerationsUsed',
+    ];
+
+    // Build increment-only update data
+    const updateData: Record<string, { increment: number }> = {};
+    for (const [field, amount] of Object.entries(increments)) {
+      if (!validFields.includes(field)) {
+        continue; // Skip invalid fields silently
+      }
+      const numAmount = Number(amount);
+      if (!Number.isInteger(numAmount) || numAmount < 0 || numAmount > 100) {
+        continue; // Skip invalid amounts (must be 0-100 positive integers)
+      }
+      if (numAmount > 0) {
+        updateData[field] = { increment: numAmount };
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      // Nothing to update, return current state
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          presentationsCreated: true,
+          academicWorksCreated: true,
+          academicGenerationsToday: true,
+          chatMessagesToday: true,
+          dalleImagesUsed: true,
+          plagiarismChecksUsed: true,
+          dissertationGenerationsUsed: true,
+          largeChapterGenerationsUsed: true,
+          usageLastResetDate: true,
+          usageLastMonthlyReset: true,
+        },
+      });
+      return res.json({ success: true, data: user });
+    }
+
+    logger.info(`[USAGE SYNC] POST increments for user ${userId}: ${JSON.stringify(updateData)}`);
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: {
-        presentationsCreated: presentationsCreated ?? undefined,
-        academicWorksCreated: academicWorksCreated ?? undefined,
-        academicGenerationsToday: academicGenerationsToday ?? undefined,
-        chatMessagesToday: chatMessagesToday ?? undefined,
-        dalleImagesUsed: dalleImagesUsed ?? undefined,
-        plagiarismChecksUsed: plagiarismChecksUsed ?? undefined,
-        dissertationGenerationsUsed: dissertationGenerationsUsed ?? undefined,
-        largeChapterGenerationsUsed: largeChapterGenerationsUsed ?? undefined,
-        usageLastResetDate: lastResetDate ? new Date(lastResetDate) : undefined,
-        usageLastMonthlyReset: lastMonthlyReset ? new Date(lastMonthlyReset) : undefined,
-      },
+      data: updateData,
       select: {
         presentationsCreated: true,
         academicWorksCreated: true,

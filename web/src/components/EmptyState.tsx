@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from '../store/languageStore';
 import { 
   MessageSquare, 
   Layers, 
@@ -18,68 +19,53 @@ interface EmptyStateProps {
 }
 
 const EmptyState = ({ type, onAction, searchQuery }: EmptyStateProps) => {
+  const { t } = useTranslation();
   const configs = {
     all: {
       icon: Rocket,
-      title: 'Начните свой путь с Science AI',
-      description: 'Создайте первый проект — чат, презентацию или научную работу. AI поможет вам на каждом этапе!',
-      buttonText: 'Создать первый проект',
+      title: t('emptyState.allTitle'),
+      description: t('emptyState.allDesc'),
+      buttonText: t('emptyState.allButton'),
       gradient: 'from-purple-500 to-pink-600',
-      tips: [
-        'Попробуйте создать презентацию на любую тему',
-        'Спросите AI о помощи с курсовой работой',
-        'Используйте чат для мозгового штурма идей',
-      ],
+      tips: [t('emptyState.allTip1'), t('emptyState.allTip2'), t('emptyState.allTip3')],
     },
     chats: {
       icon: MessageSquare,
-      title: 'Начните диалог с AI',
-      description: 'AI-ассистент готов помочь с исследованиями, написанием текстов и ответами на вопросы.',
-      buttonText: 'Новый чат',
+      title: t('emptyState.chatsTitle'),
+      description: t('emptyState.chatsDesc'),
+      buttonText: t('emptyState.chatsButton'),
       gradient: 'from-blue-500 to-cyan-600',
-      tips: [
-        'Задавайте любые вопросы по учёбе и работе',
-        'Просите объяснить сложные темы простым языком',
-        'Получайте помощь с переводами и редактурой',
-      ],
+      tips: [t('emptyState.chatsTip1'), t('emptyState.chatsTip2'), t('emptyState.chatsTip3')],
     },
     presentations: {
       icon: Layers,
-      title: 'Создайте первую презентацию',
-      description: 'AI сгенерирует структуру, тексты и подберёт изображения. Просто опишите тему!',
-      buttonText: 'Создать презентацию',
+      title: t('emptyState.presentationsTitle'),
+      description: t('emptyState.presentationsDesc'),
+      buttonText: t('emptyState.presentationsButton'),
       gradient: 'from-purple-500 to-violet-600',
-      tips: [
-        'Укажите тему и количество слайдов',
-        'AI подберёт подходящие изображения',
-        'Экспортируйте в PPTX одним кликом',
-      ],
+      tips: [t('emptyState.presentationsTip1'), t('emptyState.presentationsTip2'), t('emptyState.presentationsTip3')],
     },
     dissertations: {
       icon: FileText,
-      title: 'Начните научную работу',
-      description: 'AI поможет со структурой, введением, обзором литературы и выводами по ГОСТ.',
-      buttonText: 'Начать работу',
+      title: t('emptyState.dissertationsTitle'),
+      description: t('emptyState.dissertationsDesc'),
+      buttonText: t('emptyState.dissertationsButton'),
       gradient: 'from-emerald-500 to-teal-600',
-      tips: [
-        'AI знает требования к оформлению по ГОСТ',
-        'Получите помощь с каждой главой',
-        'Генерируйте списки литературы автоматически',
-      ],
+      tips: [t('emptyState.dissertationsTip1'), t('emptyState.dissertationsTip2'), t('emptyState.dissertationsTip3')],
     },
     search: {
       icon: Lightbulb,
-      title: searchQuery ? `Ничего не найдено по запросу "${searchQuery}"` : 'Поиск',
-      description: 'Попробуйте изменить поисковый запрос или проверьте фильтры.',
-      buttonText: 'Очистить поиск',
+      title: searchQuery ? `${t('emptyState.searchTitle')} "${searchQuery}"` : t('emptyState.searchLabel'),
+      description: t('emptyState.searchDesc'),
+      buttonText: t('emptyState.searchButton'),
       gradient: 'from-amber-500 to-orange-600',
       tips: [],
     },
     generic: {
       icon: Sparkles,
-      title: 'Здесь пока пусто',
-      description: 'Создайте что-нибудь новое, чтобы начать работу.',
-      buttonText: 'Создать',
+      title: t('emptyState.genericTitle'),
+      description: t('emptyState.genericDesc'),
+      buttonText: t('emptyState.genericButton'),
       gradient: 'from-purple-500 to-pink-600',
       tips: [],
     },

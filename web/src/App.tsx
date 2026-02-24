@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { AnimatePresence } from 'framer-motion';
 import { useEffect, lazy, Suspense } from 'react';
 import { useAuthStore } from './store/authStore';
+import { getTranslation, Language } from './i18n/translations';
 
 // Retry wrapper for lazy imports — handles network errors gracefully
 const lazyRetry = (importFn: () => Promise<{ default: React.ComponentType }>, retries = 3): Promise<{ default: React.ComponentType }> => {
@@ -46,14 +47,17 @@ import { OnboardingTour, useOnboarding } from './components/Onboarding';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Loading fallback for lazy-loaded pages
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-bg-primary">
-    <div className="text-center">
-      <div className="w-12 h-12 mx-auto mb-4 border-4 border-accent-primary/30 border-t-accent-primary rounded-full animate-spin" />
-      <p className="text-text-muted text-sm">Загрузка...</p>
+const PageLoader = () => {
+  const lang = (localStorage.getItem('app_language') || 'ru') as Language;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-bg-primary">
+      <div className="text-center">
+        <div className="w-12 h-12 mx-auto mb-4 border-4 border-accent-primary/30 border-t-accent-primary rounded-full animate-spin" />
+        <p className="text-text-muted text-sm">{getTranslation(lang, 'common.loading')}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
@@ -70,6 +74,13 @@ const AppContent = () => {
   
   return (
     <>
+      {/* Skip to main content link for keyboard/screen-reader users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-accent-primary focus:text-white focus:outline-none"
+      >
+        Skip to main content
+      </a>
       <main id="main-content" role="main">
         <Suspense fallback={<PageLoader />}>
           <AnimatePresence mode="wait">
@@ -114,10 +125,15 @@ const AppContent = () => {
 };
 
 function App() {
-  // Apply saved theme on mount
+  // Apply saved theme on mount — respect system preference if no saved choice
   useEffect(() => {
-    const savedTheme = localStorage.getItem('app_theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    const savedTheme = localStorage.getItem('app_theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    }
   }, []);
 
   return (

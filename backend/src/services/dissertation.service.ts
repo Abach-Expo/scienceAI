@@ -1,26 +1,6 @@
 import OpenAI from 'openai';
 import { logger } from '../utils/logger';
-
-// Типы для динамического импорта Anthropic SDK
-interface AnthropicMessage {
-  content: Array<{ text?: string; type?: string }>;
-}
-
-interface AnthropicClient {
-  messages: {
-    create(params: {
-      model: string;
-      max_tokens: number;
-      temperature: number;
-      system: string;
-      messages: Array<{ role: string; content: string }>;
-    }): Promise<AnthropicMessage>;
-  };
-}
-
-interface AnthropicModule {
-  default: new (config: { apiKey: string }) => AnthropicClient;
-}
+import type { AnthropicModule, AnthropicClient } from '../types/anthropic.types';
 
 // Динамический импорт Anthropic SDK
 let Anthropic: AnthropicModule | undefined;

@@ -105,14 +105,14 @@ const DashboardSidebar = ({
           className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium flex items-center gap-3"
         >
           <Plus size={20} />
-          {language === 'ru' ? 'Новый проект' : 'New Project'}
+          {t('common.new')} {t('nav.allProjects').split(' ').pop()}
         </motion.button>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         <p className="text-xs text-text-muted uppercase tracking-wider mb-3 px-3">
-          {language === 'ru' ? 'Меню' : 'Menu'}
+          {t('nav.dashboard')}
         </p>
         
         {[
@@ -136,7 +136,7 @@ const DashboardSidebar = ({
 
         <div className="h-px bg-border-primary my-3" />
         <p className="text-xs text-text-muted uppercase tracking-wider mb-3 px-3">
-          {language === 'ru' ? 'Инструменты' : 'Tools'}
+          {t('nav.quickActions')}
         </p>
 
         <button
@@ -144,14 +144,14 @@ const DashboardSidebar = ({
           className="w-full px-3 py-2.5 rounded-xl flex items-center gap-3 text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-all"
         >
           <MessageSquare size={18} />
-          {language === 'ru' ? 'AI Чат' : 'AI Chat'}
+          {t('nav.chat')}
         </button>
         <button
           onClick={() => handleNavClick(() => navigate('/academic'))}
           className="w-full px-3 py-2.5 rounded-xl flex items-center gap-3 text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-all"
         >
           <GraduationCap size={18} />
-          {language === 'ru' ? 'Академические работы' : 'Academic Works'}
+          {t('nav.dissertations')}
         </button>
       </nav>
 

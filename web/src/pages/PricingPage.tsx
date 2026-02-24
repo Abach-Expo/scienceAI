@@ -24,9 +24,11 @@ import {
 } from 'lucide-react';
 import { useSubscriptionStore, PlanType } from '../store/subscriptionStore';
 import ConfirmModal, { AlertModal } from '../components/ConfirmModal';
+import { useTranslation } from '../store/languageStore';
 
 const PricingPage = () => {
-  useDocumentTitle('Тарифы');
+  const { t } = useTranslation();
+  useDocumentTitle(t('pricing.title'));
   const navigate = useNavigate();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   const subscription = useSubscriptionStore();
@@ -208,7 +210,7 @@ const PricingPage = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-text-muted hover:text-text-primary transition-colors"
-          aria-label="Назад"
+          aria-label={t('common.back')}
         >
           <ArrowLeft size={20} />
           <span>Назад</span>

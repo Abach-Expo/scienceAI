@@ -16,6 +16,5 @@ module.exports = {
       tsconfig: 'tsconfig.json',
     }],
   },
-  setupFilesAfterSetup: [],
   testTimeout: 30000,
 };

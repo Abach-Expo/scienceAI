@@ -46,99 +46,98 @@ export const API_COSTS = {
 } as const;
 
 // ================== ЛИМИТЫ ПО ПОДПИСКАМ ==================
-// ⚠️ ВРЕМЕННО ОТКЛЮЧЕНЫ ВСЕ ЛИМИТЫ (для тестирования)
 export const PLAN_LIMITS = {
   free: {
-    essaysPerMonth: 999999,
-    referatsPerMonth: 999999,
-    courseworksPerMonth: 999999,
+    essaysPerMonth: 3,
+    referatsPerMonth: 2,
+    courseworksPerMonth: 1,
     
-    analysisPerMonth: 999999,
-    presentationsPerMonth: 999999,
-    slidesPerPresentation: 999,
-    dalleImages: 999999,
+    analysisPerMonth: 5,
+    presentationsPerMonth: 3,
+    slidesPerPresentation: 15,
+    dalleImages: 0,
     
-    chatMessagesPerDay: -1,         // безлимит
-    plagiarismChecks: 999999,
+    chatMessagesPerDay: 20,
+    plagiarismChecks: 2,
+    
+    antiAIDetection: false,
+    prioritySupport: false,
+    
+    dissertationGenerations: 1,
+    largeChapterGenerations: 0,
+    fullDissertationGeneration: false,
+    
+    exportFormats: ['pdf'] as string[],
+    maxEstimatedCost: 5,
+  },
+  starter: {
+    essaysPerMonth: 15,
+    referatsPerMonth: 10,
+    courseworksPerMonth: 5,
+    
+    analysisPerMonth: 20,
+    presentationsPerMonth: 15,
+    slidesPerPresentation: 30,
+    dalleImages: 10,
+    
+    chatMessagesPerDay: -1,
+    plagiarismChecks: 10,
+    
+    antiAIDetection: true,
+    prioritySupport: false,
+    
+    dissertationGenerations: 5,
+    largeChapterGenerations: 3,
+    fullDissertationGeneration: false,
+    
+    exportFormats: ['pdf', 'pptx', 'docx'] as string[],
+    maxEstimatedCost: 30,
+  },
+  pro: {
+    essaysPerMonth: 50,
+    referatsPerMonth: 30,
+    courseworksPerMonth: 15,
+    
+    analysisPerMonth: 50,
+    presentationsPerMonth: 40,
+    slidesPerPresentation: 60,
+    dalleImages: 30,
+    
+    chatMessagesPerDay: -1,
+    plagiarismChecks: 30,
     
     antiAIDetection: true,
     prioritySupport: true,
     
-    dissertationGenerations: 999999,
-    largeChapterGenerations: 999999,
+    dissertationGenerations: 20,
+    largeChapterGenerations: 10,
     fullDissertationGeneration: true,
     
     exportFormats: ['pdf', 'pptx', 'docx'] as string[],
-    maxEstimatedCost: 999999,
-  },
-  starter: {
-    essaysPerMonth: 999999,
-    referatsPerMonth: 999999,
-    courseworksPerMonth: 999999,
-    
-    analysisPerMonth: 999999,
-    presentationsPerMonth: 999999,
-    slidesPerPresentation: 999,
-    dalleImages: 999999,
-    
-    chatMessagesPerDay: -1,
-    plagiarismChecks: 999999,
-    
-    antiAIDetection: true,
-    prioritySupport: true,
-    
-    dissertationGenerations: 999999,
-    largeChapterGenerations: 999999,
-    fullDissertationGeneration: true,
-    
-    exportFormats: ['pdf', 'pptx', 'docx'],
-    maxEstimatedCost: 999999,
-  },
-  pro: {
-    essaysPerMonth: 999999,
-    referatsPerMonth: 999999,
-    courseworksPerMonth: 999999,
-    
-    analysisPerMonth: 999999,
-    presentationsPerMonth: 999999,
-    slidesPerPresentation: 999,
-    dalleImages: 999999,
-    
-    chatMessagesPerDay: -1,
-    plagiarismChecks: 999999,
-    
-    antiAIDetection: true,
-    prioritySupport: true,
-    
-    dissertationGenerations: 999999,
-    largeChapterGenerations: 999999,
-    fullDissertationGeneration: true,
-    
-    exportFormats: ['pdf', 'pptx', 'docx'],
-    maxEstimatedCost: 999999,
+    maxEstimatedCost: 100,
   },
   premium: {
-    essaysPerMonth: 999999,
-    referatsPerMonth: 999999,
-    courseworksPerMonth: 999999,
+    essaysPerMonth: 200,
+    referatsPerMonth: 100,
+    courseworksPerMonth: 50,
     
-    analysisPerMonth: 999999,
-    presentationsPerMonth: 999999,
-    slidesPerPresentation: 999,
-    dalleImages: 999999,
+    analysisPerMonth: 200,
+    presentationsPerMonth: 150,
+    slidesPerPresentation: 100,
+    dalleImages: 100,
     
     chatMessagesPerDay: -1,
-    plagiarismChecks: 999999,
+    plagiarismChecks: 100,
     
     antiAIDetection: true,
     prioritySupport: true,
     
-    dissertationGenerations: 999999,
-    largeChapterGenerations: 999999,
+    dissertationGenerations: 100,
+    largeChapterGenerations: 50,
     fullDissertationGeneration: true,
     
-    exportFormats: ['pdf', 'pptx', 'docx'],
-    maxEstimatedCost: 999999,
+    exportFormats: ['pdf', 'pptx', 'docx'] as string[],
+    maxEstimatedCost: 500,
   },
 } as const;
 
@@ -751,7 +750,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           freePresentationsUsed: state.freePresentationsUsed + 1,
           usage: { ...state.usage, presentationsCreated: state.usage.presentationsCreated + 1 },
         }));
-        console.log(`[LIMIT] presentationsCreated: ${before} → ${get().usage.presentationsCreated}`);
         get().trackCost('presentation', API_COSTS.presentation_generation);
         get().syncToBackend();
       },
@@ -786,7 +784,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           freeDissertationGenerationsUsed: state.freeDissertationGenerationsUsed + 1,
           usage: { ...state.usage, dissertationGenerationsUsed: state.usage.dissertationGenerationsUsed + 1 },
         }));
-        console.log(`[LIMIT] dissertationGenerationsUsed: ${before} → ${get().usage.dissertationGenerationsUsed}`);
         get().trackCost('dissertation_section', API_COSTS.dissertation_section);
         get().syncToBackend();
       },
@@ -812,7 +809,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         set((state) => ({
           usage: { ...state.usage, academicWorksCreated: state.usage.academicWorksCreated + 1 },
         }));
-        console.log(`[LIMIT] academicWorksCreated: ${before} → ${get().usage.academicWorksCreated}`);
         get().trackCost('academic_work', API_COSTS.academic_work);
         get().syncToBackend();
       },
@@ -823,10 +819,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         const todayStr = today();
         if (state.usage.lastResetDate !== todayStr) {
           set({ usage: { ...state.usage, academicGenerationsToday: 1, lastResetDate: todayStr } });
-          console.log(`[LIMIT] academicGenerationsToday: ${before} → 1 (new day reset)`);
         } else {
           set({ usage: { ...state.usage, academicGenerationsToday: state.usage.academicGenerationsToday + 1 } });
-          console.log(`[LIMIT] academicGenerationsToday: ${before} → ${get().usage.academicGenerationsToday}`);
         }
         get().trackCost('academic_generation', API_COSTS.academic_work);
         get().syncToBackend();
@@ -902,7 +896,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           usage: { ...state.usage, presentationsCreated: state.usage.presentationsCreated + 1 },
           freePresentationsUsed: state.freePresentationsUsed + 1,
         }));
-        console.log(`[LIMIT] presentationsCreated (alt): ${before} → ${get().usage.presentationsCreated}`);
         get().trackCost('presentation', API_COSTS.presentation_generation);
         get().syncToBackend();
       },
@@ -913,10 +906,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         const todayStr = today();
         if (state.usage.lastResetDate !== todayStr) {
           set({ usage: { ...state.usage, aiEditsToday: 1, lastResetDate: todayStr } });
-          console.log(`[LIMIT] aiEditsToday: ${before} → 1 (new day reset)`);
         } else {
           set({ usage: { ...state.usage, aiEditsToday: state.usage.aiEditsToday + 1 } });
-          console.log(`[LIMIT] aiEditsToday: ${before} → ${get().usage.aiEditsToday}`);
         }
         get().trackCost('slide_edit', API_COSTS.slide_ai_edit);
         get().syncToBackend();
@@ -927,7 +918,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         set((state) => ({
           usage: { ...state.usage, dalleImagesUsed: state.usage.dalleImagesUsed + 1 }
         }));
-        console.log(`[LIMIT] dalleImagesUsed: ${before} → ${get().usage.dalleImagesUsed}`);
         get().trackCost('dalle', API_COSTS.dalle3_per_image);
         get().syncToBackend();
       },
@@ -972,7 +962,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         set((state) => ({
           usage: { ...state.usage, largeChapterGenerationsUsed: state.usage.largeChapterGenerationsUsed + 1 }
         }));
-        console.log(`[LIMIT] largeChapterGenerationsUsed: ${before} → ${get().usage.largeChapterGenerationsUsed}`);
         get().trackCost('chapter', API_COSTS.dissertation_chapter);
         get().syncToBackend();
       },
@@ -1011,10 +1000,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         const todayStr = today();
         if (state.usage.lastResetDate !== todayStr) {
           set({ usage: { ...state.usage, chatMessagesToday: 1, lastResetDate: todayStr } });
-          console.log(`[LIMIT] chatMessagesToday: ${before} → 1 (new day reset)`);
         } else {
           set({ usage: { ...state.usage, chatMessagesToday: state.usage.chatMessagesToday + 1 } });
-          console.log(`[LIMIT] chatMessagesToday: ${before} → ${get().usage.chatMessagesToday}`);
         }
         get().trackCost('chat', API_COSTS.chat_message);
         get().syncToBackend();
@@ -1025,7 +1012,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         set((state) => ({
           usage: { ...state.usage, plagiarismChecksUsed: state.usage.plagiarismChecksUsed + 1 }
         }));
-        console.log(`[LIMIT] plagiarismChecksUsed: ${before} → ${get().usage.plagiarismChecksUsed}`);
         get().trackCost('plagiarism', API_COSTS.plagiarism_check);
         get().syncToBackend();
       },
@@ -1293,13 +1279,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         
         syncDebounceTimer = setTimeout(async () => {
           try {
-            console.log('[USAGE SYNC] Syncing to backend:', {
-              presentationsCreated: usage.presentationsCreated,
-              academicWorksCreated: usage.academicWorksCreated,
-              chatMessagesToday: usage.chatMessagesToday,
-              academicGenerationsToday: usage.academicGenerationsToday,
-            });
-            
             await apiClient.post('/api/usage/sync', {
               presentationsCreated: usage.presentationsCreated,
               academicWorksCreated: usage.academicWorksCreated,
@@ -1313,16 +1292,14 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               lastMonthlyReset: usage.lastMonthlyReset,
             });
             
-            console.log('[USAGE SYNC] Successfully synced to backend');
-          } catch (error) {
-            console.error('[USAGE SYNC] Failed to sync to backend:', error);
+          } catch (_error) {
+            // Silently fail — sync will retry on next action
           }
         }, 2000);
       },
 
       fetchFromBackend: async () => {
         try {
-          console.log('[USAGE SYNC] Fetching from backend...');
           
           const response = await apiClient.get<{
             success: boolean;
@@ -1344,8 +1321,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             const backendData = response.data;
             const localUsage = get().usage;
             
-            console.log('[USAGE SYNC] Backend data:', backendData);
-            console.log('[USAGE SYNC] Local data:', localUsage);
+
             
             // Используем максимум из локальных и серверных значений
             // (на случай если юзер что-то сделал оффлайн)
@@ -1363,10 +1339,9 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               },
             }));
             
-            console.log('[USAGE SYNC] Merged with local data, new state:', get().usage);
           }
-        } catch (error) {
-          console.error('[USAGE SYNC] Failed to fetch from backend:', error);
+        } catch (_error) {
+          // Silently fail — will retry on next rehydration
         }
       },
     };
@@ -1389,8 +1364,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       onRehydrateStorage: () => (state) => {
         // После загрузки из localStorage, синхронизируем с backend
         if (state) {
-          console.log('[USAGE SYNC] Store rehydrated, fetching from backend...');
-          // Небольшая задержка чтобы auth store успел загрузиться
+          // Small delay to ensure auth store is loaded
           setTimeout(() => {
             state.fetchFromBackend().catch(console.error);
           }, 500);

@@ -887,10 +887,11 @@ interface AcademicDocument {
 
 // ================== ГЛАВНЫЙ КОМПОНЕНТ ==================
 const AcademicWorksPage = () => {
-  useDocumentTitle('Научные работы');
   const navigate = useNavigate();
   const { type: urlType, id: urlId } = useParams<{ type?: string; id?: string }>();
   const { t, language } = useTranslation();
+  useDocumentTitle(t('academicWorks.pageTitle'));
+  const localeMap: Record<string, string> = { ru: 'ru-RU', en: 'en-US', kz: 'kk-KZ', de: 'de-DE', es: 'es-ES', zh: 'zh-CN' };
   const subscription = useSubscriptionStore();
   
   // Состояния
@@ -1030,8 +1031,8 @@ const AcademicWorksPage = () => {
     if (!workCheck.allowed) {
       setLimitWarning({
         show: true,
-        title: language === 'ru' ? 'Лимит академических работ' : 'Academic Works Limit',
-        reason: workCheck.reason || (language === 'ru' ? 'Вы достигли лимита работ' : 'You reached the works limit'),
+        title: t('academicWorks.limitTitle'),
+        reason: workCheck.reason || t('academicWorks.limitReasonWorks'),
         remaining: workCheck.remaining,
         type: 'works',
       });
@@ -1042,8 +1043,8 @@ const AcademicWorksPage = () => {
     if (!genCheck.allowed) {
       setLimitWarning({
         show: true,
-        title: language === 'ru' ? 'Лимит генераций' : 'Generation Limit',
-        reason: genCheck.reason || (language === 'ru' ? 'Вы достигли дневного лимита генераций' : 'You reached the daily generation limit'),
+        title: t('academicWorks.generationLimitTitle'),
+        reason: genCheck.reason || t('academicWorks.generationLimitReason'),
         remaining: genCheck.remaining,
         type: 'generations',
       });
@@ -1053,13 +1054,13 @@ const AcademicWorksPage = () => {
     setIsGenerating(true);
     setRetryCount(0);
     setGenerationProgress(0);
-    setGenerationPhase(language === 'ru' ? 'Подготовка...' : 'Preparing...');
+    setGenerationPhase(t('academicWorks.phasePreparing'));
     
     const generateWithRetry = async (attempt: number): Promise<void> => {
       try {
         // === Фаза 1: Подготовка (10%) ===
         setGenerationProgress(10);
-        setGenerationPhase(language === 'ru' ? 'Подготовка промпта и источников...' : 'Preparing prompt and sources...');
+        setGenerationPhase(t('academicWorks.phasePreparingPrompt'));
         
         // Формируем контекст источников
         const sourcesContext = selectedSources.length > 0
@@ -1148,7 +1149,7 @@ AI любит сенсационные эпитеты — настоящий у�
         // Используем безопасный бэкенд API
         // === Фаза 2: Генерация (30%) ===
         setGenerationProgress(30);
-        setGenerationPhase(language === 'ru' ? 'Генерация текста с AI...' : 'Generating text with AI...');
+        setGenerationPhase(t('academicWorks.phaseGenerating'));
         
         const response = await fetch(`${API_URL}/ai/generate`, {
           method: 'POST',
@@ -1193,7 +1194,7 @@ AI любит сенсационные эпитеты — настоящий у�
         
         // === Фаза 3: Проверка качества (70%) ===
         setGenerationProgress(70);
-        setGenerationPhase(language === 'ru' ? 'Проверка качества и форматирование...' : 'Quality check and formatting...');
+        setGenerationPhase(t('academicWorks.phaseQualityCheck'));
         
         // Парсим секции
         const sections = parseContent(generatedContent, selectedType.sections);
@@ -1219,7 +1220,7 @@ AI любит сенсационные эпитеты — настоящий у�
         
         // === Фаза 4: Завершено (100%) ===
         setGenerationProgress(100);
-        setGenerationPhase(language === 'ru' ? 'Готово!' : 'Done!');
+        setGenerationPhase(t('academicWorks.phaseDone'));
         
         // Небольшая задержка чтобы пользователь увидел 100%
         await new Promise(r => setTimeout(r, 500));
@@ -1246,9 +1247,7 @@ AI любит сенсационные эпитеты — настоящий у�
       await generateWithRetry(0);
     } catch (error: unknown) {
       console.error('Final generation error:', error);
-      setGenerationPhase(language === 'ru' 
-        ? '❌ Ошибка генерации. Попробуйте ещё раз.' 
-        : '❌ Generation error. Please try again.');
+      setGenerationPhase(t('academicWorks.phaseError'));
       // Show error for 3 seconds then clear
       setTimeout(() => setGenerationPhase(''), 3000);
     } finally {
@@ -1398,7 +1397,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
             className="flex items-center gap-2 text-text-muted hover:text-text-primary transition-colors mb-6"
           >
             <ChevronLeft size={20} />
-            <span>{language === 'ru' ? 'Назад' : 'Back'}</span>
+            <span>{t('academicWorks.back')}</span>
           </motion.button>
 
           {/* Header */}
@@ -1411,12 +1410,10 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
               <GraduationCap size={40} className="text-white" />
             </div>
             <h1 className="text-4xl font-bold text-text-primary mb-4">
-              {language === 'ru' ? 'Академические работы' : 'Academic Works'}
+              {t('academicWorks.heading')}
             </h1>
             <p className="text-xl text-text-muted max-w-2xl mx-auto">
-              {language === 'ru' 
-                ? 'Создавайте профессиональные научные работы с AI-помощником, поиском реальных источников и автоматическим цитированием'
-                : 'Create professional academic papers with AI assistant, real source search and automatic citations'}
+              {t('academicWorks.subtitle')}
             </p>
           </motion.div>
 
@@ -1448,7 +1445,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 </p>
                 <div className="flex items-center gap-2 text-xs text-text-muted">
                   <Hash size={12} />
-                  <span>{docType.minWords}—{docType.maxWords} слов</span>
+                  <span>{docType.minWords}—{docType.maxWords} {t('academicWorks.words')}</span>
                 </div>
               </motion.button>
             ))}
@@ -1462,7 +1459,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
             className="mt-12"
           >
             <h2 className="text-xl font-bold text-text-primary mb-4">
-              {language === 'ru' ? 'Недавние работы' : 'Recent Works'}
+              {t('academicWorks.recentWorks')}
             </h2>
             <RecentDocuments navigate={navigate} language={language} />
           </motion.div>
@@ -1482,7 +1479,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
             className="flex items-center gap-2 text-text-muted hover:text-text-primary mb-6 transition-colors"
           >
             <ChevronLeft size={20} />
-            {language === 'ru' ? 'Назад к выбору' : 'Back to selection'}
+            {t('academicWorks.backToSelection')}
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1511,13 +1508,13 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 {/* Topic */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-text-secondary mb-2">
-                    {language === 'ru' ? 'Тема работы *' : 'Topic *'}
+                    {t('academicWorks.topicLabel')}
                   </label>
                   <input
                     type="text"
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
-                    placeholder={language === 'ru' ? 'Например: Влияние социальных сетей на молодёжь' : 'e.g., Impact of social media on youth'}
+                    placeholder={t('academicWorks.topicPlaceholder')}
                     className="w-full px-4 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-primary placeholder-text-muted focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
                   />
                 </div>
@@ -1525,12 +1522,12 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 {/* Requirements */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-text-secondary mb-2">
-                    {language === 'ru' ? 'Дополнительные требования' : 'Additional requirements'}
+                    {t('academicWorks.additionalRequirements')}
                   </label>
                   <textarea
                     value={requirements}
                     onChange={(e) => setRequirements(e.target.value)}
-                    placeholder={language === 'ru' ? 'Специальные требования, ключевые моменты...' : 'Special requirements, key points...'}
+                    placeholder={t('academicWorks.requirementsPlaceholder')}
                     rows={3}
                     className="w-full px-4 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-primary placeholder-text-muted focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all resize-none"
                   />
@@ -1539,7 +1536,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 {/* Word count slider */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-text-secondary mb-2">
-                    {language === 'ru' ? 'Целевой объём' : 'Target length'}: {targetWords.toLocaleString()} {language === 'ru' ? 'слов' : 'words'}
+                    {t('academicWorks.targetLength')}: {targetWords.toLocaleString()} {t('academicWorks.words')}
                   </label>
                   <input
                     type="range"
@@ -1559,7 +1556,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 {/* Citation style */}
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-2">
-                    {language === 'ru' ? 'Стиль цитирования' : 'Citation style'}
+                    {t('academicWorks.citationStyle')}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {CITATION_STYLES.map((style) => (
@@ -1592,7 +1589,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 <div className="flex items-center gap-3 mb-4">
                   <Library size={20} className="text-purple-400" />
                   <h2 className="text-lg font-bold text-text-primary">
-                    {language === 'ru' ? 'Поиск научных источников' : 'Find Academic Sources'}
+                    {t('academicWorks.findSources')}
                   </h2>
                 </div>
 
@@ -1602,7 +1599,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     value={sourceSearch}
                     onChange={(e) => setSourceSearch(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSources()}
-                    placeholder={language === 'ru' ? 'Поиск статей, книг, исследований...' : 'Search articles, books, research...'}
+                    placeholder={t('academicWorks.searchPlaceholder')}
                     className="flex-1 px-4 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-primary placeholder-text-muted focus:border-purple-500 transition-all"
                   />
                   <button
@@ -1611,7 +1608,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     className="px-6 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {isSearching ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
-                    {language === 'ru' ? 'Найти' : 'Search'}
+                    {t('academicWorks.searchButton')}
                   </button>
                 </div>
 
@@ -1643,7 +1640,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
                     <BookMarked size={18} className="text-emerald-400" />
-                    {language === 'ru' ? 'Выбранные источники' : 'Selected Sources'}
+                    {t('academicWorks.selectedSources')}
                   </h2>
                   <span className="px-2 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-medium">
                     {selectedSources.length}
@@ -1652,7 +1649,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
 
                 {selectedSources.length === 0 ? (
                   <p className="text-sm text-text-muted text-center py-8">
-                    {language === 'ru' ? 'Добавьте источники для цитирования' : 'Add sources for citations'}
+                    {t('academicWorks.addSourcesHint')}
                   </p>
                 ) : (
                   <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -1685,7 +1682,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 {/* Sections preview */}
                 <div className="mt-6 pt-6 border-t border-border-primary">
                   <h3 className="text-sm font-medium text-text-secondary mb-3">
-                    {language === 'ru' ? 'Структура работы' : 'Document Structure'}
+                    {t('academicWorks.documentStructure')}
                   </h3>
                   <div className="space-y-1">
                     {selectedType.sections.map((section, i) => (
@@ -1713,8 +1710,8 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                         <Loader2 size={24} className="animate-spin" />
                         <span>
                           {retryCount > 0 
-                            ? `${language === 'ru' ? 'Повтор' : 'Retry'} ${retryCount}/${MAX_RETRIES}...` 
-                            : generationPhase || (language === 'ru' ? 'Генерация...' : 'Generating...')}
+                            ? `${t('academicWorks.retry')} ${retryCount}/${MAX_RETRIES}...` 
+                            : generationPhase || t('academicWorks.generating')}
                         </span>
                       </div>
                       {/* Progress bar */}
@@ -1731,7 +1728,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                   ) : (
                     <div className="flex items-center gap-3">
                       <Sparkles size={24} />
-                      {language === 'ru' ? 'Создать работу' : 'Generate Paper'}
+                      {t('academicWorks.generateButton')}
                     </div>
                   )}
                 </motion.button>
@@ -1784,8 +1781,8 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-text-muted">
                         {limitWarning.type === 'works'
-                          ? (language === 'ru' ? 'Осталось работ' : 'Works remaining')
-                          : (language === 'ru' ? 'Осталось генераций сегодня' : 'Generations remaining today')}
+                          ? t('academicWorks.worksRemaining')
+                          : t('academicWorks.generationsRemaining')}
                       </span>
                       <span className={`text-lg font-bold ${limitWarning.remaining > 0 ? 'text-amber-400' : 'text-red-400'}`}>
                         {limitWarning.remaining}
@@ -1799,7 +1796,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                       onClick={() => setLimitWarning(prev => ({ ...prev, show: false }))}
                       className="flex-1 px-4 py-3 rounded-xl bg-bg-tertiary text-text-secondary hover:text-text-primary transition-colors font-medium"
                     >
-                      {language === 'ru' ? 'Закрыть' : 'Close'}
+                      {t('academicWorks.close')}
                     </button>
                     <button
                       onClick={() => {
@@ -1809,7 +1806,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                       className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                     >
                       <Crown size={18} />
-                      {language === 'ru' ? 'Улучшить план' : 'Upgrade Plan'}
+                      {t('academicWorks.upgradePlan')}
                     </button>
                   </div>
                 </motion.div>
@@ -1847,7 +1844,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-bold text-text-primary flex items-center gap-2">
                     <Library size={18} />
-                    {language === 'ru' ? 'Источники' : 'Sources'}
+                    {t('academicWorks.sources')}
                   </h2>
                   <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs">
                     {selectedSources.length}
@@ -1861,7 +1858,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     value={sourceSearch}
                     onChange={(e) => setSourceSearch(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSources()}
-                    placeholder={language === 'ru' ? 'Поиск...' : 'Search...'}
+                    placeholder={t('academicWorks.search')}
                     className="flex-1 px-3 py-2 rounded-lg bg-bg-tertiary border border-border-primary text-text-primary text-sm placeholder-text-muted"
                   />
                   <button
@@ -1880,7 +1877,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                   className="w-full mt-2 px-3 py-2 rounded-lg bg-bg-tertiary border border-border-primary text-text-secondary hover:text-text-primary hover:border-purple-500/50 text-sm flex items-center justify-center gap-2 transition-all"
                 >
                   <Wand2 size={14} />
-                  {language === 'ru' ? 'Авто-поиск по тексту' : 'Auto-find for text'}
+                  {t('academicWorks.autoFind')}
                 </button>
               </div>
 
@@ -1902,7 +1899,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                           {source.authors[0]} ({source.year})
                         </p>
                         <p className="text-xs text-purple-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {language === 'ru' ? 'Клик = вставить цитату' : 'Click to insert citation'}
+                          {t('academicWorks.clickToInsertCitation')}
                         </p>
                       </div>
                       <button
@@ -1919,7 +1916,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 {searchResults.length > 0 && (
                   <>
                     <div className="text-xs text-text-muted uppercase tracking-wider pt-4 pb-2">
-                      {language === 'ru' ? 'Результаты поиска' : 'Search Results'}
+                      {t('academicWorks.searchResults')}
                     </div>
                     {searchResults.slice(0, 5).map((source) => (
                       <SourceCard
@@ -1939,7 +1936,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
               {/* Citation style */}
               <div className="p-4 border-t border-border-primary">
                 <label className="text-xs text-text-muted uppercase tracking-wider mb-2 block">
-                  {language === 'ru' ? 'Стиль цитирования' : 'Citation Style'}
+                  {t('academicWorks.citationStyleLabel')}
                 </label>
                 <select
                   value={citationStyle}
@@ -1966,7 +1963,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors text-sm"
               >
                 <ChevronLeft size={18} />
-                {language === 'ru' ? 'Назад' : 'Back'}
+                {t('academicWorks.back')}
               </button>
 
               <div className="h-6 w-px bg-border-primary" />
@@ -2007,14 +2004,14 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
               {/* Word count */}
               <div className="text-sm text-text-muted flex items-center gap-2">
                 <Hash size={14} />
-                {document.content.split(/\s+/).length.toLocaleString()} {language === 'ru' ? 'слов' : 'words'}
+                {document.content.split(/\s+/).length.toLocaleString()} {t('academicWorks.words')}
               </div>
 
               {/* Export */}
               <div className="relative group">
                 <button className="px-4 py-2 rounded-lg bg-bg-tertiary border border-border-primary text-text-primary flex items-center gap-2 hover:border-purple-500/50 transition-colors">
                   <Download size={16} />
-                  {language === 'ru' ? 'Экспорт' : 'Export'}
+                  {t('academicWorks.export')}
                   <ChevronDown size={14} />
                 </button>
                 <div className="absolute right-0 top-full mt-2 py-2 w-48 rounded-xl bg-bg-secondary border border-border-primary shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
@@ -2043,7 +2040,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2 transition-colors"
               >
                 <Save size={16} />
-                {language === 'ru' ? 'Сохранить' : 'Save'}
+                {t('academicWorks.save')}
               </button>
 
               {/* Plagiarism check toggle */}
@@ -2056,7 +2053,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                 }`}
               >
                 <FileCheck size={16} />
-                {language === 'ru' ? 'Антиплагиат' : 'Plagiarism'}
+                {t('academicWorks.plagiarism')}
               </button>
             </div>
           </header>
@@ -2081,7 +2078,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
             <div className={`fixed inset-y-0 left-0 z-50 w-64 md:relative md:z-auto md:w-52 bg-bg-secondary/95 md:bg-bg-secondary/30 border-r border-border-primary flex flex-col overflow-hidden transition-transform duration-200 ${showMobileSections ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
               <div className="p-4 pb-2">
                 <h3 className="text-[11px] text-text-muted/50 uppercase tracking-widest font-semibold mb-1">
-                  {language === 'ru' ? 'Разделы' : 'Sections'}
+                  {t('academicWorks.sections')}
                 </h3>
                 <p className="text-[11px] text-text-muted/40">
                   {activeSection + 1} / {document.sections.length}
@@ -2127,7 +2124,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                             {section.title}
                           </p>
                           {hasContent && (
-                            <p className="text-[10px] text-text-muted/40 mt-0.5">{wordCount} слов</p>
+                            <p className="text-[10px] text-text-muted/40 mt-0.5">{wordCount} {t('academicWorks.words')}</p>
                           )}
                         </div>
                       </div>
@@ -2146,9 +2143,9 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                   <div className="flex items-center gap-3 text-sm text-text-muted/60">
                     <span>{selectedType.name}</span>
                     <span className="w-1 h-1 rounded-full bg-text-muted/30" />
-                    <span>{new Date(document.createdAt).toLocaleDateString()}</span>
+                    <span>{new Date(document.createdAt).toLocaleDateString(localeMap[language] || 'en-US')}</span>
                     <span className="w-1 h-1 rounded-full bg-text-muted/30" />
-                    <span>{document.content.split(/\s+/).length.toLocaleString()} слов</span>
+                    <span>{document.content.split(/\s+/).length.toLocaleString()} {t('academicWorks.words')}</span>
                   </div>
                 </div>
 
@@ -2163,7 +2160,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     </h2>
                     <div className="flex-1" />
                     <span className="text-xs text-text-muted/40 tabular-nums">
-                      {(document.sections[activeSection]?.content || '').split(/\s+/).filter(Boolean).length} слов
+                      {(document.sections[activeSection]?.content || '').split(/\s+/).filter(Boolean).length} {t('academicWorks.words')}
                     </span>
                   </div>
                   <div className="relative group">
@@ -2185,7 +2182,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     }}
                     className="w-full min-h-[500px] px-6 py-5 rounded-xl bg-bg-tertiary/50 border border-border-primary text-text-primary text-base leading-[2] focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10 transition-all resize-none placeholder:text-text-muted/30"
                     style={{ lineHeight: '2' }}
-                    placeholder={language === 'ru' ? 'Начните писать или отредактируйте текст...' : 'Start writing or edit text...'}
+                    placeholder={t('academicWorks.editorPlaceholder')}
                   />
                   </div>
                 </div>
@@ -2198,7 +2195,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     className="px-4 py-2.5 rounded-xl bg-bg-secondary border border-border-primary text-text-secondary hover:text-text-primary hover:border-purple-500/30 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 transition-all text-sm"
                   >
                     <ChevronLeft size={16} />
-                    {language === 'ru' ? 'Предыдущий' : 'Previous'}
+                    {t('academicWorks.previous')}
                   </button>
                   <span className="text-xs text-text-muted/40 tabular-nums">
                     {activeSection + 1} из {document.sections.length}
@@ -2208,7 +2205,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     disabled={activeSection === document.sections.length - 1}
                     className="px-4 py-2.5 rounded-xl bg-bg-secondary border border-border-primary text-text-secondary hover:text-text-primary hover:border-purple-500/30 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 transition-all text-sm"
                   >
-                    {language === 'ru' ? 'Следующий' : 'Next'}
+                    {t('academicWorks.next')}
                     <ChevronRight size={16} />
                   </button>
                 </div>
@@ -2218,7 +2215,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                   <div className="mt-12 pt-8 border-t border-border-primary">
                     <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                       <BookMarked size={20} className="text-emerald-400" />
-                      {language === 'ru' ? 'Список литературы' : 'Bibliography'}
+                      {t('academicWorks.bibliography')}
                     </h2>
                     <div className="space-y-3">
                       {selectedSources.map((source, i) => {
@@ -2261,7 +2258,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-bold text-text-primary flex items-center gap-2">
                         <FileCheck size={18} className="text-emerald-400" />
-                        {language === 'ru' ? 'Антиплагиат' : 'Plagiarism Check'}
+                        {t('academicWorks.plagiarismCheck')}
                       </h3>
                       <button
                         onClick={() => setShowPlagiarismPanel(false)}
@@ -2279,7 +2276,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                             : 'text-text-muted hover:text-text-primary'
                         }`}
                       >
-                        {language === 'ru' ? 'Проверка' : 'Check'}
+                        {t('academicWorks.check')}
                       </button>
                       <button
                         onClick={() => setPlagiarismTab('detect')}
@@ -2289,7 +2286,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
                             : 'text-text-muted hover:text-text-primary'
                         }`}
                       >
-                        {language === 'ru' ? 'AI-детектор' : 'AI Detect'}
+                        {t('academicWorks.aiDetect')}
                       </button>
                     </div>
                   </div>
@@ -2334,7 +2331,9 @@ const SourceCard = ({
   onRemove: () => void;
   language: string;
   compact?: boolean;
-}) => (
+}) => {
+  const { t } = useTranslation();
+  return (
   <div className={`p-3 rounded-lg ${compact ? 'bg-bg-primary' : 'bg-bg-tertiary'} border border-border-primary hover:border-purple-500/30 transition-colors`}>
     <div className="flex items-start gap-3">
       <div className="flex-1 min-w-0">
@@ -2353,7 +2352,7 @@ const SourceCard = ({
           <div className="flex items-center gap-3 mt-2 text-xs text-text-muted">
             <span className="flex items-center gap-1">
               <Quote size={10} />
-              {source.citationCount.toLocaleString()} {language === 'ru' ? 'цитат' : 'citations'}
+              {source.citationCount.toLocaleString()} {t('academicWorks.citations')}
             </span>
             {source.doi && (
               <a
@@ -2382,10 +2381,13 @@ const SourceCard = ({
       </button>
     </div>
   </div>
-);
+  );
+};
 
 // Recent documents component
 const RecentDocuments = ({ navigate, language }: { navigate: (path: string) => void; language: string }) => {
+  const { t } = useTranslation();
+  const localeMap: Record<string, string> = { ru: 'ru-RU', en: 'en-US', kz: 'kk-KZ', de: 'de-DE', es: 'es-ES', zh: 'zh-CN' };
   const [docs, setDocs] = useState<AcademicDocument[]>([]);
 
   useEffect(() => {
@@ -2400,7 +2402,7 @@ const RecentDocuments = ({ navigate, language }: { navigate: (path: string) => v
     return (
       <div className="text-center py-12 text-text-muted">
         <FileText size={48} className="mx-auto mb-4 opacity-50" />
-        <p>{language === 'ru' ? 'Пока нет работ. Создайте первую!' : 'No works yet. Create your first one!'}</p>
+        <p>{t('academicWorks.noWorksYet')}</p>
       </div>
     );
   }
@@ -2424,10 +2426,10 @@ const RecentDocuments = ({ navigate, language }: { navigate: (path: string) => v
               <div className="flex-1 min-w-0">
                 <p className="text-text-primary font-medium truncate">{doc.title}</p>
                 <p className="text-xs text-text-muted mt-1">
-                  {docType?.name || doc.type} • {doc.wordCount.toLocaleString()} {language === 'ru' ? 'слов' : 'words'}
+                  {docType?.name || doc.type} • {doc.wordCount.toLocaleString()} {t('academicWorks.words')}
                 </p>
                 <p className="text-xs text-text-muted mt-1">
-                  {new Date(doc.updatedAt).toLocaleDateString()}
+                  {new Date(doc.updatedAt).toLocaleDateString(localeMap[language] || 'en-US')}
                 </p>
               </div>
             </div>

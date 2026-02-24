@@ -94,7 +94,7 @@ export const Button: React.FC<ButtonProps> = ({
               getTextSize(),
               variant === 'secondary' && styles.textSecondary,
               variant === 'ghost' && styles.textGhost,
-              icon && { marginLeft: 8 },
+              icon ? { marginLeft: 8 } : undefined,
               textStyle,
             ]}
           >

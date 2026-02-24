@@ -12,9 +12,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../theme';
-import { Input, Button } from '../../components/ui';
-import { useAuthStore } from '../../store/authStore';
+import { theme } from '../theme';
+import { Input, Button } from '../components/ui';
+import { useAuthStore } from '../store/authStore';
 
 export const AuthScreen: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);

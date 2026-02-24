@@ -18,6 +18,18 @@ function getAIService(): AIService {
 // Серверный API ключ из .env (БЕЗОПАСНО - не виден клиенту)
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
+// Singleton OpenAI client (reused across requests)
+let _openaiClient: OpenAI | null = null;
+function getOpenAIClient(): OpenAI {
+  if (!_openaiClient && OPENAI_API_KEY) {
+    _openaiClient = new OpenAI({ apiKey: OPENAI_API_KEY });
+  }
+  if (!_openaiClient) {
+    throw new Error('OpenAI API key is not configured');
+  }
+  return _openaiClient;
+}
+
 // ================== УЛУЧШЕННАЯ КОНФИГУРАЦИЯ МОДЕЛЕЙ ==================
 
 type ModelConfig = {
@@ -269,7 +281,7 @@ router.post(
         }
       }
 
-      const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+      const openai = getOpenAIClient();
 
       // Умный выбор модели
       const selectedModel = model || selectOptimalModel({ maxTokens, useHighQuality: true });

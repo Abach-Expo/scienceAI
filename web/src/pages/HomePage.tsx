@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useAuthStore } from '../store/authStore';
+import { useTranslation } from '../store/languageStore';
 import {
   Sparkles,
   Layers,
@@ -29,7 +30,8 @@ import {
 } from 'lucide-react';
 
 const HomePage = () => {
-  useDocumentTitle('AI для студентов');
+  const { t } = useTranslation();
+  useDocumentTitle(t('home.pageTitle'));
   const navigate = useNavigate();
   const demoRef = useRef<HTMLDivElement>(null);
   const [onlineStudents] = useState(() => Math.floor(Math.random() * 20) + 5);
@@ -59,38 +61,38 @@ const HomePage = () => {
   const features = [
     {
       icon: Brain,
-      title: 'AI Ассистент',
-      description: 'Умный помощник для исследований, анализа и генерации контента',
+      title: t('home.featureAI'),
+      description: t('home.featureAIDesc'),
       color: 'from-purple-500 to-violet-600',
     },
     {
       icon: Layers,
-      title: 'Презентации',
-      description: 'Создавайте профессиональные презентации за минуты',
+      title: t('home.featurePresentations'),
+      description: t('home.featurePresentationsDesc'),
       color: 'from-pink-500 to-rose-600',
     },
     {
       icon: GraduationCap,
-      title: 'Диссертации',
-      description: 'Помощь в написании научных работ и диссертаций',
+      title: t('home.featureDissertations'),
+      description: t('home.featureDissertationsDesc'),
       color: 'from-blue-500 to-cyan-600',
     },
     {
       icon: Download,
-      title: 'Экспорт',
-      description: 'PPTX, PDF и другие форматы одним кликом',
+      title: t('home.featureExport'),
+      description: t('home.featureExportDesc'),
       color: 'from-green-500 to-emerald-600',
     },
     {
       icon: MessageSquare,
-      title: 'Умный чат',
-      description: 'Общайтесь с AI для решения любых задач',
+      title: t('home.featureChat'),
+      description: t('home.featureChatDesc'),
       color: 'from-amber-500 to-orange-600',
     },
     {
       icon: Shield,
-      title: 'Антиплагиат',
-      description: '95%+ уникальность, обход AI-детекторов',
+      title: t('home.featureAntiPlagiarism'),
+      description: t('home.featureAntiPlagiarismDesc'),
       color: 'from-teal-500 to-cyan-600',
     },
   ];
@@ -129,10 +131,10 @@ const HomePage = () => {
 
   // Статистика
   const stats = [
-    { value: '5,000+', label: 'Студентов' },
-    { value: '15,000+', label: 'Работ создано' },
-    { value: '94%', label: 'Проходят антиплагиат' },
-    { value: '10 мин', label: 'Среднее время' },
+    { value: '5,000+', label: t('home.statStudents') },
+    { value: '15,000+', label: t('home.statWorksCreated') },
+    { value: '94%', label: t('home.statAntiPlagiarism') },
+    { value: '10 мин', label: t('home.statAvgTime') },
   ];
 
   // FAQ для снятия возражений
@@ -180,7 +182,7 @@ const HomePage = () => {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-all"
-              title={currentTheme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+              title={currentTheme === 'dark' ? t('home.lightTheme') : t('home.darkTheme')}
             >
               {currentTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -188,13 +190,13 @@ const HomePage = () => {
               onClick={() => navigate('/pricing')}
               className="hidden sm:block px-4 py-2 rounded-xl text-text-secondary hover:text-text-primary transition-colors"
             >
-              Тарифы
+              {t('home.navPricing')}
             </button>
             <button
               onClick={() => navigate('/auth')}
               className="px-4 py-2 rounded-xl text-text-secondary hover:text-text-primary transition-colors"
             >
-              Войти
+              {t('home.navLogin')}
             </button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -202,7 +204,7 @@ const HomePage = () => {
               onClick={() => navigate('/auth')}
               className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium flex items-center gap-2"
             >
-              Начать сейчас
+              {t('home.navStartNow')}
               <ArrowRight size={18} />
             </motion.button>
           </div>
@@ -219,10 +221,10 @@ const HomePage = () => {
         <div className="glass border border-border-primary rounded-2xl p-4 max-w-xs">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs text-green-400">Онлайн сейчас</span>
+            <span className="text-xs text-green-400">{t('home.onlineNow')}</span>
           </div>
           <p className="text-sm text-text-secondary">
-            <span className="text-text-primary font-semibold">{onlineStudents} студентов</span> создают работы прямо сейчас
+            <span className="text-text-primary font-semibold">{onlineStudents} {t('home.studentsOnline')}</span> {t('home.studentsCreating')}
           </p>
         </div>
       </motion.div>
@@ -250,22 +252,22 @@ const HomePage = () => {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-border-primary mb-8"
             >
               <Rocket size={16} className="text-purple-400" />
-              <span className="text-sm text-text-secondary">🔥 Диссертация за 10 минут вместо 3-6 месяцев</span>
+              <span className="text-sm text-text-secondary">{t('home.badge')}</span>
             </motion.div>
 
             {/* Title */}
             <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-              <span className="text-text-primary">AI создаёт</span>
+              <span className="text-text-primary">{t('home.heroTitle1')}</span>
               <br />
-              <span className="gradient-text">диссертации</span>
+              <span className="gradient-text">{t('home.heroTitle2')}</span>
               <br />
-              <span className="text-text-primary">за минуты</span>
+              <span className="text-text-primary">{t('home.heroTitle3')}</span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-xl text-text-secondary max-w-2xl mx-auto mb-10">
-              AI пишет магистерские диссертации, курсовые, презентации за считанные минуты.
-              <span className="text-purple-400 font-semibold"> Антиплагиат 94%+</span> — обходит любые проверки.
+              {t('home.heroSubtitle')}
+              <span className="text-purple-400 font-semibold"> {t('home.heroHighlight')}</span>{t('home.heroHighlightSuffix')}
             </p>
 
             {/* CTA Buttons */}
@@ -277,7 +279,7 @@ const HomePage = () => {
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-purple-500/30"
               >
                 <Sparkles size={22} />
-              Попробовать сейчас
+              {t('home.tryNow')}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -286,7 +288,7 @@ const HomePage = () => {
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl glass border border-border-primary text-text-primary font-bold text-lg flex items-center justify-center gap-3 hover:bg-white/5 transition-colors"
               >
                 <Play size={22} />
-                Смотреть демо
+                {t('home.watchDemo')}
               </motion.button>
             </div>
 
@@ -318,11 +320,11 @@ const HomePage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-              Всё что нужно для
-              <span className="gradient-text"> идеальной работы</span>
+              {t('home.featuresTitle')}
+              <span className="gradient-text">{t('home.featuresHighlight')}</span>
             </h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">
-              Мощные инструменты AI для создания диссертаций, курсовых и презентаций
+              {t('home.featuresSubtitle')}
             </p>
           </motion.div>
 
@@ -358,18 +360,18 @@ const HomePage = () => {
             className="text-center mb-12"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-              Как это работает
+              {t('home.howItWorksTitle')}
             </h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">
-              3 простых шага до готовой диссертации
+              {t('home.howItWorksSubtitle')}
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-4 md:gap-8 mb-12">
             {[
-              { step: '01', title: 'Выберите тип работы', desc: 'Диссертация, курсовая, реферат или презентация', icon: FileText },
-              { step: '02', title: 'Опишите тему', desc: 'AI задаст уточняющие вопросы и предложит структуру', icon: MessageSquare },
-              { step: '03', title: 'Получите результат', desc: 'Готовая работа с источниками за 10-30 минут', icon: CheckCircle },
+              { step: '01', title: t('home.step1Title'), desc: t('home.step1Desc'), icon: FileText },
+              { step: '02', title: t('home.step2Title'), desc: t('home.step2Desc'), icon: MessageSquare },
+              { step: '03', title: t('home.step3Title'), desc: t('home.step3Desc'), icon: CheckCircle },
             ].map((item, index) => (
               <motion.div
                 key={item.step}
@@ -406,13 +408,13 @@ const HomePage = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/auth')}
                 className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/30"
-                title="Смотреть демо"
+                title={t('home.watchDemo')}
               >
                 <Play size={32} className="text-white ml-1" />
               </motion.button>
             </div>
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <span className="text-text-secondary text-sm">Демо: Создание диссертации за 15 минут</span>
+              <span className="text-text-secondary text-sm">{t('home.demoCaption')}</span>
               <span className="text-text-muted text-sm">4:32</span>
             </div>
           </motion.div>
@@ -429,8 +431,8 @@ const HomePage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-              Сравни цены и
-              <span className="gradient-text"> сэкономь тысячи</span>
+              {t('home.comparePricesTitle')}
+              <span className="gradient-text">{t('home.comparePricesHighlight')}</span>
             </h2>
           </motion.div>
 
@@ -443,14 +445,14 @@ const HomePage = () => {
               className="card border-red-500/30 bg-red-500/5"
             >
               <div className="text-center">
-                <div className="text-red-400 text-sm font-semibold mb-2">❌ Фрилансер</div>
-                <div className="text-4xl font-bold text-red-400 mb-2">Дорого</div>
-                <div className="text-text-muted text-sm mb-4">за работу</div>
+                <div className="text-red-400 text-sm font-semibold mb-2">{t('home.freelancer')}</div>
+                <div className="text-4xl font-bold text-red-400 mb-2">{t('home.freelancerExpensive')}</div>
+                <div className="text-text-muted text-sm mb-4">{t('home.freelancerPerWork')}</div>
                 <div className="space-y-2 text-sm text-text-secondary">
-                  <div>⏰ 2-4 недели ожидания</div>
-                  <div>🔄 Бесконечные правки</div>
-                  <div>❓ Не всегда качественно</div>
-                  <div>💸 Предоплата 50%</div>
+                  <div>{t('home.freelancerWait')}</div>
+                  <div>{t('home.freelancerEdits')}</div>
+                  <div>{t('home.freelancerQuality')}</div>
+                  <div>{t('home.freelancerPrepay')}</div>
                 </div>
               </div>
             </motion.div>
@@ -463,17 +465,17 @@ const HomePage = () => {
               className="card border-purple-500/50 bg-purple-500/10 relative scale-105"
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-bold">
-                ⭐ Рекомендуем
+                {t('home.recommended')}
               </div>
               <div className="text-center pt-4">
-                <div className="text-purple-400 text-sm font-semibold mb-2">✅ Science AI</div>
-                <div className="text-4xl font-bold text-purple-400 mb-2">от $5.99</div>
-                <div className="text-text-muted text-sm mb-4">в месяц</div>
+                <div className="text-purple-400 text-sm font-semibold mb-2">{t('home.scienceAI')}</div>
+                <div className="text-4xl font-bold text-purple-400 mb-2">{t('home.scienceAIPrice')}</div>
+                <div className="text-text-muted text-sm mb-4">{t('home.scienceAIPerMonth')}</div>
                 <div className="space-y-2 text-sm text-text-secondary">
-                  <div>⚡ Результат за 10 минут</div>
-                  <div>♾️ Безлимитные правки</div>
-                  <div>🎯 Проходит антиплагиат</div>
-                  <div>🔒 7 дней гарантия возврата</div>
+                  <div>{t('home.scienceAISpeed')}</div>
+                  <div>{t('home.scienceAIEdits')}</div>
+                  <div>{t('home.scienceAIAntiPlag')}</div>
+                  <div>{t('home.scienceAIRefund')}</div>
                 </div>
               </div>
             </motion.div>
@@ -486,14 +488,14 @@ const HomePage = () => {
               className="card border-red-500/30 bg-red-500/5"
             >
               <div className="text-center">
-                <div className="text-red-400 text-sm font-semibold mb-2">❌ Агентство</div>
-                <div className="text-4xl font-bold text-red-400 mb-2">$2000-10000</div>
-                <div className="text-text-muted text-sm mb-4">за диссертацию</div>
+                <div className="text-red-400 text-sm font-semibold mb-2">{t('home.agency')}</div>
+                <div className="text-4xl font-bold text-red-400 mb-2">{t('home.agencyPrice')}</div>
+                <div className="text-text-muted text-sm mb-4">{t('home.agencyPer')}</div>
                 <div className="space-y-2 text-sm text-text-secondary">
-                  <div>⏰ 1-3 месяца работы</div>
-                  <div>📝 Договор и NDA</div>
-                  <div>🔒 Зависимость от исполнителя</div>
-                  <div>💸 Полная предоплата</div>
+                  <div>{t('home.agencyWait')}</div>
+                  <div>{t('home.agencyContract')}</div>
+                  <div>{t('home.agencyDependency')}</div>
+                  <div>{t('home.agencyPrepay')}</div>
                 </div>
               </div>
             </motion.div>
@@ -512,7 +514,7 @@ const HomePage = () => {
               onClick={() => navigate('/auth')}
               className="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-lg shadow-lg shadow-purple-500/30"
             >
-              🚀 Начать за $5.99/мес
+              {t('home.startForPrice')}
             </motion.button>
           </motion.div>
         </div>
@@ -528,10 +530,10 @@ const HomePage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-              Что говорят студенты
+              {t('home.testimonialsTitle')}
             </h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">
-              Реальные истории успеха наших пользователей
+              {t('home.testimonialsSubtitle')}
             </p>
           </motion.div>
 
@@ -575,13 +577,13 @@ const HomePage = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-border-primary mb-4">
               <HelpCircle size={16} className="text-purple-400" />
-              <span className="text-sm text-text-secondary">Частые вопросы</span>
+              <span className="text-sm text-text-secondary">{t('home.faqBadge')}</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-              Есть вопросы?
+              {t('home.faqTitle')}
             </h2>
             <p className="text-text-secondary text-lg">
-              Ответы на самые популярные вопросы
+              {t('home.faqSubtitle')}
             </p>
           </motion.div>
 
@@ -632,10 +634,10 @@ const HomePage = () => {
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: Shield, text: 'SSL Защита', color: 'text-green-400' },
-              { icon: Lock, text: 'Данные в безопасности', color: 'text-blue-400' },
-              { icon: RefreshCw, text: '7 дней возврат', color: 'text-purple-400' },
-              { icon: CreditCard, text: 'Безопасная оплата', color: 'text-pink-400' },
+              { icon: Shield, text: t('home.trustSSL'), color: 'text-green-400' },
+              { icon: Lock, text: t('home.trustData'), color: 'text-blue-400' },
+              { icon: RefreshCw, text: t('home.trustRefund'), color: 'text-purple-400' },
+              { icon: CreditCard, text: t('home.trustPayment'), color: 'text-pink-400' },
             ].map((badge, index) => (
               <motion.div
                 key={index}
@@ -672,20 +674,20 @@ const HomePage = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 mb-6"
               >
                 <Zap size={16} className="text-amber-400" />
-                <span className="text-sm text-amber-300">Скидка 20% при оплате за год</span>
+                <span className="text-sm text-amber-300">{t('home.ctaDiscount')}</span>
               </motion.div>
 
               <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-                Начни прямо сейчас
+                {t('home.ctaTitle')}
               </h2>
               <p className="text-text-secondary text-lg mb-6 max-w-2xl mx-auto">
-                Пока ты думаешь — другие уже сдают работы, сделанные за 10 минут
+                {t('home.ctaSubtitle')}
               </p>
               
               {/* Price highlight */}
               <div className="flex items-center justify-center gap-4 mb-8">
-                <span className="text-5xl font-bold gradient-text">от $5.99</span>
-                <span className="text-lg text-text-secondary">/мес</span>
+                <span className="text-5xl font-bold gradient-text">{t('home.ctaPrice')}</span>
+                <span className="text-lg text-text-secondary">{t('home.ctaPriceUnit')}</span>
               </div>
 
               <motion.button
@@ -695,12 +697,12 @@ const HomePage = () => {
                 className="px-10 py-5 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-xl flex items-center justify-center gap-3 mx-auto shadow-lg shadow-purple-500/30"
               >
                 <Sparkles size={24} />
-                Начать прямо сейчас
+                {t('home.ctaButton')}
                 <ArrowRight size={24} />
               </motion.button>
               
               <p className="text-text-muted text-sm mt-4">
-                Безопасная оплата • 7 дней гарантия возврата
+                {t('home.ctaGuarantee')}
               </p>
             </div>
           </motion.div>
@@ -720,45 +722,45 @@ const HomePage = () => {
                 <span className="text-xl font-bold text-text-primary">Science AI</span>
               </div>
               <p className="text-text-muted text-sm">
-                AI-платформа для студентов и исследователей. Диссертации, курсовые, презентации за минуты.
+                {t('home.footerDesc')}
               </p>
             </div>
 
             {/* Product */}
             <div>
-              <h4 className="font-semibold text-text-primary mb-4">Продукт</h4>
+              <h4 className="font-semibold text-text-primary mb-4">{t('home.footerProduct')}</h4>
               <div className="space-y-2">
-                <button onClick={() => navigate('/pricing')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">Тарифы</button>
-                <button onClick={scrollToDemo} className="block text-text-muted hover:text-text-primary transition-colors text-sm">Как это работает</button>
-                <button onClick={() => navigate('/auth')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">Регистрация</button>
+                <button onClick={() => navigate('/pricing')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerPricing')}</button>
+                <button onClick={scrollToDemo} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerHowItWorks')}</button>
+                <button onClick={() => navigate('/auth')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerRegister')}</button>
               </div>
             </div>
 
             {/* Legal */}
             <div>
-              <h4 className="font-semibold text-text-primary mb-4">Информация</h4>
+              <h4 className="font-semibold text-text-primary mb-4">{t('home.footerInfo')}</h4>
               <div className="space-y-2">
-                <button onClick={() => navigate('/privacy')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">Конфиденциальность</button>
-                <button onClick={() => navigate('/terms')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">Условия использования</button>
+                <button onClick={() => navigate('/privacy')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerPrivacy')}</button>
+                <button onClick={() => navigate('/terms')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerTerms')}</button>
               </div>
             </div>
 
             {/* Contact */}
             <div>
-              <h4 className="font-semibold text-text-primary mb-4">Контакты</h4>
+              <h4 className="font-semibold text-text-primary mb-4">{t('home.footerContacts')}</h4>
               <div className="space-y-2">
                 <a href="mailto:support@science-ai.app" className="block text-text-muted hover:text-text-primary transition-colors text-sm">support@science-ai.app</a>
-                <p className="text-text-muted text-sm">Ответ в течение 24 часов</p>
+                <p className="text-text-muted text-sm">{t('home.footerResponseTime')}</p>
               </div>
             </div>
           </div>
 
           <div className="border-t border-border-primary pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-text-muted">
-              © 2026 Science AI. Все права защищены.
+              {t('home.footerCopyright')}
             </p>
             <div className="flex items-center gap-4">
-              <span className="text-xs text-text-muted">Безопасные платежи:</span>
+              <span className="text-xs text-text-muted">{t('home.footerSecurePayments')}</span>
               <div className="flex items-center gap-2">
                 <div className="px-2 py-1 rounded bg-white/10 text-xs text-text-secondary">Visa</div>
                 <div className="px-2 py-1 rounded bg-white/10 text-xs text-text-secondary">Mastercard</div>

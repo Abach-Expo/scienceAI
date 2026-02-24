@@ -5,12 +5,13 @@
 
 import * as Sentry from '@sentry/node';
 import { Request, Response, NextFunction, Application } from 'express';
+import { logger } from '../utils/logger';
 
 const SENTRY_DSN = process.env.SENTRY_DSN;
 
 export function initSentry(_app: Application) {
   if (!SENTRY_DSN) {
-    console.log('⚠️ Sentry DSN not configured, skipping initialization');
+    logger.info('Sentry DSN not configured, skipping initialization');
     return;
   }
 
@@ -67,7 +68,7 @@ export function initSentry(_app: Application) {
     ],
   });
 
-  console.log('✅ Sentry initialized for backend');
+  logger.info('Sentry initialized for backend');
 }
 
 // Request handler - add to app BEFORE routes

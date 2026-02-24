@@ -20,14 +20,12 @@
       "dest": "backend/src/index.ts"
     },
     {
-      "src": "/(.*)",
+      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|map))$",
       "dest": "web/$1"
-    }
-  ],
-  "rewrites": [
+    },
     {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "web/index.html"
     }
   ],
   "headers": [
@@ -37,7 +35,9 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(self)" }
       ]
     },
     {
@@ -47,7 +47,7 @@
       ]
     },
     {
-      "source": "/(.*).svg",
+      "source": "/(.*)\\.svg",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=604800" }
       ]

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Science AI — AI для студентов | Диссертации, курсовые, презентации</title>
-    <meta name="description" content="Science AI — ваш умный помощник для учёбы. Создавайте эссе, курсовые, диссертации и презентации за минуты. Профессиональное качество с искусственным интеллектом." />
-    <meta name="keywords" content="диссертация AI, курсовая работа нейросеть, презентация с ИИ, реферат онлайн, магистерская диссертация, антиплагиат, Science AI, написать курсовую быстро" />
+    <title>Science AI — AI Assistant for Students | Essays, Dissertations, Presentations</title>
+    <meta name="description" content="Science AI — your smart study assistant. Create essays, term papers, dissertations and presentations in minutes. Professional quality with artificial intelligence." />
+    <meta name="keywords" content="AI essay writer, dissertation assistant, presentation AI, term paper generator, academic writing, plagiarism check, Science AI" />
     <meta name="author" content="Science AI Team" />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#8B5CF6" media="(prefers-color-scheme: dark)" />
@@ -16,21 +16,21 @@
     <link rel="canonical" href="https://science-ai.app/" />
     
     <!-- Open Graph -->
-    <meta property="og:title" content="Science AI — AI помощник для студентов" />
-    <meta property="og:description" content="Создавайте академические работы с AI. Эссе, курсовые, диссертации и презентации профессионального качества — за минуты вместо дней." />
+    <meta property="og:title" content="Science AI — AI Assistant for Students" />
+    <meta property="og:description" content="Create academic papers with AI. Essays, term papers, dissertations and professional-quality presentations — in minutes instead of days." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://science-ai.app/" />
     <meta property="og:site_name" content="Science AI" />
-    <meta property="og:locale" content="ru_RU" />
-    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ru_RU" />
     <meta property="og:image" content="https://science-ai.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Science AI — AI для студентов" />
-    <meta name="twitter:description" content="Умный AI-помощник для студентов. Эссе, курсовые, диссертации и презентации — легко и быстро." />
+    <meta name="twitter:title" content="Science AI — AI for Students" />
+    <meta name="twitter:description" content="Smart AI assistant for students. Essays, term papers, dissertations and presentations — easily and quickly." />
     <meta name="twitter:image" content="https://science-ai.app/og-image.png" />
     
     <!-- PWA -->
@@ -49,7 +49,7 @@
       "name": "Science AI",
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Web, Windows, Android, iOS",
-      "description": "AI-помощник для студентов: диссертации, курсовые, рефераты, презентации с проверкой антиплагиата 95%+",
+      "description": "AI assistant for students: dissertations, term papers, reports, presentations with 95%+ plagiarism check",
       "url": "https://science-ai.app",
       "offers": [
         {
@@ -57,21 +57,21 @@
           "name": "Starter",
           "price": "5.99",
           "priceCurrency": "USD",
-          "description": "40 эссе, 30 презентаций, 200 сообщений чата в день"
+          "description": "40 essays, 30 presentations, 200 chat messages per day"
         },
         {
           "@type": "Offer",
           "name": "Pro",
           "price": "12.99",
           "priceCurrency": "USD",
-          "description": "70 эссе, 70 презентаций, 500 сообщений чата в день"
+          "description": "70 essays, 70 presentations, 500 chat messages per day"
         },
         {
           "@type": "Offer",
           "name": "Premium",
           "price": "24.99",
           "priceCurrency": "USD",
-          "description": "Безлимитные эссе, 150 презентаций, 1000 сообщений чата в день"
+          "description": "Unlimited essays, 150 presentations, 1000 chat messages per day"
         }
       ],
       "aggregateRating": {
@@ -97,12 +97,15 @@
       <div style="padding: 2rem; text-align: center; font-family: sans-serif; background: #0A0A0F; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
         <div>
           <h1 style="font-size: 1.5rem; margin-bottom: 1rem;">Science AI</h1>
-          <p>Для работы приложения необходимо включить JavaScript в настройках вашего браузера.</p>
+          <p>JavaScript is required to run this application. Please enable it in your browser settings.</p>
         </div>
       </div>
     </noscript>
-    <a href="#main-content" class="skip-to-content">Перейти к основному содержимому</a>
     <div id="root"></div>
+    <script>
+      // Set <html lang> from stored language preference
+      try { var l = localStorage.getItem('app_language'); if (l) document.documentElement.lang = l; } catch(e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

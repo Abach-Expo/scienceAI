@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
+import { getTranslation, Language } from '../i18n/translations';
 
 interface Props {
   children: ReactNode;
@@ -36,13 +37,18 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleReportBug = () => {
-    const subject = encodeURIComponent('Bug Report - Science AI');
-    const body = encodeURIComponent(`Страница: ${window.location.pathname}\nВремя: ${new Date().toLocaleString('ru-RU')}\nОписание проблемы: `);
+    const lang = (localStorage.getItem('app_language') || 'ru') as Language;
+    const te = (key: string) => getTranslation(lang, key);
+    const subject = encodeURIComponent(te('errors.bugSubject'));
+    const localeMap: Record<string, string> = { ru: 'ru-RU', en: 'en-US', kz: 'kk-KZ', de: 'de-DE', es: 'es-ES', zh: 'zh-CN' };
+    const body = encodeURIComponent(`${te('errors.bugBodyPage')}: ${window.location.pathname}\n${te('errors.bugBodyTime')}: ${new Date().toLocaleString(localeMap[lang] || 'en-US')}\n${te('errors.bugBodyDesc')}: `);
     window.open(`mailto:support@science-ai.app?subject=${subject}&body=${body}`);
   };
 
   public render() {
     if (this.state.hasError) {
+      const lang = (localStorage.getItem('app_language') || 'ru') as Language;
+      const te = (key: string) => getTranslation(lang, key);
       return (
         <div className="min-h-screen bg-bg-primary flex items-center justify-center px-6">
           {/* Background */}
@@ -61,15 +67,15 @@ class ErrorBoundary extends Component<Props, State> {
 
             {/* Title */}
             <h1 className="text-3xl font-bold text-text-primary mb-4">
-              Упс! Что-то пошло не так
+              {te('errors.title')}
             </h1>
             <p className="text-text-secondary mb-8">
-              Произошла непредвиденная ошибка. Мы уже работаем над её исправлением.
+              {te('errors.description')}
             </p>
 
             {/* Error code for support reference */}
             <p className="text-text-muted text-xs mb-8">
-              Код ошибки: {Date.now().toString(36).toUpperCase()}
+              {te('errors.errorCode')}: {Date.now().toString(36).toUpperCase()}
             </p>
 
             {/* Actions */}
@@ -79,7 +85,7 @@ class ErrorBoundary extends Component<Props, State> {
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
               >
                 <RefreshCw size={20} />
-                Перезагрузить
+                {te('errors.reload')}
               </button>
               
               <button
@@ -87,7 +93,7 @@ class ErrorBoundary extends Component<Props, State> {
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-bg-tertiary border border-border-secondary text-text-primary font-semibold flex items-center justify-center gap-2 hover:bg-bg-secondary transition-colors"
               >
                 <Home size={20} />
-                На главную
+                {te('errors.goHome')}
               </button>
             </div>
 
@@ -97,7 +103,7 @@ class ErrorBoundary extends Component<Props, State> {
               className="mt-6 text-sm text-text-muted hover:text-text-secondary flex items-center justify-center gap-2 mx-auto"
             >
               <Bug size={16} />
-              Сообщить об ошибке
+              {te('errors.reportBug')}
             </button>
           </div>
         </div>

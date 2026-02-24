@@ -59,10 +59,10 @@ interface Chat {
 }
 
 const ChatPage = () => {
-  useDocumentTitle('AI Чат');
   const navigate = useNavigate();
   const { id } = useParams();
   const { language, t } = useTranslation();
+  useDocumentTitle(t('chat.title'));
   const subscription = useSubscriptionStore();
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -110,7 +110,7 @@ const ChatPage = () => {
     }
     return {
       id: id || `chat-${Date.now()}`,
-      title: language === 'ru' ? 'Новый чат' : 'New Chat',
+      title: t('chat.newChat'),
       messages: [],
       starred: false,
       createdAt: new Date(),
@@ -191,12 +191,12 @@ const ChatPage = () => {
   }, [input]);
 
   const quickPrompts = [
-    { icon: Lightbulb, text: 'Помоги с идеей для исследования', color: 'from-yellow-500 to-orange-500', category: 'Исследование' },
-    { icon: Beaker, text: 'Объясни научную концепцию', color: 'from-green-500 to-emerald-500', category: 'Наука' },
-    { icon: Calculator, text: 'Помоги решить задачу', color: 'from-blue-500 to-cyan-500', category: 'Математика' },
-    { icon: BookOpen, text: 'Составь план обучения', color: 'from-purple-500 to-pink-500', category: 'Обучение' },
-    { icon: Languages, text: 'Переведи и проверь текст', color: 'from-rose-500 to-red-500', category: 'Языки' },
-    { icon: Code, text: 'Помоги написать код', color: 'from-indigo-500 to-violet-500', category: 'Код' },
+    { icon: Lightbulb, text: t('chat.promptResearch'), color: 'from-yellow-500 to-orange-500', category: t('chat.categoryResearch') },
+    { icon: Beaker, text: t('chat.promptScience'), color: 'from-green-500 to-emerald-500', category: t('chat.categoryScience') },
+    { icon: Calculator, text: t('chat.promptMath'), color: 'from-blue-500 to-cyan-500', category: t('chat.categoryMath') },
+    { icon: BookOpen, text: t('chat.promptStudy'), color: 'from-purple-500 to-pink-500', category: t('chat.categoryStudy') },
+    { icon: Languages, text: t('chat.promptTranslate'), color: 'from-rose-500 to-red-500', category: t('chat.categoryLanguages') },
+    { icon: Code, text: t('chat.promptCode'), color: 'from-indigo-500 to-violet-500', category: t('chat.categoryCode') },
   ];
 
   // ========== REAL AI API CALL (AI model routing) ==========
@@ -299,7 +299,7 @@ const ChatPage = () => {
 
       const responseText = await response.text();
       if (!responseText) {
-        return { content: '⚠️ Сервер временно недоступен. Попробуйте через несколько секунд.', taskType: 'chat' };
+        return { content: `⚠️ ${t('chat.serverUnavailable')}`, taskType: 'chat' };
       }
 
       const data = JSON.parse(responseText);
@@ -307,14 +307,14 @@ const ChatPage = () => {
         return { content: data.content, taskType };
       }
 
-      return { content: `⚠️ ${data.error || 'Ошибка генерации. Попробуйте ещё раз.'}`, taskType: 'chat' };
+      return { content: `⚠️ ${data.error || t('chat.generationError')}`, taskType: 'chat' };
     } catch (error: unknown) {
       // Check if request was aborted
       if (error instanceof Error && error.name === 'AbortError') {
-        return { content: '⏹️ Генерация остановлена пользователем.', taskType: 'chat' };
+        return { content: `⏹️ ${t('chat.generationStopped')}`, taskType: 'chat' };
       }
       console.error('Chat AI Error:', error);
-      return { content: `❌ Проблема с соединением. Проверьте интернет и попробуйте снова.`, taskType: 'chat' };
+      return { content: `❌ ${t('chat.connectionError')}`, taskType: 'chat' };
     }
   };
 
@@ -334,7 +334,7 @@ const ChatPage = () => {
     const limits = subscription.getLimits();
     const remaining = subscription.getRemainingLimits();
     if (remaining.chatMessages <= 0) {
-      setLimitWarning(`Дневной лимит сообщений исчерпан (${limits.chatMessagesPerDay}/день). Обновите план для продолжения.`);
+      setLimitWarning(`${t('chat.dailyLimitReached')} (${limits.chatMessagesPerDay}/${t('chat.perDay')}). ${t('chat.upgradeToContinue')}.`);
       return;
     }
 
@@ -414,7 +414,7 @@ const ChatPage = () => {
     const newChatId = `chat-${Date.now()}`;
     const newChat: Chat = {
       id: newChatId,
-      title: language === 'ru' ? 'Новый чат' : 'New Chat',
+      title: t('chat.newChat'),
       messages: [],
       starred: false,
       createdAt: new Date(),
@@ -479,7 +479,7 @@ const ChatPage = () => {
     setChat(prev => ({
       ...prev,
       messages: [],
-      title: language === 'ru' ? 'Новый чат' : 'New Chat',
+      title: t('chat.newChat'),
       updatedAt: new Date(),
     }));
     setShowMenu(false);
@@ -594,7 +594,7 @@ const ChatPage = () => {
 
   const handleExportChat = () => {
     const content = chat.messages.map(m => 
-      `${m.role === 'user' ? '👤 Вы' : '🤖 AI'}: ${m.content}`
+      `${m.role === 'user' ? `👤 ${t('chat.you')}` : '🤖 AI'}: ${m.content}`
     ).join('\n\n---\n\n');
     
     const blob = new Blob([`# ${chat.title}\n\n${content}`], { type: 'text/markdown' });
@@ -639,7 +639,7 @@ const ChatPage = () => {
         return { title: sec.title, content };
       });
     } else {
-      sections = [{ title: 'Полный текст', content: message.content }];
+      sections = [{ title: t('chat.fullText'), content: message.content }];
     }
 
     const docId = `chat-${Date.now()}`;
@@ -671,15 +671,15 @@ const ChatPage = () => {
   const formatTime = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - new Date(date).getTime();
-    if (diff < 60000) return 'только что';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} мин`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч`;
-    return new Date(date).toLocaleDateString('ru-RU');
+    if (diff < 60000) return t('chat.justNow');
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} ${t('chat.minutesShort')}`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} ${t('chat.hoursShort')}`;
+    return new Date(date).toLocaleDateString(language === 'ru' ? 'ru-RU' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : language === 'zh' ? 'zh-CN' : language === 'kz' ? 'kk-KZ' : 'en-US');
   };
 
   const formatMessageTime = (date: Date) => {
     const d = new Date(date);
-    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(language === 'ru' ? 'ru-RU' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : language === 'zh' ? 'zh-CN' : language === 'kz' ? 'kk-KZ' : 'en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   // Sanitize HTML to prevent XSS from AI-generated content
@@ -806,7 +806,7 @@ const ChatPage = () => {
               className="flex items-center gap-1.5 px-2 py-1 hover:bg-bg-tertiary rounded text-xs text-text-muted hover:text-text-primary transition-colors"
             >
               {copied === `code-${index}` ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-              {copied === `code-${index}` ? 'Скопировано!' : 'Копировать'}
+              {copied === `code-${index}` ? t('chat.copied') : t('chat.copy')}
             </button>
           </div>
           <pre className="p-4 overflow-x-auto">
@@ -840,7 +840,7 @@ const ChatPage = () => {
                 <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
                   <AlertTriangle size={24} className="text-amber-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-text-primary">Лимит исчерпан</h3>
+                <h3 className="text-lg font-semibold text-text-primary">{t('chat.limitReached')}</h3>
               </div>
               <p className="text-text-secondary mb-6">{limitWarning}</p>
               <div className="flex gap-3">
@@ -848,13 +848,13 @@ const ChatPage = () => {
                   onClick={() => setLimitWarning(null)}
                   className="flex-1 px-4 py-2 rounded-xl bg-bg-tertiary text-text-primary hover:bg-bg-primary transition-colors"
                 >
-                  Закрыть
+                  {t('common.close')}
                 </button>
                 <button
                   onClick={() => { setLimitWarning(null); navigate('/pricing'); }}
                   className="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:opacity-90 transition-opacity"
                 >
-                  Обновить план
+                  {t('chat.upgradePlan')}
                 </button>
               </div>
             </motion.div>
@@ -883,21 +883,21 @@ const ChatPage = () => {
                 <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
                   <Trash2 size={24} className="text-red-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-text-primary">Удалить чат?</h3>
+                <h3 className="text-lg font-semibold text-text-primary">{t('chat.deleteChat')}</h3>
               </div>
-              <p className="text-text-secondary mb-6">Это действие нельзя отменить. Чат и все сообщения будут удалены.</p>
+              <p className="text-text-secondary mb-6">{t('chat.deleteChatConfirm')}</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteConfirm(null)}
                   className="flex-1 px-4 py-2 rounded-xl bg-bg-tertiary text-text-primary hover:bg-bg-primary transition-colors"
                 >
-                  Отмена
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={() => confirmDeleteChat(deleteConfirm)}
                   className="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
                 >
-                  Удалить
+                  {t('common.delete')}
                 </button>
               </div>
             </motion.div>
@@ -942,7 +942,7 @@ const ChatPage = () => {
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Поиск чатов..."
+                    placeholder={t('chat.searchChats')}
                     className="w-full pl-9 pr-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
@@ -953,7 +953,8 @@ const ChatPage = () => {
                       ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400' 
                       : 'bg-bg-tertiary border-border-primary text-text-muted hover:text-text-primary'
                   }`}
-                  title={showStarredOnly ? 'Показать все' : 'Только избранные'}
+                  title={showStarredOnly ? t('chat.showAll') : t('chat.starredOnly')}
+                  aria-label={showStarredOnly ? t('chat.showAll') : t('chat.starredOnly')}
                 >
                   <Star size={16} className={showStarredOnly ? 'fill-yellow-400' : ''} />
                 </button>
@@ -963,7 +964,7 @@ const ChatPage = () => {
             <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
               {filteredChats.length > 0 && (
                 <p className="text-[11px] text-text-muted/50 uppercase tracking-widest font-semibold px-3 py-2">
-                  {showStarredOnly ? 'Избранное' : 'История'} ({filteredChats.length})
+                  {showStarredOnly ? t('chat.starred') : t('chat.history')} ({filteredChats.length})
                 </p>
               )}
               <div className="space-y-0.5">
@@ -987,7 +988,7 @@ const ChatPage = () => {
                         <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-[11px] text-text-muted/50">{formatTime(c.updatedAt)}</p>
                           {c.messages.length > 0 && (
-                            <p className="text-[11px] text-text-muted/40">{c.messages.length} сообщ.</p>
+                            <p className="text-[11px] text-text-muted/40">{c.messages.length} {t('chat.messagesShort')}</p>
                           )}
                         </div>
                       </div>
@@ -997,6 +998,7 @@ const ChatPage = () => {
                     <button
                       onClick={(e) => handleDeleteChat(c.id, e)}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-red-500/20 text-text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                      aria-label={t('chat.deleteThisChat')}
                     >
                       <Trash2 size={13} />
                     </button>
@@ -1006,7 +1008,7 @@ const ChatPage = () => {
                 {allChats.length === 0 && (
                   <div className="text-center py-8 text-text-muted/50">
                     <MessageSquare size={20} className="mx-auto mb-2 opacity-50" />
-                    <p className="text-xs">Нет чатов</p>
+                    <p className="text-xs">{t('chat.noChats')}</p>
                   </div>
                 )}
               </div>
@@ -1018,7 +1020,7 @@ const ChatPage = () => {
                 className="w-full px-3 py-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-all flex items-center gap-2"
               >
                 <ArrowLeft size={16} />
-                Вернуться в Dashboard
+                {t('chat.backToDashboard')}
               </button>
             </div>
           </motion.aside>
@@ -1034,6 +1036,7 @@ const ChatPage = () => {
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
                 className="p-2 hover:bg-bg-secondary rounded-xl transition-colors text-text-muted hover:text-text-primary"
+                aria-label={t('chat.toggleSidebar')}
               >
                 <Menu size={18} />
               </button>
@@ -1064,13 +1067,14 @@ const ChatPage = () => {
             
             <div className="flex items-center gap-2">
               <span className="text-xs text-text-muted px-2 py-1 bg-bg-secondary rounded-lg">
-                {chat.messages.length} сообщений
+                {chat.messages.length} {t('chat.messages')}
               </span>
               
               <div className="relative">
                 <button
                   onClick={() => setShowMenu(!showMenu)}
                   className="p-2 hover:bg-bg-secondary rounded-xl transition-colors"
+                  aria-label={t('chat.moreOptions')}
                 >
                   <MoreVertical size={20} />
                 </button>
@@ -1088,14 +1092,14 @@ const ChatPage = () => {
                         className="w-full px-4 py-3 text-left hover:bg-bg-tertiary flex items-center gap-3 transition-colors"
                       >
                         <Star size={18} className={chat.starred ? 'text-yellow-400 fill-yellow-400' : 'text-text-muted'} />
-                        {chat.starred ? 'Убрать из избранного' : 'В избранное'}
+                        {chat.starred ? t('chat.removeFromFavorites') : t('chat.addToFavorites')}
                       </button>
                       <button
                         onClick={handleExportChat}
                         className="w-full px-4 py-3 text-left hover:bg-bg-tertiary flex items-center gap-3 transition-colors"
                       >
                         <Download size={18} className="text-text-muted" />
-                        Экспорт в Markdown
+                        {t('chat.exportMarkdown')}
                       </button>
                       <div className="h-px bg-border-primary" />
                       <button
@@ -1103,7 +1107,7 @@ const ChatPage = () => {
                         className="w-full px-4 py-3 text-left hover:bg-red-500/10 flex items-center gap-3 text-red-400 transition-colors"
                       >
                         <Trash2 size={18} />
-                        Очистить чат
+                        {t('chat.clearChat')}
                       </button>
                     </motion.div>
                   )}
@@ -1131,7 +1135,7 @@ const ChatPage = () => {
                   transition={{ delay: 0.1 }}
                   className="text-3xl font-bold text-text-primary mb-3"
                 >
-                  Привет! Чем могу помочь?
+                  {t('chat.greeting')}
               </motion.h2>
               <motion.p 
                 initial={{ y: 20, opacity: 0 }}
@@ -1139,7 +1143,7 @@ const ChatPage = () => {
                 transition={{ delay: 0.2 }}
                 className="text-text-secondary mb-8 max-w-md mx-auto"
               >
-                Задайте вопрос, выберите быструю команду или просто начните общение
+                {t('chat.greetingSubtext')}
               </motion.p>
               
               <motion.div 
@@ -1193,7 +1197,7 @@ const ChatPage = () => {
                           {regeneratingId === message.id ? (
                             <div className="flex items-center gap-2">
                               <RefreshCw size={16} className="animate-spin text-purple-400" />
-                              <span className="text-text-muted">Генерирую новый ответ...</span>
+                              <span className="text-text-muted">{t('chat.regenerating')}</span>
                             </div>
                           ) : (
                             <>
@@ -1216,13 +1220,13 @@ const ChatPage = () => {
                               onClick={handleCancelEditMessage}
                               className="px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                             >
-                              Отмена
+                              {t('common.cancel')}
                             </button>
                             <button
                               onClick={handleSaveEditMessage}
                               className="px-3 py-1.5 text-sm bg-white/20 hover:bg-white/30 rounded-lg transition-colors font-medium"
                             >
-                              Сохранить и отправить
+                              {t('chat.saveAndSend')}
                             </button>
                           </div>
                         </div>
@@ -1241,7 +1245,8 @@ const ChatPage = () => {
                         <button
                           onClick={() => handleCopy(message.content, message.id)}
                           className="p-1.5 hover:bg-bg-secondary rounded-lg transition-colors text-text-muted hover:text-text-primary flex items-center gap-1 text-xs"
-                          title="Копировать"
+                          title={t('chat.copy')}
+                          aria-label={t('chat.copy')}
                         >
                           {copied === message.id ? (
                             <Check size={13} className="text-green-400" />
@@ -1252,7 +1257,8 @@ const ChatPage = () => {
                         <button 
                           onClick={() => handleRegenerate(message.id)}
                           className="p-1.5 hover:bg-bg-secondary rounded-lg transition-colors text-text-muted hover:text-text-primary text-xs"
-                          title="Сгенерировать заново"
+                          title={t('chat.regenerate')}
+                          aria-label={t('chat.regenerate')}
                         >
                           <RefreshCw size={13} />
                         </button>
@@ -1260,10 +1266,11 @@ const ChatPage = () => {
                           <button
                             onClick={() => handleOpenInEditor(message)}
                             className="p-1.5 hover:bg-bg-secondary rounded-lg transition-colors text-text-muted hover:text-purple-400 flex items-center gap-1 text-xs"
-                            title="Открыть в редакторе"
+                            title={t('chat.openInEditor')}
+                            aria-label={t('chat.openInEditor')}
                           >
                             <Edit3 size={13} />
-                            <span className="hidden sm:inline">В редактор</span>
+                            <span className="hidden sm:inline">{t('chat.toEditor')}</span>
                           </button>
                         )}
                         <button 
@@ -1271,7 +1278,8 @@ const ChatPage = () => {
                           className={`p-1.5 hover:bg-bg-secondary rounded-lg transition-colors text-xs ${
                             message.feedback === 'up' ? 'text-green-400 bg-green-500/10' : 'text-text-muted hover:text-green-400'
                           }`}
-                          title="Полезный ответ"
+                          title={t('chat.helpfulResponse')}
+                          aria-label={t('chat.helpfulResponse')}
                         >
                           <ThumbsUp size={13} className={message.feedback === 'up' ? 'fill-green-400' : ''} />
                         </button>
@@ -1280,7 +1288,8 @@ const ChatPage = () => {
                           className={`p-1.5 hover:bg-bg-secondary rounded-lg transition-colors text-xs ${
                             message.feedback === 'down' ? 'text-red-400 bg-red-500/10' : 'text-text-muted hover:text-red-400'
                           }`}
-                          title="Неполезный ответ"
+                          title={t('chat.unhelpfulResponse')}
+                          aria-label={t('chat.unhelpfulResponse')}
                         >
                           <ThumbsDown size={13} className={message.feedback === 'down' ? 'fill-red-400' : ''} />
                         </button>
@@ -1290,7 +1299,8 @@ const ChatPage = () => {
                         <button
                           onClick={() => handleStartEditMessage(message)}
                           className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white text-xs"
-                          title="Редактировать сообщение"
+                          title={t('chat.editMessage')}
+                          aria-label={t('chat.editMessage')}
                         >
                           <Edit3 size={13} />
                         </button>
@@ -1372,7 +1382,8 @@ const ChatPage = () => {
                       whileTap={{ scale: 0.95 }}
                       onClick={handleStop}
                       className="p-3 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
-                      title="Остановить генерацию"
+                      title={t('chat.stopGeneration')}
+                      aria-label={t('chat.stopGeneration')}
                     >
                       <StopCircle size={20} />
                     </motion.button>
@@ -1388,6 +1399,7 @@ const ChatPage = () => {
                           ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50'
                           : 'bg-bg-tertiary text-text-muted cursor-not-allowed'
                       }`}
+                      aria-label={t('chat.send')}
                     >
                       <Send size={20} />
                     </motion.button>
@@ -1398,15 +1410,15 @@ const ChatPage = () => {
             
             <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
               <p className="text-[11px] text-text-muted/40">
-                Science AI может допускать ошибки
+                {t('chat.aiDisclaimer')}
               </p>
               <span className="text-text-muted/20">•</span>
               <p className="text-[11px] text-text-muted/40">
-                Shift + Enter — новая строка
+                {t('chat.newLineHint')}
               </p>
               <span className="text-text-muted/20">•</span>
               <p className="text-[11px] text-text-muted/40">
-                {subscription.getRemainingLimits().chatMessages}/{subscription.getLimits().chatMessagesPerDay} сообщений сегодня
+                {subscription.getRemainingLimits().chatMessages}/{subscription.getLimits().chatMessagesPerDay} {t('chat.messagesToday')}
               </p>
             </div>
           </div>

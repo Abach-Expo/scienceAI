@@ -2,9 +2,11 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Home, ArrowLeft, LayoutDashboard, Presentation, CreditCard } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useTranslation } from '../store/languageStore';
 
 const NotFoundPage = () => {
-  useDocumentTitle('Страница не найдена');
+  const { t } = useTranslation();
+  useDocumentTitle(t('notFound.pageTitle'));
   const navigate = useNavigate();
 
   return (
@@ -34,11 +36,10 @@ const NotFoundPage = () => {
 
         {/* Message */}
         <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-          Страница не найдена
+          {t('notFound.title')}
         </h1>
         <p className="text-text-secondary text-lg mb-8">
-          Кажется, эта страница решила уйти на каникулы. 
-          Давай вернёмся к чему-то полезному!
+          {t('notFound.description')}
         </p>
 
         {/* Action Buttons */}
@@ -50,7 +51,7 @@ const NotFoundPage = () => {
             className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold flex items-center justify-center gap-2"
           >
             <Home size={20} />
-            На главную
+            {t('notFound.goHome')}
           </motion.button>
           
           <motion.button
@@ -60,18 +61,18 @@ const NotFoundPage = () => {
             className="w-full sm:w-auto px-6 py-3 rounded-xl glass border border-border-primary text-text-primary font-semibold flex items-center justify-center gap-2"
           >
             <ArrowLeft size={20} />
-            Назад
+            {t('notFound.goBack')}
           </motion.button>
         </div>
 
         {/* Quick Links */}
         <div className="mt-12 pt-8 border-t border-border-primary">
-          <p className="text-text-muted text-sm mb-4">Попробуй эти страницы:</p>
+          <p className="text-text-muted text-sm mb-4">{t('notFound.tryPages')}</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             {[
-              { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-              { label: 'Презентации', path: '/presentations', icon: Presentation },
-              { label: 'Тарифы', path: '/pricing', icon: CreditCard },
+              { label: t('notFound.dashboard'), path: '/dashboard', icon: LayoutDashboard },
+              { label: t('notFound.presentations'), path: '/presentations', icon: Presentation },
+              { label: t('notFound.pricing'), path: '/pricing', icon: CreditCard },
             ].map((link) => (
               <button
                 key={link.path}

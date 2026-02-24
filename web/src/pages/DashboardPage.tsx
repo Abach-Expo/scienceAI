@@ -41,9 +41,9 @@ interface UserData {
 }
 
 const DashboardPage = () => {
-  useDocumentTitle('Панель управления');
   const navigate = useNavigate();
   const { t, language } = useTranslation();
+  useDocumentTitle(t('nav.dashboard'));
   const [user, setUser] = useState<UserData | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'presentations' | 'dissertations'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -195,7 +195,7 @@ const DashboardPage = () => {
   }, [navigate]);
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('user');
+    useAuthStore.getState().logout();
     navigate('/');
   }, [navigate]);
 
@@ -282,7 +282,8 @@ const DashboardPage = () => {
     if (diff < 3600000) return `${Math.floor(diff / 60000)} ${t('time.minutesAgo')}`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} ${t('time.hoursAgo')}`;
     if (diff < 604800000) return `${Math.floor(diff / 86400000)} ${t('time.daysAgo')}`;
-    return date.toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US');
+    const localeMap: Record<string, string> = { ru: 'ru-RU', en: 'en-US', kz: 'kk-KZ', de: 'de-DE', es: 'es-ES', zh: 'zh-CN' };
+    return date.toLocaleDateString(localeMap[language] || 'en-US');
   }, [t, language]);
 
   const getTypeIcon = useCallback((type: string) => {
@@ -344,7 +345,7 @@ const DashboardPage = () => {
               }`}
             >
               <BarChart3 size={16} />
-              {language === 'ru' ? 'Виджеты' : 'Widgets'}
+              {t('dashboard.widgets')}
             </button>
           </div>
           
@@ -359,7 +360,9 @@ const DashboardPage = () => {
           <div className="flex items-center gap-2 md:gap-4">
             <div className="flex-1 relative">
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
+              <label htmlFor="dashboard-search" className="sr-only">{t('dashboard.searchPlaceholder')}</label>
               <input
+                id="dashboard-search"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

@@ -1,18 +1,23 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import { body, validationResult } from 'express-validator';
 import { prisma } from '../index';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { OAuth2Client } from 'google-auth-library';
 import { emailService } from '../services/email.service';
+import { issueTokenPair, rotateRefreshToken, revokeAllRefreshTokens } from '../utils/tokens';
 
 const router = Router();
 
 // Google OAuth client
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '706158118774-ukrop2ocg4iq23fu5npamstfquu549q2.apps.googleusercontent.com';
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+if (!GOOGLE_CLIENT_ID) {
+  logger.warn('GOOGLE_CLIENT_ID is not set. Google OAuth will not work.');
+}
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID || '');
 
 // Helper to log usage
 const logUsage = async (userId: string, action: string, req: Request, tokensUsed: number = 0, details?: Record<string, unknown>) => {
@@ -47,7 +52,10 @@ router.post(
   '/register',
   [
     body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }),
+    body('password')
+      .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+      .matches(/[0-9]/).withMessage('Password must contain at least one number'),
     body('name').trim().notEmpty()
   ],
   async (req: Request, res: Response): Promise<void> => {
@@ -96,16 +104,12 @@ router.post(
       // Send welcome email (non-blocking)
       emailService.sendWelcomeEmail(user.email, user.name).catch(() => {});
 
-      // Generate JWT
-      const token = jwt.sign(
-        { userId: user.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: '30d' }
-      );
+      // Generate token pair (short-lived access + refresh)
+      const { accessToken, refreshToken } = await issueTokenPair(user.id);
 
       res.status(201).json({
         success: true,
-        data: { user, token }
+        data: { user, token: accessToken, refreshToken }
       });
     } catch (error) {
       logger.error('Registration error:', error);
@@ -166,12 +170,8 @@ router.post(
       // Log login
       await logUsage(user.id, 'login', req, 0, { method: 'email' });
 
-      // Generate JWT
-      const token = jwt.sign(
-        { userId: user.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: '30d' }
-      );
+      // Generate token pair
+      const { accessToken, refreshToken } = await issueTokenPair(user.id);
 
       res.json({
         success: true,
@@ -183,7 +183,8 @@ router.post(
             avatar: user.avatar,
             provider: user.provider,
           },
-          token
+          token: accessToken,
+          refreshToken
         }
       });
     } catch (error) {
@@ -225,9 +226,6 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({
         success: false,
         message: 'Ошибка верификации Google токена',
-        debug: errMsg,
-        clientIdSet: !!process.env.GOOGLE_CLIENT_ID,
-        clientIdPrefix: process.env.GOOGLE_CLIENT_ID?.substring(0, 15) || 'NONE'
       });
       return;
     }
@@ -292,12 +290,8 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       await logUsage(user.id, 'register', req, 0, { method: 'google' });
     }
 
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET!,
-      { expiresIn: '30d' }
-    );
+    // Generate token pair
+    const { accessToken, refreshToken } = await issueTokenPair(user.id);
 
     res.json({
       success: true,
@@ -309,7 +303,8 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
           avatar: user.avatar,
           provider: user.provider,
         },
-        token
+        token: accessToken,
+        refreshToken
       }
     });
   } catch (error) {
@@ -318,6 +313,45 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
       success: false,
       message: 'Ошибка авторизации через Google'
     });
+  }
+});
+
+// Refresh access token using refresh token
+router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      res.status(400).json({ success: false, message: 'Refresh token required' });
+      return;
+    }
+
+    const result = await rotateRefreshToken(refreshToken);
+    if (!result) {
+      res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+      }
+    });
+  } catch (error) {
+    logger.error('Token refresh error:', error);
+    res.status(500).json({ success: false, message: 'Token refresh failed' });
+  }
+});
+
+// Logout — revoke all refresh tokens
+router.post('/logout', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    await revokeAllRefreshTokens(req.userId!);
+    res.json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    logger.error('Logout error:', error);
+    res.status(500).json({ success: false, message: 'Logout failed' });
   }
 });
 
@@ -420,8 +454,21 @@ router.get('/usage', authMiddleware, async (req: AuthRequest, res: Response): Pr
 });
 
 // Update user profile
-router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+router.put(
+  '/profile',
+  authMiddleware,
+  [
+    body('name').optional().trim().isLength({ min: 1, max: 100 }).withMessage('Name must be 1-100 characters'),
+    body('avatar').optional().trim().isURL().withMessage('Avatar must be a valid URL'),
+  ],
+  async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, errors: errors.array() });
+      return;
+    }
+
     const { name, avatar } = req.body;
     const userId = req.userId!;
 
@@ -449,9 +496,23 @@ router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response): 
   }
 });
 
+// Shared password validation rules
+const passwordValidation = [
+  body('newPassword')
+    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+    .matches(/[0-9]/).withMessage('Password must contain at least one number'),
+];
+
 // Change password (only for local users)
-router.put('/password', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/password', authMiddleware, passwordValidation, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, errors: errors.array() });
+      return;
+    }
+
     const { currentPassword, newPassword } = req.body;
     const userId = req.userId!;
 
@@ -480,6 +541,9 @@ router.put('/password', authMiddleware, async (req: AuthRequest, res: Response):
       data: { password: hashedPassword }
     });
 
+    // Revoke all refresh tokens — force re-login on all devices
+    await revokeAllRefreshTokens(userId);
+
     res.json({ success: true, message: 'Пароль успешно изменён' });
   } catch (error) {
     res.status(500).json({
@@ -490,30 +554,20 @@ router.put('/password', authMiddleware, async (req: AuthRequest, res: Response):
 });
 
 // Log AI usage (called from frontend)
-router.post('/log-usage', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { action, tokensUsed, details } = req.body;
-    const userId = req.userId!;
+const ALLOWED_USAGE_ACTIONS = new Set([
+  'chat_message', 'presentation_created', 'dissertation_generated',
+  'academic_work', 'plagiarism_check', 'image_generated', 'export',
+]);
 
-    await logUsage(userId, action, req, tokensUsed || 0, details);
-
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка логирования'
-    });
-  }
-});
-
-// Change password (authenticated user)
 router.post(
-  '/change-password',
+  '/log-usage',
+  authMiddleware,
   [
-    body('currentPassword').isLength({ min: 1 }),
-    body('newPassword').isLength({ min: 6 })
+    body('action').isString().trim().isLength({ min: 1, max: 64 }),
+    body('tokensUsed').optional().isInt({ min: 0, max: 1000000 }),
+    body('details').optional().isObject(),
   ],
-  async (req: Request, res: Response): Promise<void> => {
+  async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -521,46 +575,32 @@ router.post(
         return;
       }
 
-      // Get user from token
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        res.status(401).json({ success: false, message: 'Не авторизован' });
-        return;
-      }
-      
-      const token = authHeader.replace('Bearer ', '');
-      let decoded: { userId?: string; id?: string; email?: string; [key: string]: unknown };
-      try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId?: string; id?: string; email?: string; [key: string]: unknown };
-      } catch {
-        res.status(401).json({ success: false, message: 'Неверный токен' });
+      const { action, tokensUsed, details } = req.body;
+      const userId = req.userId!;
+
+      // Whitelist allowed actions
+      if (!ALLOWED_USAGE_ACTIONS.has(action)) {
+        res.status(400).json({ success: false, message: 'Invalid action' });
         return;
       }
 
-      const user = await prisma.user.findUnique({ where: { id: decoded.userId || decoded.id } });
-      if (!user || user.provider !== 'local' || !user.password) {
-        res.status(400).json({ success: false, message: 'Смена пароля недоступна для этого аккаунта' });
-        return;
-      }
+      // Sanitize details: only allow string/number values, strip HTML
+      const safeDetails = details
+        ? Object.fromEntries(
+            Object.entries(details)
+              .filter(([, v]) => typeof v === 'string' || typeof v === 'number')
+              .map(([k, v]) => [k.slice(0, 64), typeof v === 'string' ? v.slice(0, 500).replace(/<[^>]*>/g, '') : v])
+          )
+        : undefined;
 
-      const { currentPassword, newPassword } = req.body;
+      await logUsage(userId, action, req, tokensUsed || 0, safeDetails);
 
-      const isValid = await bcrypt.compare(currentPassword, user.password);
-      if (!isValid) {
-        res.status(400).json({ success: false, message: 'Неверный текущий пароль' });
-        return;
-      }
-
-      const hashedPassword = await bcrypt.hash(newPassword, 12);
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { password: hashedPassword }
-      });
-
-      res.json({ success: true, message: 'Пароль успешно изменён' });
+      res.json({ success: true });
     } catch (error) {
-      logger.error('Change password error:', error);
-      res.status(500).json({ success: false, message: 'Ошибка при смене пароля' });
+      res.status(500).json({
+        success: false,
+        message: 'Ошибка логирования'
+      });
     }
   }
 );
@@ -591,8 +631,8 @@ router.post(
         return;
       }
 
-      // Generate reset token (6 random digits for simplicity)
-      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+      // Generate reset token (6 cryptographically-secure random digits)
+      const resetCode = crypto.randomInt(100000, 999999).toString();
       const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       // Save reset token to user
@@ -627,7 +667,7 @@ router.post(
   [
     body('email').isEmail().normalizeEmail(),
     body('code').isLength({ min: 6, max: 6 }),
-    body('newPassword').isLength({ min: 6 })
+    ...passwordValidation,
   ],
   async (req: Request, res: Response): Promise<void> => {
     try {

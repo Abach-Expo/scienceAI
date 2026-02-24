@@ -1,9 +1,16 @@
 import { Router, Response } from 'express';
 import { query, validationResult } from 'express-validator';
 import axios from 'axios';
+import { XMLParser } from 'fast-xml-parser';
 import { prisma } from '../index';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { logger } from '../utils/logger';
+
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@_',
+  isArray: (name) => ['entry', 'author', 'link'].includes(name),
+});
 
 const router = Router();
 
@@ -52,9 +59,12 @@ router.get(
 
       const arxivUrl = process.env.ARXIV_API_URL || 'http://export.arxiv.org/api/query';
       
+      // Sanitize query: escape Lucene special characters to prevent query injection
+      const safeQuery = String(q).replace(/[+\-!(){}\[\]^"~*?:\\/]/g, '\\$&');
+
       const response = await axios.get(arxivUrl, {
         params: {
-          search_query: `all:${q}`,
+          search_query: `all:${safeQuery}`,
           start,
           max_results: maxResults,
           sortBy: 'relevance',
@@ -62,60 +72,34 @@ router.get(
         },
         headers: {
           'Accept': 'application/xml'
-        }
+        },
+        timeout: 15000, // 15s timeout to prevent hanging
       });
 
-      // Parse XML response (simplified - in production use xml2js)
+      // Parse XML response with fast-xml-parser
       const xmlData = response.data;
-      
-      // Extract entries using regex (for simplicity)
+      const parsed = xmlParser.parse(xmlData);
+      const feed = parsed.feed || parsed;
+      const rawEntries = feed.entry || [];
+
       const entries: Array<{ id: string; title: string; abstract: string; authors: string[]; published: string; year: number; url: string; source: string }> = [];
-      const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
-      let match;
 
-      while ((match = entryRegex.exec(xmlData)) !== null) {
-        const entryXml = match[1];
-        
-        const getId = (xml: string) => {
-          const m = xml.match(/<id>(.*?)<\/id>/);
-          return m ? m[1] : '';
-        };
-        
-        const getTitle = (xml: string) => {
-          const m = xml.match(/<title>([\s\S]*?)<\/title>/);
-          return m ? m[1].replace(/\s+/g, ' ').trim() : '';
-        };
-        
-        const getSummary = (xml: string) => {
-          const m = xml.match(/<summary>([\s\S]*?)<\/summary>/);
-          return m ? m[1].replace(/\s+/g, ' ').trim() : '';
-        };
-        
-        const getAuthors = (xml: string) => {
-          const authors: string[] = [];
-          const authorRegex = /<author>[\s\S]*?<name>(.*?)<\/name>[\s\S]*?<\/author>/g;
-          let authorMatch;
-          while ((authorMatch = authorRegex.exec(xml)) !== null) {
-            authors.push(authorMatch[1]);
-          }
-          return authors;
-        };
-        
-        const getPublished = (xml: string) => {
-          const m = xml.match(/<published>(.*?)<\/published>/);
-          return m ? m[1] : '';
-        };
-
-        const id = getId(entryXml);
+      for (const entry of rawEntries) {
+        const id = typeof entry.id === 'string' ? entry.id : '';
         const arxivId = id.split('/abs/').pop()?.split('v')[0] || id;
+        const title = (typeof entry.title === 'string' ? entry.title : '').replace(/\s+/g, ' ').trim();
+        const summary = (typeof entry.summary === 'string' ? entry.summary : '').replace(/\s+/g, ' ').trim();
+        const authors = (Array.isArray(entry.author) ? entry.author : entry.author ? [entry.author] : [])
+          .map((a: any) => (typeof a === 'string' ? a : a?.name || '')).filter(Boolean);
+        const published = typeof entry.published === 'string' ? entry.published : '';
 
         entries.push({
           id: arxivId,
-          title: getTitle(entryXml),
-          abstract: getSummary(entryXml),
-          authors: getAuthors(entryXml),
-          published: getPublished(entryXml),
-          year: new Date(getPublished(entryXml)).getFullYear(),
+          title,
+          abstract: summary,
+          authors,
+          published,
+          year: published ? new Date(published).getFullYear() : 0,
           url: id,
           source: 'ARXIV'
         });
@@ -245,23 +229,20 @@ router.get(
 
       // Process ArXiv results
       if (arxivResults.status === 'fulfilled') {
-        // Parse and add ArXiv results (simplified)
-        const xmlData = arxivResults.value.data;
-        const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
-        let match;
+        try {
+          const parsed = xmlParser.parse(arxivResults.value.data);
+          const feed = parsed.feed || parsed;
+          const rawEntries = feed.entry || [];
 
-        while ((match = entryRegex.exec(xmlData)) !== null) {
-          const entryXml = match[1];
-          const titleMatch = entryXml.match(/<title>([\s\S]*?)<\/title>/);
-          const idMatch = entryXml.match(/<id>(.*?)<\/id>/);
-          
-          if (titleMatch && idMatch) {
-            results.push({
-              id: idMatch[1],
-              title: titleMatch[1].replace(/\s+/g, ' ').trim(),
-              source: 'ARXIV'
-            });
+          for (const entry of rawEntries) {
+            const id = typeof entry.id === 'string' ? entry.id : '';
+            const title = (typeof entry.title === 'string' ? entry.title : '').replace(/\s+/g, ' ').trim();
+            if (id && title) {
+              results.push({ id, title, source: 'ARXIV' });
+            }
           }
+        } catch (e) {
+          logger.warn('Failed to parse ArXiv XML in combined search:', e);
         }
       }
 
