@@ -1,0 +1,9 @@
+backend/
+mobile/
+e2e/
+test-results/
+*.md
+docker-compose.yml
+Dockerfile
+nginx.conf
+playwright.config.ts

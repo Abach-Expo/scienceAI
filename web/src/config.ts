@@ -4,7 +4,7 @@
  */
 
 // API URL: use environment variable with production fallback
-export const API_URL = import.meta.env.VITE_API_URL || 'https://science-ai-backend-l1aw.vercel.app/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://api.science-ai.app/api';
 
 // Google Client ID from environment variable
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
