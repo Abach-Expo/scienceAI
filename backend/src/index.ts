@@ -76,7 +76,7 @@ initSentry(app);
 app.use(helmet({
   contentSecurityPolicy: false, // Disable for API
   crossOriginEmbedderPolicy: false,
-  crossOriginOpenerPolicy: false, // Allow Google OAuth popup
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }, // Allow Google OAuth popup
   crossOriginResourcePolicy: false, // Allow cross-origin requests
 }));
 

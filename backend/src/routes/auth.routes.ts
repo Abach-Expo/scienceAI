@@ -307,11 +307,14 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
         refreshToken
       }
     });
-  } catch (error) {
-    logger.error('Google auth error:', error);
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const errStack = error instanceof Error ? error.stack : '';
+    logger.error('Google auth error:', errMsg, errStack);
     res.status(500).json({
       success: false,
-      message: 'Ошибка авторизации через Google'
+      message: 'Ошибка авторизации через Google',
+      debug: process.env.NODE_ENV !== 'production' ? errMsg : undefined
     });
   }
 });
