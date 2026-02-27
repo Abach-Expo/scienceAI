@@ -42,7 +42,7 @@ interface WebSocketState {
   clearProgress: (taskId: string) => void;
 }
 
-const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://api.science-ai.app';
 
 export const useWebSocketStore = create<WebSocketState>((set, get) => ({
   socket: null,

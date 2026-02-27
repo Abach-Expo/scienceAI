@@ -114,7 +114,6 @@ const AuthPage = () => {
         navigate('/dashboard');
       }
     } catch (error: unknown) {
-      console.error('Google auth error:', error);
       const message = error instanceof Error ? error.message : t('auth.googleAuthFailed');
       setServerError(message);
     } finally {
@@ -237,7 +236,6 @@ const AuthPage = () => {
       saveAuthData(authData);
       navigate('/dashboard');
     } catch (error: unknown) {
-      console.error('Auth error:', error);
       const message = error instanceof Error ? error.message : t('auth.genericError');
       setServerError(message);
     } finally {
@@ -245,14 +243,7 @@ const AuthPage = () => {
     }
   };
 
-  const handleSocialLogin = async (provider: string) => {
-    setServerError(null);
-    
-    if (provider === 'GitHub') {
-      // GitHub OAuth - будет доступен позже
-      setServerError(t('auth.githubComingSoon'));
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-bg-primary flex">

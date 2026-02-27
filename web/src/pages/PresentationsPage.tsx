@@ -179,7 +179,7 @@ export function PresentationsPage() {
         const parsed = JSON.parse(saved);
         setPresentations(parsed);
       } catch (e) {
-        console.error('Error loading presentations:', e);
+        // parse error handled silently
       }
     }
   }, []);
@@ -667,7 +667,6 @@ LAYOUTS: title(слайд 1), content, content-image, image-content, full-image,
       }, 2000);
       
     } catch (error) {
-      console.error('Generation error:', error);
       setWorkspaceSteps(prev => prev.map((s, i) => 
         i === currentWorkspaceStep ? { ...s, status: 'error' } : s
       ));
@@ -1215,8 +1214,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
         parsed = JSON.parse(jsonStr);
       } catch (parseError: unknown) {
         const errMsg = parseError instanceof Error ? parseError.message : 'Unknown error';
-        console.error('JSON Parse Error:', errMsg);
-        console.error('Failed JSON:', jsonStr.substring(0, 500));
         
         // Попытка восстановить обрезанный JSON
         if (jsonStr.includes('"slides"')) {
@@ -1341,7 +1338,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
       
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error('Unknown error');
-      console.error('Generation error:', err);
       
       // Улучшенное сообщение об ошибке
       let errorMessage = '❌ **Ошибка генерации презентации**\n\n';
@@ -1434,7 +1430,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
         }]);
       }
     } catch (error) {
-      console.error('Image generation error:', error);
       updateSlide(index, { isGeneratingImage: false });
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
@@ -1474,7 +1469,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.warn('Cannot fetch image directly, trying canvas method...');
       // Альтернативный метод через canvas
       return new Promise((resolve) => {
         const img = new Image();
@@ -1619,7 +1613,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
               throw new Error('Failed to load image');
             }
           } catch (imgError) {
-            console.warn('Image load failed:', imgError);
             // Если изображение не загружается, добавляем placeholder
             pptSlide.addShape('rect', {
               x: imgX,
@@ -1723,7 +1716,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
       setIsExporting(false);
       
     } catch (error) {
-      console.error('Error exporting to PPTX:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -1939,7 +1931,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
       setIsExporting(false);
       
     } catch (error) {
-      console.error('Error exporting to PDF:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -2036,7 +2027,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
         }]);
       }
     } catch (error) {
-      console.error('AI Command Error:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -2152,7 +2142,6 @@ quoteAuthor: "Стив Джобс, основатель Apple"
         }]);
       }
     } catch (error) {
-      console.error('AI Edit Error:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -2253,7 +2242,6 @@ ${JSON.stringify(slide, null, 2)}`
             };
           }
         } catch (slideError) {
-          console.warn(`Failed to enhance slide ${i + 1}:`, slideError);
           // Оставляем слайд без изменений
         }
         
@@ -2279,7 +2267,6 @@ ${JSON.stringify(slide, null, 2)}`
       }]);
       
     } catch (error) {
-      console.error('Enhance error:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -2324,7 +2311,7 @@ ${JSON.stringify(slide, null, 2)}`
             generated++;
           }
         } catch (imgError) {
-          console.warn(`Failed to fetch image for slide ${i + 1}:`, imgError);
+          // image fetch failed, skip
         }
         
         await new Promise(r => setTimeout(r, 500)); // Rate limiting для Pexels
@@ -2347,7 +2334,6 @@ ${JSON.stringify(slide, null, 2)}`
       }]);
       
     } catch (error) {
-      console.error('Image generation error:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -2402,10 +2388,9 @@ ${JSON.stringify(slide, null, 2)}`
       if (jsonMatch) {
         try {
           setAiSuggestions(JSON.parse(jsonMatch[0]));
-        } catch (e) { /* ignore */ }
+        } catch { /* JSON parse may fail - skip gracefully */ }
       }
     } catch (error) {
-      console.error('Suggestions error:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -2522,11 +2507,10 @@ ${JSON.stringify(slide, null, 2)}`
             timestamp: new Date(),
           }]);
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
+          // JSON parse failed
         }
       }
     } catch (error) {
-      console.error('Add stats error:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -2603,11 +2587,10 @@ ${JSON.stringify(slide, null, 2)}`
             timestamp: new Date(),
           }]);
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
+          // JSON parse failed
         }
       }
     } catch (error) {
-      console.error('Add quote error:', error);
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',

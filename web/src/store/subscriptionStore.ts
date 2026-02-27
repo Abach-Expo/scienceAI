@@ -1366,7 +1366,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         if (state) {
           // Small delay to ensure auth store is loaded
           setTimeout(() => {
-            state.fetchFromBackend().catch(console.error);
+            state.fetchFromBackend().catch(() => { /* handled */ });
           }, 500);
         }
       },

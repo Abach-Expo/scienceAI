@@ -22,6 +22,7 @@ import {
 } from '../store/subscriptionStore';
 import { createCheckout, BillingPeriod } from '../services/payment';
 import { useAuthStore } from '../store/authStore';
+import { useAlert } from './ConfirmModal';
 
 interface SubscriptionModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const { currentPlan, tokensBalance, setPlan, addTokens } = useSubscriptionStore();
+  const { alert: showAlert, AlertDialog } = useAlert();
 
   const handleSelectPlan = async (planId: PlanType) => {
     try {
@@ -47,7 +49,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
       const email = useAuthStore.getState().getUserEmail();
       
       if (!email) {
-        alert('Ошибка: не найден email пользователя. Войдите в аккаунт.');
+        showAlert({ title: 'Ошибка', message: 'Не найден email пользователя. Войдите в аккаунт.', type: 'error' });
         return;
       }
 
@@ -57,12 +59,11 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         // Redirect to LemonSqueezy checkout
         window.location.href = result.checkoutUrl;
       } else {
-        alert(`Ошибка: ${result.error || 'Не удалось создать платёж'}`);
+        showAlert({ title: 'Ошибка', message: result.error || 'Не удалось создать платёж', type: 'error' });
       }
     } catch (error: unknown) {
-      console.error('Checkout error:', error);
       const message = error instanceof Error ? error.message : 'Попробуйте позже';
-      alert(`Ошибка платежа: ${message}`);
+      showAlert({ title: 'Ошибка платежа', message, type: 'error' });
     } finally {
       setLoadingPlan(null);
     }
@@ -72,8 +73,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     const pkg = TOKEN_PACKAGES.find(p => p.id === packageId);
     if (!pkg) return;
     
-    // Token purchases also go through LemonSqueezy checkout
-    alert('Покупка токенов будет доступна в следующем обновлении. Выберите план подписки.');
+    showAlert({ title: 'Скоро', message: 'Покупка токенов будет доступна в следующем обновлении. Выберите план подписки.', type: 'info' });
   };
 
   const getPlanIcon = (planId: string) => {
@@ -244,6 +244,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
           </div>
         </motion.div>
       </motion.div>
+      <AlertDialog />
     </AnimatePresence>
   );
 };

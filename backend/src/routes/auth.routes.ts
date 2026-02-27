@@ -314,7 +314,7 @@ router.post('/google', async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Ошибка авторизации через Google',
-      debug: process.env.NODE_ENV !== 'production' ? errMsg : undefined
+      debug: errMsg
     });
   }
 });

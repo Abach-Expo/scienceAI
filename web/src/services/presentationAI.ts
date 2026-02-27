@@ -549,7 +549,6 @@ export const generateAISuggestions = async (slide: SlideData, openai: OpenAIClie
     const result = JSON.parse(response.choices[0].message.content || '{}');
     return result.suggestions || [];
   } catch (e) {
-    console.error('AI suggestions error:', e);
     return [
       'Сделать заголовок более захватывающим',
       'Добавить статистику для убедительности',
@@ -592,7 +591,6 @@ export const autoEnhanceSlide = async (slide: SlideData, openai: OpenAIClient): 
       notes: result.improvedSlide?.speakerNotes || slide.notes,
     };
   } catch (e) {
-    console.error('Auto enhance error:', e);
     return slide;
   }
 };

@@ -79,7 +79,6 @@ export async function generateAI(
       provider: data.provider,
     };
   } catch (error: unknown) {
-    console.error('AI Server Error:', error);
     const message = error instanceof Error ? error.message : 'Ошибка соединения с сервером';
     return {
       content: '',

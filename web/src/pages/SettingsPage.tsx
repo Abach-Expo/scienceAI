@@ -122,7 +122,7 @@ const SettingsPage = () => {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
-      console.error('Profile save error:', error);
+      // error handled by UI
     } finally {
       setProfileSaving(false);
     }

@@ -34,7 +34,6 @@ const HomePage = () => {
   useDocumentTitle(t('home.pageTitle'));
   const navigate = useNavigate();
   const demoRef = useRef<HTMLDivElement>(null);
-  const [onlineStudents] = useState(() => Math.floor(Math.random() * 20) + 5);
   const [currentTheme, setCurrentTheme] = useState(() => {
     return document.documentElement.getAttribute('data-theme') || 'dark';
   });
@@ -100,30 +99,30 @@ const HomePage = () => {
   // Отзывы студентов
   const testimonials = [
     { 
-      name: 'Анна К.', 
-      role: 'Магистрант МГУ', 
-      text: 'Написала диссертацию за 3 дня вместо 3 месяцев. Прошла антиплагиат на 94%. Преподаватель даже похвалил за "глубину исследования". Лучшая подписка в моей жизни!', 
+      name: t('home.testimonial1Name'), 
+      role: t('home.testimonial1Role'), 
+      text: t('home.testimonial1Text'), 
       rating: 5,
       avatar: '👩‍🎓'
     },
     { 
-      name: 'Дмитрий С.', 
-      role: 'Аспирант СПбГУ', 
-      text: 'Сначала не верил, что AI может писать научные тексты. Теперь использую каждый день. Экономлю 20+ часов в неделю на рутине.', 
+      name: t('home.testimonial2Name'), 
+      role: t('home.testimonial2Role'), 
+      text: t('home.testimonial2Text'), 
       rating: 5,
       avatar: '👨‍💻'
     },
     { 
-      name: 'Елена М.', 
-      role: 'Студентка 4 курса', 
-      text: 'Курсовую сделала за вечер! Всё структурировано, с источниками, оформление по ГОСТу. Одногруппники думают, что я гений 😅', 
+      name: t('home.testimonial3Name'), 
+      role: t('home.testimonial3Role'), 
+      text: t('home.testimonial3Text'), 
       rating: 5,
       avatar: '👩‍💼'
     },
     { 
-      name: 'Артём В.', 
-      role: 'Преподаватель', 
-      text: 'Использую для подготовки лекций и презентаций. 50 слайдов с анимациями за 10 минут — это магия!', 
+      name: t('home.testimonial4Name'), 
+      role: t('home.testimonial4Role'), 
+      text: t('home.testimonial4Text'), 
       rating: 5,
       avatar: '👨‍🏫'
     },
@@ -131,35 +130,20 @@ const HomePage = () => {
 
   // Статистика
   const stats = [
-    { value: '5,000+', label: t('home.statStudents') },
-    { value: '15,000+', label: t('home.statWorksCreated') },
-    { value: '94%', label: t('home.statAntiPlagiarism') },
-    { value: '10 мин', label: t('home.statAvgTime') },
+    { value: t('home.statStudentsValue'), label: t('home.statStudents') },
+    { value: t('home.statWorksValue'), label: t('home.statWorksCreated') },
+    { value: t('home.statAntiPlagValue'), label: t('home.statAntiPlagiarism') },
+    { value: t('home.statAvgTimeValue'), label: t('home.statAvgTime') },
   ];
 
   // FAQ для снятия возражений
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const faqs = [
-    {
-      question: 'Это действительно проходит антиплагиат?',
-      answer: 'Да! Наш AI использует уникальные алгоритмы генерации текста + встроенный обход AI-детекторов. Средняя уникальность — 94%+. Мы проверяем каждую работу перед отправкой.'
-    },
-    {
-      question: 'Сколько времени занимает создание диссертации?',
-      answer: 'Генерация структуры — 5 минут, полная диссертация с источниками — 15-30 минут в зависимости от объёма. Это в 1000 раз быстрее ручного написания.'
-    },
-    {
-      question: 'Можно ли редактировать сгенерированный текст?',
-      answer: 'Конечно! Вы получаете полный контроль над текстом. Можете редактировать, добавлять свои идеи, менять структуру. AI — это инструмент, а не замена вашего мышления.'
-    },
-    {
-      question: 'Что если меня поймают?',
-      answer: 'Наш AI генерирует уникальный текст, который не копирует существующие работы. Встроенная "гуманизация" делает текст неотличимым от написанного человеком. Система прошла тысячи проверок — 0 случаев обнаружения.'
-    },
-    {
-      question: 'Есть ли гарантия возврата денег?',
-      answer: 'Да! 7 дней гарантии возврата без вопросов. Если сервис вам не подошёл — напишите в поддержку, и мы вернём деньги в течение 24 часов.'
-    },
+    { question: t('home.faq1Q'), answer: t('home.faq1A') },
+    { question: t('home.faq2Q'), answer: t('home.faq2A') },
+    { question: t('home.faq3Q'), answer: t('home.faq3A') },
+    { question: t('home.faq4Q'), answer: t('home.faq4A') },
+    { question: t('home.faq5Q'), answer: t('home.faq5A') },
   ];
 
   return (
@@ -211,23 +195,7 @@ const HomePage = () => {
         </div>
       </motion.nav>
 
-      {/* Live Activity Indicator */}
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 2 }}
-        className="fixed bottom-6 left-6 z-40 hidden md:block"
-      >
-        <div className="glass border border-border-primary rounded-2xl p-4 max-w-xs">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs text-green-400">{t('home.onlineNow')}</span>
-          </div>
-          <p className="text-sm text-text-secondary">
-            <span className="text-text-primary font-semibold">{onlineStudents} {t('home.studentsOnline')}</span> {t('home.studentsCreating')}
-          </p>
-        </div>
-      </motion.div>
+
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-6 pt-20">

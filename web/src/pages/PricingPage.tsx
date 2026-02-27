@@ -23,7 +23,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { useSubscriptionStore, PlanType } from '../store/subscriptionStore';
-import ConfirmModal, { AlertModal } from '../components/ConfirmModal';
+import ConfirmModal, { AlertModal, useAlert } from '../components/ConfirmModal';
 import { useTranslation } from '../store/languageStore';
 
 const PricingPage = () => {
@@ -32,6 +32,7 @@ const PricingPage = () => {
   const navigate = useNavigate();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   const subscription = useSubscriptionStore();
+  const { alert: showAlert, AlertDialog: PaymentAlertDialog } = useAlert();
 
   // 🎯 ПЛАНЫ С МАРЖОЙ 40%
   // Цены синхронизированы с backend/usage.middleware.ts
@@ -179,21 +180,20 @@ const PricingPage = () => {
           window.location.href = data.checkoutUrl;
           return;
         } else {
-          alert(`Ошибка: ${data.error || 'Не удалось создать платёж. Попробуйте позже.'}`);
+          showAlert({ title: t('pricing.paymentError'), message: data.error || t('pricing.paymentFailedRetry'), type: 'error' });
         }
       } catch (error: unknown) {
-        console.error('Payment error:', error);
-        alert('Ошибка подключения к платёжной системе. Проверьте интернет-соединение.');
+        showAlert({ title: t('pricing.paymentError'), message: t('pricing.connectionError'), type: 'error' });
       }
     }
     setSubscribeModal({ open: false, planId: null, plan: null, price: 0, period: '' });
   };
 
-  // Статистика (обновляется с реальными данными)
+  // Статистика
   const stats = [
-    { value: '99.9%', label: 'ДОСТУПНОСТЬ', color: 'text-purple-400' },
-    { value: '10K+', label: 'ПРЕЗЕНТАЦИЙ', color: 'text-pink-400' },
-    { value: '<1s', label: 'ВРЕМЯ ОТКЛИКА', color: 'text-purple-400' },
+    { value: '99.9%', label: t('pricing.trustUptime').toUpperCase(), color: 'text-purple-400' },
+    { value: '10K+', label: t('pricing.featurePresTitle').toUpperCase(), color: 'text-pink-400' },
+    { value: '<1s', label: t('pricing.trustUptime') === '99.9% uptime' ? 'RESPONSE TIME' : 'ВРЕМЯ ОТКЛИКА', color: 'text-purple-400' },
   ];
 
   return (
@@ -213,7 +213,7 @@ const PricingPage = () => {
           aria-label={t('common.back')}
         >
           <ArrowLeft size={20} />
-          <span>Назад</span>
+          <span>{t('pricing.back')}</span>
         </motion.button>
 
         <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ const PricingPage = () => {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-sm mb-8"
         >
           <Star size={14} className="fill-current" />
-          Доверяют 5,000+ пользователей
+          {t('pricing.trustedBy')}
         </motion.div>
 
         <motion.h1
@@ -251,9 +251,9 @@ const PricingPage = () => {
           transition={{ delay: 0.2 }}
           className="text-4xl md:text-6xl font-bold mb-6"
         >
-          Создавай умнее.{' '}
+          {t('pricing.heroTitle')}{' '}
           <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-            Делай быстрее.
+            {t('pricing.heroHighlight')}
           </span>
         </motion.h1>
 
@@ -263,8 +263,7 @@ const PricingPage = () => {
           transition={{ delay: 0.3 }}
           className="text-text-secondary text-lg max-w-2xl mx-auto mb-12"
         >
-          AI платформа для создания презентаций и научных работ.
-          От идеи до результата за минуты.
+          {t('pricing.heroSubtitle')}
         </motion.p>
 
         {/* Stats */}
@@ -300,7 +299,7 @@ const PricingPage = () => {
           className="flex items-center justify-center gap-4 mb-4"
         >
           <span className={`text-sm font-medium transition-colors ${billingPeriod === 'monthly' ? 'text-text-primary' : 'text-text-muted'}`}>
-            Месяц
+            {t('pricing.monthly')}
           </span>
           
           <button
@@ -315,7 +314,7 @@ const PricingPage = () => {
           </button>
           
           <span className={`text-sm font-medium transition-colors ${billingPeriod === 'yearly' ? 'text-text-primary' : 'text-text-muted'}`}>
-            Год
+            {t('pricing.yearly')}
           </span>
         </motion.div>
 
@@ -329,7 +328,7 @@ const PricingPage = () => {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-sm text-green-400"
             >
               <TrendingUp size={14} />
-              Скидка 20% при оплате за год
+              {t('pricing.yearlyDiscount')}
             </motion.div>
           )}
         </AnimatePresence>
@@ -364,7 +363,7 @@ const PricingPage = () => {
                     transition={{ delay: 0.8 }}
                     className="absolute -top-3 right-6 px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-xs font-medium"
                   >
-                    Выбор #1
+                    {t('pricing.popular')}
                   </motion.div>
                 )}
 
@@ -459,7 +458,7 @@ const PricingPage = () => {
                   {isCurrentPlan ? (
                     <>
                       <Check size={16} />
-                      Текущий план
+                      {t('pricing.currentPlan')}
                     </>
                   ) : (
                     <>
@@ -510,9 +509,9 @@ const PricingPage = () => {
             viewport={{ once: true }}
             className="text-3xl font-bold text-center mb-4"
           >
-            Всё что нужно для{' '}
+            {t('pricing.featuresTitle')}{' '}
             <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-              успешной работы
+              {t('pricing.featuresHighlight')}
             </span>
           </motion.h2>
           
@@ -523,27 +522,27 @@ const PricingPage = () => {
             transition={{ delay: 0.1 }}
             className="text-text-secondary text-center max-w-2xl mx-auto mb-16"
           >
-            Мощные AI инструменты для создания презентаций, диссертаций и научных работ
+            {t('pricing.featuresSubtitle')}
           </motion.p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
                 icon: <Layers size={24} />,
-                title: 'AI Презентации',
-                description: 'Создавайте профессиональные презентации за минуты с помощью искусственного интеллекта',
+                title: t('pricing.featurePresTitle'),
+                description: t('pricing.featurePresDesc'),
                 gradient: 'from-purple-500 to-pink-500',
               },
               {
                 icon: <FileText size={24} />,
-                title: 'Редактор диссертаций',
-                description: 'Пишите научные работы с умным помощником, который понимает контекст',
+                title: t('pricing.featureDissTitle'),
+                description: t('pricing.featureDissDesc'),
                 gradient: 'from-blue-500 to-cyan-500',
               },
               {
                 icon: <ImageIcon size={24} />,
-                title: 'AI изображения',
-                description: 'Генерируйте уникальные иллюстрации для ваших презентаций',
+                title: t('pricing.featureImgTitle'),
+                description: t('pricing.featureImgDesc'),
                 gradient: 'from-orange-500 to-red-500',
               },
             ].map((feature, index) => (
@@ -577,10 +576,10 @@ const PricingPage = () => {
             className="flex items-center justify-center gap-8 flex-wrap"
           >
             {[
-              { icon: <Shield size={20} />, text: 'SSL защита' },
-              { icon: <Clock size={20} />, text: 'Возврат 24ч' },
-              { icon: <Users size={20} />, text: '5,000+ пользователей' },
-              { icon: <TrendingUp size={20} />, text: '99.9% uptime' },
+              { icon: <Shield size={20} />, text: t('pricing.trustSSL') },
+              { icon: <Clock size={20} />, text: t('pricing.trustRefund') },
+              { icon: <Users size={20} />, text: t('pricing.trustUsers') },
+              { icon: <TrendingUp size={20} />, text: t('pricing.trustUptime') },
             ].map((item, index) => (
               <motion.div
                 key={item.text}
@@ -607,10 +606,10 @@ const PricingPage = () => {
           className="max-w-4xl mx-auto text-center p-12 rounded-3xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30"
         >
           <h2 className="text-3xl font-bold mb-4">
-            Готовы начать?
+            {t('pricing.ctaTitle')}
           </h2>
           <p className="text-text-secondary mb-8">
-            Присоединяйтесь к тысячам пользователей, которые уже используют Science AI
+            {t('pricing.ctaSubtitle')}
           </p>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -618,7 +617,7 @@ const PricingPage = () => {
             onClick={() => handleSelectPlan('pro')}
             className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow"
           >
-            Начать с Pro →
+            {t('pricing.ctaButton')}
           </motion.button>
         </motion.div>
       </section>
@@ -626,13 +625,13 @@ const PricingPage = () => {
       {/* Footer */}
       <footer className="px-6 py-8 border-t border-border-primary">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-text-muted text-sm">© 2026 Science AI. Все права защищены.</p>
+          <p className="text-text-muted text-sm">{t('pricing.footerCopyright')}</p>
           <div className="flex items-center gap-6 text-sm">
             <button onClick={() => navigate('/privacy')} className="text-text-muted hover:text-text-primary transition-colors">
-              Конфиденциальность
+              {t('pricing.privacyLink')}
             </button>
             <button onClick={() => navigate('/terms')} className="text-text-muted hover:text-text-primary transition-colors">
-              Условия
+              {t('pricing.termsLink')}
             </button>
           </div>
         </div>
@@ -643,10 +642,10 @@ const PricingPage = () => {
         isOpen={subscribeModal.open}
         onClose={() => setSubscribeModal({ open: false, planId: null, plan: null, price: 0, period: '' })}
         onConfirm={confirmSubscription}
-        title={`Подписка на ${subscribeModal.plan?.name}`}
+        title={`${t('pricing.subscribeTo')} ${subscribeModal.plan?.name}`}
         message={
           <div className="space-y-3">
-            <p>Вы получите доступ к премиум функциям:</p>
+            <p>{t('pricing.subscribeFeatures')}</p>
             <ul className="list-disc list-inside text-text-secondary space-y-1 text-sm">
               <li>Расширенные лимиты презентаций</li>
               <li>AI-генерация изображений</li>
@@ -660,8 +659,8 @@ const PricingPage = () => {
             </div>
           </div>
         }
-        confirmText="Оформить подписку"
-        cancelText="Отмена"
+        confirmText={t('pricing.subscribeButton')}
+        cancelText={t('pricing.cancelButton')}
         type="info"
       />
 
@@ -671,11 +670,12 @@ const PricingPage = () => {
           setSuccessModal(false);
           navigate('/dashboard');
         }}
-        title="Подписка активирована! 🎉"
-        message="Поздравляем! Теперь вам доступны все премиум функции. Приятного использования!"
-        buttonText="Начать работу"
+        title={t('pricing.successTitle')}
+        message={t('pricing.successMessage')}
+        buttonText={t('pricing.successButton')}
         type="success"
       />
+      <PaymentAlertDialog />
     </div>
   );
 };

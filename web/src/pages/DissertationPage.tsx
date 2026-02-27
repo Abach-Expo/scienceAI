@@ -55,6 +55,7 @@ import {
 } from 'lucide-react';
 import { useSubscriptionStore, SUBSCRIPTION_PLANS, PLAN_LIMITS } from '../store/subscriptionStore';
 import PlagiarismChecker from '../components/PlagiarismChecker';
+import { useConfirm } from '../components/ConfirmModal';
 import { lazy, Suspense } from 'react';
 const AIDetectionChecker = lazy(() => import('../components/AIDetectionChecker'));
 const AntiAIDetectionLazy = lazy(() => import('../components/AntiAIDetection').then(m => ({ default: m.AntiAIDetection })));
@@ -68,6 +69,7 @@ const DissertationPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const contentRef = useRef<HTMLDivElement>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abstractTextareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -3035,10 +3037,9 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   <Plus size={12} className="text-text-muted" />
                 </button>
                 <button
-                  onClick={() => {
-                    if (window.confirm(`Удалить "${chapter.title}"?`)) {
-                      deleteChapter(chapter.id);
-                    }
+                  onClick={async () => {
+                    const yes = await confirm({ title: 'Удаление главы', message: `Удалить "${chapter.title}"?`, type: 'danger', confirmText: 'Удалить', cancelText: 'Отмена' });
+                    if (yes) deleteChapter(chapter.id);
                   }}
                   className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover:opacity-100"
                   title="Удалить главу"
@@ -3070,11 +3071,10 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                         {sub.title}
                       </button>
                         <button
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            if (window.confirm(`Удалить "${sub.title}"?`)) {
-                              deleteSubchapter(chapter.id, sub.id);
-                            }
+                            const yes = await confirm({ title: 'Удаление подраздела', message: `Удалить "${sub.title}"?`, type: 'danger', confirmText: 'Удалить', cancelText: 'Отмена' });
+                            if (yes) deleteSubchapter(chapter.id, sub.id);
                           }}
                           className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover/sub:opacity-100"
                           title="Удалить подраздел"
@@ -4047,6 +4047,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
         tourId="dissertation-editor"
         onComplete={() => {}}
       />
+      <ConfirmDialog />
     </div>
   );
 };

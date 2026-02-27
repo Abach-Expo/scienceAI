@@ -9,7 +9,7 @@ const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 
 export function initSentry() {
   if (!SENTRY_DSN) {
-    console.log('Sentry DSN not configured, skipping initialization');
+    if (import.meta.env.DEV) console.log('Sentry DSN not configured, skipping initialization');
     return;
   }
 
@@ -97,7 +97,7 @@ export function initSentry() {
     sendDefaultPii: false,
   });
 
-  console.log('✅ Sentry initialized');
+  if (import.meta.env.DEV) console.log('✅ Sentry initialized');
 }
 
 // Export Sentry for manual error capturing

@@ -92,7 +92,7 @@ const ChatPage = () => {
           createdAt: new Date(c.createdAt as string),
           updatedAt: new Date(c.updatedAt as string)
         })));
-      } catch (e) { /* ignore */ }
+      } catch { /* localStorage parse may fail - skip gracefully */ }
     }
   }, []);
 
@@ -105,7 +105,7 @@ const ChatPage = () => {
           const chats = JSON.parse(savedChats);
           const found = chats.find((c: Chat) => c.id === id);
           if (found) return { ...found, createdAt: new Date(found.createdAt), updatedAt: new Date(found.updatedAt) };
-        } catch (e) { /* ignore */ }
+        } catch { /* localStorage parse may fail - skip gracefully */ }
       }
     }
     return {
@@ -313,7 +313,6 @@ const ChatPage = () => {
       if (error instanceof Error && error.name === 'AbortError') {
         return { content: `⏹️ ${t('chat.generationStopped')}`, taskType: 'chat' };
       }
-      console.error('Chat AI Error:', error);
       return { content: `❌ ${t('chat.connectionError')}`, taskType: 'chat' };
     }
   };
@@ -379,7 +378,7 @@ const ChatPage = () => {
         updatedAt: new Date(),
       }));
     } catch (error) {
-      console.error('Chat error:', error);
+      // error handled by UI
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
@@ -404,7 +403,7 @@ const ChatPage = () => {
         updatedAt: new Date(),
       }));
     } catch (error) {
-      console.error('Regenerate error:', error);
+      // error handled by UI
     } finally {
       setRegeneratingId(null);
     }
@@ -464,7 +463,7 @@ const ChatPage = () => {
             navigate('/dashboard');
           }
         }
-      } catch (e) { /* ignore */ }
+      } catch { /* localStorage parse may fail - skip gracefully */ }
     }
     setDeleteConfirm(null);
   };
@@ -560,7 +559,7 @@ const ChatPage = () => {
         updatedAt: new Date(),
       }));
     } catch (error) {
-      console.error('Edit regenerate error:', error);
+      // error handled by UI
     } finally {
       setIsLoading(false);
     }

@@ -100,16 +100,16 @@ const DashboardPage = () => {
             const lastMsg = chat.messages?.length ? chat.messages[chat.messages.length - 1] : null;
             allItems.push({
               id: chat.id,
-              title: chat.title || 'Новый чат',
+              title: chat.title || t('dashboard.newChat'),
               lastMessage: lastMsg
                 ? lastMsg.content.slice(0, 50) + '...'
-                : 'Начните общение...',
+                : t('chat.greeting'),
               timestamp: new Date(chat.updatedAt || chat.createdAt || Date.now()),
               type: 'chat',
               starred: chat.starred || false,
             });
           });
-        } catch (e) { /* ignore */ }
+        } catch { /* localStorage parse may fail - skip gracefully */ }
       }
       
       const savedPresentations = localStorage.getItem('science-ai-presentations');
@@ -119,14 +119,14 @@ const DashboardPage = () => {
           presentations.forEach((pres: { id: string; title?: string; slides?: unknown[]; updatedAt?: string; createdAt?: string; starred?: boolean }) => {
             allItems.push({
               id: pres.id,
-              title: pres.title || 'Презентация',
-              lastMessage: `${pres.slides?.length || 0} слайдов`,
+              title: pres.title || t('dashboard.newPresentation'),
+              lastMessage: `${pres.slides?.length || 0} ${t('presentations.slides')}`,
               timestamp: new Date(pres.updatedAt || pres.createdAt || Date.now()),
               type: 'presentation',
               starred: pres.starred || false,
             });
           });
-        } catch (e) { /* ignore */ }
+        } catch { /* localStorage parse may fail - skip gracefully */ }
       }
       
       const savedDissertations = localStorage.getItem('dissertations');
@@ -136,14 +136,14 @@ const DashboardPage = () => {
           dissertations.forEach((diss: { id: string; title?: string; wordCount?: number; updatedAt?: string; createdAt?: string; starred?: boolean }) => {
             allItems.push({
               id: diss.id,
-              title: diss.title || 'Диссертация',
-              lastMessage: `${diss.wordCount || 0} слов`,
+              title: diss.title || t('dashboard.newDissertation'),
+              lastMessage: `${diss.wordCount || 0} ${t('academicWorks.words')}`,
               timestamp: new Date(diss.updatedAt || diss.createdAt || Date.now()),
               type: 'dissertation',
               starred: diss.starred || false,
             });
           });
-        } catch (e) { /* ignore */ }
+        } catch { /* localStorage parse may fail - skip gracefully */ }
       }
       
       allItems.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -160,7 +160,7 @@ const DashboardPage = () => {
           dissertations.forEach((d: { wordCount?: number }) => {
             totalWords += d.wordCount || 0;
           });
-        } catch (e) { /* ignore */ }
+        } catch { /* localStorage parse may fail - skip gracefully */ }
       }
       
       const aiRequests = parseInt(localStorage.getItem('ai_requests_count') || '0');
@@ -233,7 +233,7 @@ const DashboardPage = () => {
           localStorage.setItem('dissertations', JSON.stringify(list));
         }
       }
-    } catch (e) { /* ignore */ }
+    } catch { /* localStorage parse may fail - skip gracefully */ }
     
     setItems(prev => prev.filter(item => item.id !== id));
   }, []);
@@ -248,7 +248,7 @@ const DashboardPage = () => {
         );
         localStorage.setItem(storageKey, JSON.stringify(list));
       }
-    } catch (e) { /* ignore */ }
+    } catch { /* localStorage parse may fail - skip gracefully */ }
     
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, starred: !item.starred } : item

@@ -616,7 +616,6 @@ Return JSON:
       
       return JSON.parse(content);
     } catch (error) {
-      console.error('AI Engine error:', error);
       throw error;
     }
   }

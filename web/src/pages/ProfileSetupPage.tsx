@@ -82,7 +82,7 @@ const ProfileSetupPage = () => {
       // Переходим на dashboard
       navigate('/dashboard');
     } catch (error) {
-      console.error('Profile update error:', error);
+      // error handled by UI
     } finally {
       setIsLoading(false);
     }

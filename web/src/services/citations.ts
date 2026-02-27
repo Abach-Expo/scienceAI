@@ -268,7 +268,6 @@ export const searchCrossRef = async (query: string, limit = 10): Promise<Source[
       type: mapCrossRefType(work.type),
     }));
   } catch (error) {
-    console.error('CrossRef search error:', error);
     return [];
   }
 };
@@ -311,7 +310,6 @@ export const searchSemanticScholar = async (query: string, limit = 10): Promise<
       type: 'article',
     }));
   } catch (error) {
-    console.error('Semantic Scholar search error:', error);
     return [];
   }
 };
@@ -344,7 +342,6 @@ export const searchOpenAlex = async (query: string, limit = 10): Promise<Source[
       type: mapOpenAlexType(work.type),
     }));
   } catch (error) {
-    console.error('OpenAlex search error:', error);
     return [];
   }
 };
