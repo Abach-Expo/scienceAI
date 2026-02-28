@@ -193,8 +193,12 @@ const AuthPage = () => {
     
     if (!formData.password) {
       newErrors.password = t('auth.validationPasswordRequired');
-    } else if (formData.password.length < 6) {
+    } else if (formData.password.length < 8) {
       newErrors.password = t('auth.validationPasswordShort');
+    } else if (mode === 'register' && !/[A-Z]/.test(formData.password)) {
+      newErrors.password = t('auth.validationPasswordUppercase');
+    } else if (mode === 'register' && !/[0-9]/.test(formData.password)) {
+      newErrors.password = t('auth.validationPasswordNumber');
     }
     
     if (mode === 'register' && formData.password !== formData.confirmPassword) {
@@ -228,6 +232,11 @@ const AuthPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle validation errors array from backend
+        if (data.errors && Array.isArray(data.errors)) {
+          const firstError = data.errors[0];
+          throw new Error(firstError?.msg || firstError?.message || t('auth.authError'));
+        }
         throw new Error(data.message || data.error || t('auth.authError'));
       }
 
