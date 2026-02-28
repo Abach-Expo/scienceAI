@@ -40,6 +40,7 @@ import {
   FileDown,
   Sparkles,
   FileText,
+  Paperclip,
   Lock,
   Rocket,
   Zap,
@@ -59,6 +60,8 @@ import { useConfirm } from '../components/ConfirmModal';
 import { lazy, Suspense } from 'react';
 const AIDetectionChecker = lazy(() => import('../components/AIDetectionChecker'));
 const AntiAIDetectionLazy = lazy(() => import('../components/AntiAIDetection').then(m => ({ default: m.AntiAIDetection })));
+
+import { parseFile, formatFileForPrompt, ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, formatFileSize, type ParsedFile } from '../utils/fileParser';
 
 // Extracted dissertation modules
 import type { Chapter, DocumentType, DocumentTypeConfig, Dissertation, Citation, AIMessage } from './dissertation';
@@ -88,6 +91,9 @@ const DissertationPage = () => {
   const [showAIPanel, setShowAIPanel] = useState(true);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<ParsedFile[]>([]);
+  const [isParsingFile, setIsParsingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -1550,28 +1556,97 @@ ${selectedChapter
   };
 
   // ================== AI ФУНКЦИИ ==================
+  // File attachment handlers
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsParsingFile(true);
+    const newFiles: ParsedFile[] = [];
+
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        setAiMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `⚠️ Файл "${file.name}" слишком большой (${formatFileSize(file.size)}). Максимум: ${formatFileSize(MAX_FILE_SIZE)}`,
+          timestamp: new Date(),
+        }]);
+        continue;
+      }
+
+      try {
+        const parsed = await parseFile(file);
+        newFiles.push(parsed);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Не удалось прочитать файл';
+        setAiMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `❌ ${file.name}: ${msg}`,
+          timestamp: new Date(),
+        }]);
+      }
+    }
+
+    if (newFiles.length > 0) {
+      setAttachedFiles(prev => [...prev, ...newFiles]);
+    }
+
+    setIsParsingFile(false);
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeAttachedFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleAIGenerate = async () => {
-    if (!aiPrompt.trim()) return;
+    const hasFiles = attachedFiles.length > 0;
+    if (!aiPrompt.trim() && !hasFiles) return;
+    
+    // Build prompt with file content
+    let fullPrompt = aiPrompt.trim();
+    if (hasFiles) {
+      const fileContents = attachedFiles.map(f => formatFileForPrompt(f)).join('\n\n');
+      fullPrompt = fullPrompt
+        ? `${fullPrompt}\n\n${fileContents}`
+        : `Проанализируй прикреплённые файлы:\n\n${fileContents}`;
+    }
+
+    // User-visible message
+    const displayMessage = aiPrompt.trim() 
+      ? (hasFiles ? `${aiPrompt.trim()}\n\n📎 ${attachedFiles.map(f => f.name).join(', ')}` : aiPrompt.trim())
+      : `📎 ${attachedFiles.map(f => f.name).join(', ')}`;
+    
+    // Clear attachments immediately
+    const currentAttachedFiles = [...attachedFiles];
+    setAttachedFiles([]);
     
     // Умный анализ намерения
-    const intentAnalysis = await analyzeIntentWithAI(aiPrompt);
+    const intentAnalysis = await analyzeIntentWithAI(fullPrompt);
     
     // Если это не генерация — обрабатываем как разговор
     if (!intentAnalysis.intent.startsWith('generate_')) {
-      const handled = await handleSmartResponse(aiPrompt, intentAnalysis);
+      // Temporarily set aiPrompt to fullPrompt for handleSmartResponse
+      const originalPrompt = aiPrompt;
+      setAiPrompt(fullPrompt);
+      const handled = await handleSmartResponse(fullPrompt, intentAnalysis);
       if (handled) {
         setAiPrompt('');
         return;
       }
+      setAiPrompt(originalPrompt);
     }
     
     // Проверяем, нужно ли уточнение перед генерацией
-    if (intentAnalysis.clarificationNeeded && intentAnalysis.confidence < 0.7) {
+    if (intentAnalysis.clarificationNeeded && intentAnalysis.confidence < 0.7 && !hasFiles) {
       setAiMessages(prev => [...prev, 
         {
           id: Date.now().toString(),
           role: 'user',
-          content: aiPrompt,
+          content: displayMessage,
           timestamp: new Date(),
         },
         {
@@ -1598,12 +1673,12 @@ ${!selectedChapter
     setAiMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'user',
-      content: aiPrompt,
+      content: displayMessage,
       timestamp: new Date(),
     }]);
     
     // Генерируем без дублирования сообщения
-    const result = await generateHumanText(aiPrompt, getSelectedContent().content, { skipUserMessage: true });
+    const result = await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
     if (result) {
       setAiPrompt('');
     }
@@ -3645,6 +3720,41 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   
                   {/* Input */}
                   <div className="p-4 border-t border-border-primary">
+                    {/* Attached files preview */}
+                    {attachedFiles.length > 0 && (
+                      <div className="mb-2 space-y-1">
+                        {attachedFiles.map((file, index) => (
+                          <div
+                            key={`${file.name}-${index}`}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs"
+                          >
+                            <FileText size={14} className="text-purple-400 shrink-0" />
+                            <span className="text-text-primary truncate flex-1">{file.name}</span>
+                            <span className="text-text-muted shrink-0">{formatFileSize(file.size)}</span>
+                            {file.truncated && (
+                              <span className="text-yellow-400 shrink-0" title="Файл обрезан из-за размера">⚠️</span>
+                            )}
+                            <button
+                              onClick={() => removeAttachedFile(index)}
+                              className="p-0.5 hover:bg-red-500/20 rounded transition-colors shrink-0"
+                            >
+                              <X size={12} className="text-red-400" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept={ACCEPTED_FILE_TYPES}
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    
                     <div className="relative">
                       <textarea
                         value={aiPrompt}
@@ -3655,16 +3765,30 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                             handleAIGenerate();
                           }
                         }}
-                        placeholder="Введите запрос для AI... (Enter для отправки)"
+                        placeholder={attachedFiles.length > 0 ? "Добавьте комментарий к файлам... (Enter для отправки)" : "Введите запрос для AI... (Enter для отправки)"}
                         rows={3}
                         disabled={isGenerating}
-                        className="w-full p-3 pr-12 bg-bg-tertiary border border-border-primary rounded-xl resize-none focus:outline-none focus:border-purple-500 text-sm disabled:opacity-50"
+                        className="w-full p-3 pl-11 pr-12 bg-bg-tertiary border border-border-primary rounded-xl resize-none focus:outline-none focus:border-purple-500 text-sm disabled:opacity-50"
                       />
+                      {/* Paperclip button */}
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isGenerating || isParsingFile}
+                        className="absolute bottom-3 left-3 p-2 rounded-lg hover:bg-bg-primary text-text-muted hover:text-purple-400 transition-colors disabled:opacity-50"
+                        title="Прикрепить файл (PDF, DOCX, TXT и др.)"
+                      >
+                        {isParsingFile ? (
+                          <RefreshCw size={16} className="animate-spin" />
+                        ) : (
+                          <Paperclip size={16} />
+                        )}
+                      </button>
+                      {/* Send button */}
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={handleAIGenerate}
-                        disabled={!aiPrompt.trim() || isGenerating}
+                        disabled={(!aiPrompt.trim() && attachedFiles.length === 0) || isGenerating}
                         className="absolute bottom-3 right-3 p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white disabled:opacity-50"
                       >
                         {isGenerating ? (
@@ -3675,7 +3799,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                       </motion.button>
                     </div>
                     <p className="text-xs text-text-muted mt-2 text-center">
-                      💡 AI пишет в человеческом академическом стиле
+                      📎 PDF, DOCX, TXT и др. · 💡 AI пишет в академическом стиле
                     </p>
                   </div>
                 </div>
