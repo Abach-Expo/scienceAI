@@ -1607,52 +1607,158 @@ ${selectedChapter
     if (!aiPrompt.trim() && !hasFiles) return;
     
     // Build prompt with file content
-    let fullPrompt = aiPrompt.trim();
+    const userText = aiPrompt.trim();
+    let fullPrompt = userText;
+    let fileContents = '';
     if (hasFiles) {
-      const fileContents = attachedFiles.map(f => formatFileForPrompt(f)).join('\n\n');
-      fullPrompt = fullPrompt
-        ? `${fullPrompt}\n\n${fileContents}`
-        : `Проанализируй прикреплённые файлы:\n\n${fileContents}`;
+      fileContents = attachedFiles.map(f => formatFileForPrompt(f)).join('\n\n');
     }
 
     // User-visible message
-    const displayMessage = aiPrompt.trim() 
-      ? (hasFiles ? `${aiPrompt.trim()}\n\n📎 ${attachedFiles.map(f => f.name).join(', ')}` : aiPrompt.trim())
+    const displayMessage = userText 
+      ? (hasFiles ? `${userText}\n\n📎 ${attachedFiles.map(f => f.name).join(', ')}` : userText)
       : `📎 ${attachedFiles.map(f => f.name).join(', ')}`;
     
-    // Clear attachments immediately
-    const currentAttachedFiles = [...attachedFiles];
+    // Clear attachments and prompt immediately
     setAttachedFiles([]);
+    setAiPrompt('');
+    
+    // Add user message to chat
+    setAiMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      role: 'user',
+      content: displayMessage,
+      timestamp: new Date(),
+    }]);
+
+    // ═══════════════════════════════════════════
+    // FILE ANALYSIS PATH — separate from text generation
+    // ═══════════════════════════════════════════
+    if (hasFiles) {
+      // Проверка лимитов
+      const limitCheck = subscription.canGenerateDissertationContent();
+      if (!limitCheck.allowed) {
+        setShowLimitModal(true);
+        setAiMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `⚠️ ${limitCheck.reason}`,
+          timestamp: new Date(),
+        }]);
+        return;
+      }
+
+      setIsGenerating(true);
+      setGenerationProgress(0);
+      const progressInterval = setInterval(() => {
+        setGenerationProgress(prev => Math.min(prev + Math.random() * 12, 90));
+      }, 500);
+
+      try {
+        const dissertationContext = `Тема диссертации: "${dissertation.title}"
+Область: ${dissertation.scienceField}
+Тип: ${dissertation.degreeType}
+${selectedChapter ? `Текущий раздел: ${getSelectedContent().title}` : ''}`;
+
+        const fileAnalysisSystemPrompt = `Ты — опытный научный консультант и эксперт по академическому письму. 
+Пользователь работает над диссертацией и прикрепил файл(ы) для анализа.
+
+КОНТЕКСТ РАБОТЫ:
+${dissertationContext}
+
+ТВОЯ ЗАДАЧА:
+- Внимательно прочитай содержимое прикреплённых файлов
+- Если пользователь дал конкретную инструкцию — выполни её
+- Если инструкции нет — дай развёрнутый анализ:
+  • Краткое содержание/суть документа
+  • Сильные стороны
+  • Слабые стороны и ошибки
+  • Конкретные рекомендации по улучшению
+  • Как материал соотносится с темой диссертации
+- Отвечай структурированно с подзаголовками
+- Используй конкретные цитаты из текста файла
+- НЕ переписывай и НЕ копируй содержимое файла обратно
+- Давай именно АНАЛИЗ и ОЦЕНКУ, а не пересказ
+
+ЯЗЫК ОТВЕТА: русский (если файл не на другом языке)`;
+
+        const userAnalysisPrompt = userText 
+          ? `${userText}\n\n${fileContents}` 
+          : `Проанализируй прикреплённый документ. Дай подробную оценку содержания, структуры, качества аргументации и рекомендации по улучшению.\n\n${fileContents}`;
+
+        const response = await fetch(`${API_URL}/ai/generate`, {
+          method: 'POST',
+          headers: getAuthorizationHeaders(),
+          body: JSON.stringify({
+            taskType: 'dissertation',
+            systemPrompt: fileAnalysisSystemPrompt,
+            userPrompt: userAnalysisPrompt,
+            temperature: 0.7,
+            maxTokens: 4000,
+          }),
+        });
+
+        clearInterval(progressInterval);
+        setGenerationProgress(100);
+
+        const responseText = await response.text();
+        if (!responseText) throw new Error('Сервер вернул пустой ответ');
+
+        const data = JSON.parse(responseText);
+        
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || `Ошибка сервера (${response.status})`);
+        }
+
+        const aiContent = data.content || data.data?.content || '';
+        
+        // Track usage
+        subscription.incrementDissertationGenerations();
+
+        setAiMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: aiContent || '⚠️ AI не вернул ответ. Попробуйте ещё раз.',
+          timestamp: new Date(),
+        }]);
+      } catch (error) {
+        clearInterval(progressInterval);
+        const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+        setAiMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `❌ Ошибка при анализе файлов: ${errorMessage}`,
+          timestamp: new Date(),
+        }]);
+      } finally {
+        setIsGenerating(false);
+        setGenerationProgress(0);
+      }
+      return;
+    }
+
+    // ═══════════════════════════════════════════
+    // TEXT GENERATION PATH — original flow (no files)
+    // ═══════════════════════════════════════════
+    fullPrompt = userText;
     
     // Умный анализ намерения
     const intentAnalysis = await analyzeIntentWithAI(fullPrompt);
     
     // Если это не генерация — обрабатываем как разговор
     if (!intentAnalysis.intent.startsWith('generate_')) {
-      // Temporarily set aiPrompt to fullPrompt for handleSmartResponse
-      const originalPrompt = aiPrompt;
-      setAiPrompt(fullPrompt);
       const handled = await handleSmartResponse(fullPrompt, intentAnalysis);
       if (handled) {
-        setAiPrompt('');
         return;
       }
-      setAiPrompt(originalPrompt);
     }
     
     // Проверяем, нужно ли уточнение перед генерацией
-    if (intentAnalysis.clarificationNeeded && intentAnalysis.confidence < 0.7 && !hasFiles) {
-      setAiMessages(prev => [...prev, 
-        {
-          id: Date.now().toString(),
-          role: 'user',
-          content: displayMessage,
-          timestamp: new Date(),
-        },
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `Уточните, пожалуйста:
+    if (intentAnalysis.clarificationNeeded && intentAnalysis.confidence < 0.7) {
+      setAiMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Уточните, пожалуйста:
 
 ${!selectedChapter 
   ? '⚠️ **Раздел не выбран.** Выберите главу или подраздел слева.\n\n' 
@@ -1662,26 +1768,13 @@ ${!selectedChapter
 • Написать текст с нуля
 • Расширить существующий
 • Улучшить/отредактировать`,
-          timestamp: new Date(),
-        }
-      ]);
-      setAiPrompt('');
+        timestamp: new Date(),
+      }]);
       return;
     }
     
-    // Это уверенный запрос на генерацию - добавляем сообщение пользователя отдельно
-    setAiMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      role: 'user',
-      content: displayMessage,
-      timestamp: new Date(),
-    }]);
-    
-    // Генерируем без дублирования сообщения
-    const result = await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
-    if (result) {
-      setAiPrompt('');
-    }
+    // Генерируем без дублирования сообщения (user msg already added above)
+    await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
   };
 
   const generateSection = async () => {
