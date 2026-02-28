@@ -330,6 +330,7 @@ router.post(
 );
 
 // ================== STREAMING ENDPOINT ==================
+// Uses real streaming (Claude/OpenAI streaming API) for Vercel 60s timeout on Hobby plan
 router.post(
   '/generate-stream',
   [
@@ -354,47 +355,64 @@ router.post(
         return;
       }
 
-      const { systemPrompt, userPrompt, temperature = 0.85, maxTokens = 4000, model, taskType } = req.body;
+      const { systemPrompt, userPrompt: rawUserPrompt, temperature = 0.85, maxTokens = 4000, taskType } = req.body;
+      const userPrompt = sanitizeUserInput(rawUserPrompt);
 
-      // Для текстовых задач с taskType — используем AIService (Claude для текстов)
-      const TEXT_TASK_TYPES = ['text_generation', 'essay', 'coursework', 'referat', 'dissertation', 'style_improvement'];
-      if (taskType && TEXT_TASK_TYPES.includes(taskType)) {
-        try {
-          const result = await getAIService().generate(taskType, systemPrompt, userPrompt, {
-            temperature: Math.max(temperature, 0.92),
-            maxTokens,
-            presencePenalty: 0.75,
-            frequencyPenalty: 0.55,
-          });
-
-          // Отдаём результат как SSE (один большой чанк)
-          res.setHeader('Content-Type', 'text/event-stream');
-          res.setHeader('Cache-Control', 'no-cache');
-          res.setHeader('Connection', 'keep-alive');
-          res.setHeader('Access-Control-Allow-Origin', '*');
-
-          // Разбиваем на чанки для плавного отображения
-          const chunkSize = 50;
-          for (let i = 0; i < result.content.length; i += chunkSize) {
-            const chunk = result.content.slice(i, i + chunkSize);
-            res.write(`data: ${JSON.stringify({ content: chunk, done: false })}\n\n`);
-          }
-          res.write(`data: ${JSON.stringify({ content: '', done: true })}\n\n`);
-          res.end();
-          return;
-        } catch (routingError: unknown) {
-          logger.error(`[AI Stream] Routing error for ${taskType}, falling back to OpenAI:`, routingError instanceof Error ? routingError.message : 'Unknown error');
-        }
-      }
-
-      const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-      const selectedModel = model || 'gpt-4o';
-
-      // Настройка SSE
+      // Set SSE headers FIRST — this enables Vercel streaming mode (60s timeout on Hobby)
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
       res.setHeader('Access-Control-Allow-Origin', '*');
+      res.flushHeaders();
+
+      // Send initial heartbeat to confirm connection
+      res.write(`data: ${JSON.stringify({ content: '', done: false, status: 'connected' })}\n\n`);
+
+      const ROUTED_TASK_TYPES = [
+        'text_generation', 'essay', 'coursework', 'referat', 'dissertation', 'style_improvement',
+        'analysis', 'presentation', 'outline', 'self_review', 'chat', 'plagiarism'
+      ];
+      const TEXT_TASK_TYPES = ['text_generation', 'essay', 'coursework', 'referat', 'dissertation', 'style_improvement'];
+      const isTextTask = TEXT_TASK_TYPES.includes(taskType);
+
+      if (taskType && ROUTED_TASK_TYPES.includes(taskType)) {
+        // Use AIService streaming (Claude for text, GPT for others)
+        try {
+          const result = await getAIService().generateStream(
+            taskType,
+            systemPrompt,
+            userPrompt,
+            {
+              temperature: isTextTask ? Math.max(temperature, 0.92) : temperature,
+              maxTokens,
+              presencePenalty: isTextTask ? 0.75 : 0.6,
+              frequencyPenalty: isTextTask ? 0.55 : 0.4,
+            },
+            (chunk: string) => {
+              // Send each chunk as SSE in real-time
+              res.write(`data: ${JSON.stringify({ content: chunk, done: false })}\n\n`);
+            }
+          );
+
+          logger.info(`[AI Stream] Routed to ${result.provider}/${result.model}, ${result.content.length} chars`);
+
+          // Send final humanized content (postProcessHumanize was applied in generateStream)
+          res.write(`data: ${JSON.stringify({ content: '', done: true, fullContent: result.content })}\n\n`);
+          res.end();
+          return;
+        } catch (routingError: unknown) {
+          logger.error(`[AI Stream] Routing error for ${taskType}:`, routingError instanceof Error ? routingError.message : 'Unknown error');
+          // Send error via SSE
+          res.write(`data: ${JSON.stringify({ error: 'Ошибка генерации. Попробуйте позже.', done: true })}\n\n`);
+          res.end();
+          return;
+        }
+      }
+
+      // Fallback: standard OpenAI streaming for unrouted tasks
+      const openai = getOpenAIClient();
+      const selectedModel = selectOptimalModel({ maxTokens, useHighQuality: true });
 
       const stream = await openai.chat.completions.create({
         model: selectedModel,
@@ -421,8 +439,16 @@ router.post(
 
     } catch (error: unknown) {
       logger.error('AI streaming error:', error);
-      res.write(`data: ${JSON.stringify({ error: 'Ошибка генерации', done: true })}\n\n`);
-      res.end();
+      // Try to send error via SSE if headers were already sent
+      try {
+        res.write(`data: ${JSON.stringify({ error: 'Ошибка генерации', done: true })}\n\n`);
+        res.end();
+      } catch {
+        // If headers not sent yet, respond with JSON
+        if (!res.headersSent) {
+          res.status(500).json({ success: false, message: 'Ошибка генерации' });
+        }
+      }
     }
   }
 );

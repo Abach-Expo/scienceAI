@@ -674,6 +674,107 @@ OUTPUT RULES:
     return content;
   }
 
+  /**
+   * Streaming generation for SSE endpoint.
+   * Uses Claude streaming API for text tasks, OpenAI streaming for others.
+   * Calls onChunk callback for each text delta, returns full accumulated text.
+   * Skips 2nd humanization pass — postProcessHumanize is applied on the final result.
+   */
+  async generateStream(
+    taskType: string,
+    systemPrompt: string,
+    userPrompt: string,
+    options: {
+      temperature?: number;
+      maxTokens?: number;
+      presencePenalty?: number;
+      frequencyPenalty?: number;
+    } = {},
+    onChunk: (text: string) => void
+  ): Promise<{ content: string; model: string; provider: string }> {
+    const routingKey = (taskType in MODEL_ROUTING ? taskType : 'chat') as keyof typeof MODEL_ROUTING;
+    const routing = MODEL_ROUTING[routingKey];
+
+    // For text tasks — inject humanization rules (same as generate())
+    const TEXT_TASKS = ['text_generation', 'essay', 'coursework', 'referat', 'dissertation', 'article', 'style_improvement'];
+    let effectiveSystemPrompt = systemPrompt;
+    let effectiveOptions = { ...options };
+
+    if (TEXT_TASKS.includes(routingKey)) {
+      const persona = getRandomWritingStyle();
+      effectiveSystemPrompt = `${persona}\n\n${systemPrompt}\n\n${HUMANIZATION_RULES}`;
+      effectiveOptions.temperature = Math.max(effectiveOptions.temperature || 0.7, 0.92);
+      effectiveOptions.presencePenalty = Math.max(effectiveOptions.presencePenalty || 0, 0.75);
+      effectiveOptions.frequencyPenalty = Math.max(effectiveOptions.frequencyPenalty || 0, 0.55);
+    }
+
+    const { temperature = 0.7, maxTokens = 4000, presencePenalty, frequencyPenalty } = effectiveOptions;
+    let accumulated = '';
+
+    // Try Claude streaming first for anthropic tasks
+    if (routing.provider === 'anthropic' && this.anthropic) {
+      try {
+        const stream = this.anthropic.messages.stream({
+          model: this.claudeModel,
+          max_tokens: maxTokens,
+          temperature,
+          system: effectiveSystemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+        });
+
+        stream.on('text', (text: string) => {
+          accumulated += text;
+          onChunk(text);
+        });
+
+        await stream.finalMessage();
+
+        if (!accumulated) throw new Error('No content from Claude stream');
+
+        // Apply postProcessHumanize (fast regex, no API call)
+        if (TEXT_TASKS.includes(routingKey)) {
+          accumulated = this.postProcessHumanize(accumulated);
+        }
+
+        return { content: accumulated, model: routing.model, provider: routing.provider };
+      } catch (error: unknown) {
+        logger.warn(`Claude streaming error, falling back to OpenAI: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        accumulated = '';
+      }
+    }
+
+    // OpenAI streaming fallback
+    const model = routing.provider === 'anthropic' ? this.model : routing.model;
+    const stream = await this.openai.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: effectiveSystemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+      ...(presencePenalty !== undefined ? { presence_penalty: presencePenalty } : {}),
+      ...(frequencyPenalty !== undefined ? { frequency_penalty: frequencyPenalty } : {}),
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const text = chunk.choices[0]?.delta?.content || '';
+      if (text) {
+        accumulated += text;
+        onChunk(text);
+      }
+    }
+
+    if (!accumulated) throw new Error('No content from OpenAI stream');
+
+    if (TEXT_TASKS.includes(routingKey)) {
+      accumulated = this.postProcessHumanize(accumulated);
+    }
+
+    return { content: accumulated, model, provider: routing.provider === 'anthropic' ? 'openai' : routing.provider };
+  }
+
   async generateOutline(
     topic: string,
     projectType: string,

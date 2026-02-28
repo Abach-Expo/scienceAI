@@ -582,8 +582,8 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 9. Избегай шаблонных фраз AI ("В современном мире...")
 10. Добавь 1-2 риторических вопроса для живости текста`;
 
-      // Вызываем AI через бэкенд API (безопасно - ключ на сервере)
-      const response = await fetch(`${API_URL}/ai/generate`, {
+      // Вызываем AI через стриминг endpoint (SSE) — обходит Vercel 10s timeout
+      const response = await fetch(`${API_URL}/ai/generate-stream`, {
         method: 'POST',
         headers: getAuthorizationHeaders(),
         body: JSON.stringify({
@@ -595,39 +595,94 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
         }),
       });
 
+      if (!response.ok) {
+        // Non-streaming error response (e.g. 401, 400)
+        const errorText = await response.text();
+        let errorMsg = `Ошибка сервера (${response.status})`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMsg = errorData.error || errorData.message || errorMsg;
+        } catch { /* ignore parse error */ }
+        throw new Error(errorMsg);
+      }
+
+      // Read SSE stream
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Streaming не поддерживается');
+
+      const decoder = new TextDecoder();
+      let streamedText = '';
+      let fullContent = '';
+      let sseBuffer = '';
+
+      // Add a streaming assistant message placeholder
+      const streamMsgId = Date.now().toString();
+      setAiMessages(prev => [...prev, {
+        id: streamMsgId,
+        role: 'assistant',
+        content: '▍',
+        timestamp: new Date(),
+      }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split('\n\n');
+        sseBuffer = lines.pop() || ''; // Keep incomplete chunk in buffer
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            
+            if (data.error) {
+              throw new Error(data.error);
+            }
+            
+            if (data.content) {
+              streamedText += data.content;
+              // Update the streaming message in real-time
+              setAiMessages(prev => prev.map(msg => 
+                msg.id === streamMsgId 
+                  ? { ...msg, content: streamedText + '▍' }
+                  : msg
+              ));
+              setGenerationProgress(prev => Math.min(prev + 0.5, 95));
+            }
+            
+            if (data.done) {
+              // Use fullContent from server (with postProcessHumanize applied) if available
+              fullContent = data.fullContent || streamedText;
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message !== 'Unexpected end of JSON input') {
+              throw e;
+            }
+          }
+        }
+      }
+
       clearInterval(progressInterval);
 
-      // Защита от пустого ответа
-      const responseText = await response.text();
-      if (!responseText) {
-        throw new Error('Сервер вернул пустой ответ. Проверьте, что бэкенд запущен на порту 3001.');
+      if (!fullContent && !streamedText) {
+        throw new Error('Сервер вернул пустой ответ');
       }
 
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        throw new Error('Некорректный JSON от сервера: ' + responseText.substring(0, 100));
-      }
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Ошибка сервера');
-      }
+      const generatedText = fullContent || streamedText;
 
       setGenerationProgress(100);
-
-      const generatedText = data.content || '';
 
       // Increment usage counter
       subscription.incrementDissertationGenerations();
 
-      // Добавляем ответ AI
-      setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: generatedText,
-        timestamp: new Date(),
-      }]);
+      // Update streaming message with final content
+      setAiMessages(prev => prev.map(msg => 
+        msg.id === streamMsgId 
+          ? { ...msg, content: generatedText }
+          : msg
+      ));
 
       setTimeout(() => setGenerationProgress(0), 500);
       return generatedText;
@@ -855,7 +910,7 @@ ${fullContent.slice(-4000)}
 ✓ Риторические вопросы для вовлечения читателя
 ✓ Конкретика: цифры, даты, имена исследователей`;
 
-        const response = await fetch(`${API_URL}/ai/generate`, {
+        const response = await fetch(`${API_URL}/ai/generate-stream`, {
           method: 'POST',
           headers: getAuthorizationHeaders(),
           body: JSON.stringify({
@@ -867,12 +922,37 @@ ${fullContent.slice(-4000)}
           }),
         });
 
-        const responseText = await response.text();
-        if (!responseText) continue;
-        
-        const data = JSON.parse(responseText);
-        if (data.content) {
-          fullContent += `\n## ${sub.title}\n\n${data.content}\n\n`;
+        if (!response.ok) {
+          const errText = await response.text();
+          try { const errData = JSON.parse(errText); console.error('Generation error:', errData); } catch {}
+          continue;
+        }
+
+        // Read SSE stream and collect full content
+        let sectionContent = '';
+        const reader = response.body?.getReader();
+        if (!reader) continue;
+
+        const decoder = new TextDecoder();
+        let sseBuffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          sseBuffer += decoder.decode(value, { stream: true });
+          const lines = sseBuffer.split('\n\n');
+          sseBuffer = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) sectionContent += data.content;
+              if (data.done && data.fullContent) sectionContent = data.fullContent;
+            } catch { /* ignore parse errors */ }
+          }
+        }
+
+        if (sectionContent) {
+          fullContent += `\n## ${sub.title}\n\n${sectionContent}\n\n`;
         }
 
         // Пауза между запросами чтобы не перегрузить API
@@ -1686,11 +1766,11 @@ ${dissertationContext}
           ? `${userText}\n\n${fileContents}` 
           : `Проанализируй прикреплённый документ. Дай подробную оценку содержания, структуры, качества аргументации и рекомендации по улучшению.\n\n${fileContents}`;
 
-        const response = await fetch(`${API_URL}/ai/generate`, {
+        const response = await fetch(`${API_URL}/ai/generate-stream`, {
           method: 'POST',
           headers: getAuthorizationHeaders(),
           body: JSON.stringify({
-            taskType: 'dissertation',
+            taskType: 'analysis',
             systemPrompt: fileAnalysisSystemPrompt,
             userPrompt: userAnalysisPrompt,
             temperature: 0.7,
@@ -1698,29 +1778,66 @@ ${dissertationContext}
           }),
         });
 
+        if (!response.ok) {
+          const errText = await response.text();
+          let errMsg = `Ошибка сервера (${response.status})`;
+          try { const errData = JSON.parse(errText); errMsg = errData.error || errData.message || errMsg; } catch {}
+          throw new Error(errMsg);
+        }
+
         clearInterval(progressInterval);
         setGenerationProgress(100);
 
-        const responseText = await response.text();
-        if (!responseText) throw new Error('Сервер вернул пустой ответ');
+        // Read SSE stream
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('Streaming не поддерживается');
 
-        const data = JSON.parse(responseText);
-        
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || `Ошибка сервера (${response.status})`);
+        const decoder = new TextDecoder();
+        let streamContent = '';
+        let sseBuffer = '';
+
+        // Add streaming placeholder message
+        const fileMsgId = Date.now().toString();
+        setAiMessages(prev => [...prev, {
+          id: fileMsgId,
+          role: 'assistant',
+          content: '▍',
+          timestamp: new Date(),
+        }]);
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          sseBuffer += decoder.decode(value, { stream: true });
+          const lines = sseBuffer.split('\n\n');
+          sseBuffer = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.error) throw new Error(data.error);
+              if (data.content) {
+                streamContent += data.content;
+                setAiMessages(prev => prev.map(msg => 
+                  msg.id === fileMsgId ? { ...msg, content: streamContent + '▍' } : msg
+                ));
+              }
+              if (data.done && data.fullContent) streamContent = data.fullContent;
+            } catch (e) {
+              if (e instanceof Error && e.message !== 'Unexpected end of JSON input') throw e;
+            }
+          }
         }
 
-        const aiContent = data.content || data.data?.content || '';
+        const aiContent = streamContent;
         
         // Track usage
         subscription.incrementDissertationGenerations();
 
-        setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: aiContent || '⚠️ AI не вернул ответ. Попробуйте ещё раз.',
-          timestamp: new Date(),
-        }]);
+        // Update streaming message with final content
+        setAiMessages(prev => prev.map(msg => 
+          msg.id === fileMsgId ? { ...msg, content: aiContent || '⚠️ AI не вернул ответ. Попробуйте ещё раз.' } : msg
+        ));
       } catch (error) {
         clearInterval(progressInterval);
         const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
