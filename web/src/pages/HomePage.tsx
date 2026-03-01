@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -146,6 +146,54 @@ const HomePage = () => {
     { question: t('home.faq5Q'), answer: t('home.faq5A') },
   ];
 
+  // Animated number counter component
+  const AnimatedStat = ({ value, label, delay = 0 }: { value: string; label: string; delay?: number }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const isInView = useInView(ref, { once: true, margin: '-50px' });
+    const [displayValue, setDisplayValue] = useState('0');
+
+    useEffect(() => {
+      if (!isInView) return;
+      // Extract numeric part and suffix (e.g., "50,000+" → 50000 & "+", "95%" → 95 & "%")
+      const numMatch = value.replace(/\s/g, '').match(/^([\d,.]+)(.*)/);
+      if (!numMatch) { setDisplayValue(value); return; }
+      const targetNum = parseFloat(numMatch[1].replace(/,/g, ''));
+      const suffix = numMatch[2] || '';
+      const prefix = value.startsWith('+') ? '+' : '';
+      
+      if (isNaN(targetNum)) { setDisplayValue(value); return; }
+
+      let start = 0;
+      const duration = 1500;
+      const startTime = performance.now() + delay;
+      
+      const animate = (now: number) => {
+        const elapsed = now - startTime;
+        if (elapsed < 0) { requestAnimationFrame(animate); return; }
+        const progress = Math.min(elapsed / duration, 1);
+        // Ease out cubic
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(eased * targetNum);
+        
+        // Format with locale
+        const formatted = targetNum >= 1000 
+          ? current.toLocaleString('ru-RU') 
+          : current.toString();
+        setDisplayValue(prefix + formatted + suffix);
+        
+        if (progress < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    }, [isInView, value, delay]);
+
+    return (
+      <div ref={ref} className="text-center">
+        <div className="text-3xl md:text-4xl font-bold gradient-text">{isInView ? displayValue : '0'}</div>
+        <div className="text-text-muted text-sm mt-1">{label}</div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-bg-primary overflow-hidden">
       {/* Navigation */}
@@ -260,7 +308,7 @@ const HomePage = () => {
               </motion.button>
             </div>
 
-            {/* Stats */}
+            {/* Stats with animated counters */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -268,10 +316,7 @@ const HomePage = () => {
               className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8"
             >
               {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold gradient-text">{stat.value}</div>
-                  <div className="text-text-muted text-sm">{stat.label}</div>
-                </div>
+                <AnimatedStat key={index} value={stat.value} label={stat.label} delay={index * 150} />
               ))}
             </motion.div>
           </motion.div>
@@ -304,14 +349,17 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="card group cursor-pointer"
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="card group cursor-pointer relative overflow-hidden"
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <feature.icon size={28} className="text-white" />
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+                <div className="relative">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
+                    <feature.icon size={28} className="text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-text-primary mb-2">{feature.title}</h3>
+                  <p className="text-text-secondary leading-relaxed">{feature.description}</p>
                 </div>
-                <h3 className="text-xl font-bold text-text-primary mb-2">{feature.title}</h3>
-                <p className="text-text-secondary">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -513,10 +561,11 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="card hover:border-purple-500/50 transition-all duration-300"
+                whileHover={{ y: -4 }}
+                className="card hover:border-purple-500/50 transition-all duration-300 group"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-3xl">{item.avatar}</span>
+                  <div className="text-3xl group-hover:scale-110 transition-transform">{item.avatar}</div>
                   <div>
                     <p className="font-semibold text-text-primary">{item.name}</p>
                     <p className="text-sm text-text-muted">{item.role}</p>
@@ -527,7 +576,7 @@ const HomePage = () => {
                     <Star key={i} size={14} className="text-yellow-400 fill-yellow-400" />
                   ))}
                 </div>
-                <p className="text-text-primary text-sm leading-relaxed">"{item.text}"</p>
+                <p className="text-text-primary text-sm leading-relaxed italic">"{item.text}"</p>
               </motion.div>
             ))}
           </div>

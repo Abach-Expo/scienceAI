@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import {
   Folder,
   Calendar,
@@ -22,6 +23,29 @@ interface StatsWidgetsProps {
   tipText: string;
   t: (key: string) => string;
 }
+
+// Animated number counter
+const AnimatedNumber = ({ value, delay = 0 }: { value: number; delay?: number }) => {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (value === 0) { setDisplay(0); return; }
+    const duration = 1200;
+    const startTime = performance.now() + delay * 1000;
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      if (elapsed < 0) { requestAnimationFrame(animate); return; }
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * value));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, [value, delay]);
+
+  return <>{display.toLocaleString()}</>;
+};
 
 const StatsWidgets = ({ showWidgets, stats, tipText, t }: StatsWidgetsProps) => {
   const widgets = [
@@ -78,17 +102,38 @@ const StatsWidgets = ({ showWidgets, stats, tipText, t }: StatsWidgetsProps) => 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: widget.delay }}
-                className="p-3 md:p-4 rounded-xl glass border border-border-primary hover:border-accent-primary/30 transition-all"
+                whileHover={{ y: -2, scale: 1.02 }}
+                className="p-3 md:p-4 rounded-xl glass border border-border-primary hover:border-accent-primary/30 transition-all group"
               >
                 <div className="flex items-center gap-2 md:gap-3 mb-2">
-                  <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br ${widget.gradient} flex items-center justify-center flex-shrink-0`}>
+                  <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br ${widget.gradient} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
                     <widget.icon size={18} className="text-white" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-lg md:text-2xl font-bold text-text-primary">{widget.value}</p>
+                    <p className="text-lg md:text-2xl font-bold text-text-primary tabular-nums">
+                      {typeof widget.value === 'number' 
+                        ? <AnimatedNumber value={widget.value} delay={widget.delay} />
+                        : widget.value}
+                    </p>
                     <p className="text-xs text-text-muted truncate">{widget.label}</p>
                   </div>
                 </div>
+                {/* Streak fire effect */}
+                {widget.icon === Flame && stats.streak >= 3 && (
+                  <div className="flex gap-0.5 mt-1">
+                    {Array.from({ length: Math.min(stats.streak, 7) }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: widget.delay + i * 0.1 }}
+                        className="text-xs"
+                      >
+                        🔥
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>

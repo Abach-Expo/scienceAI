@@ -8,6 +8,7 @@ import { getAuthorizationHeaders } from '../services/apiClient';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import {
   ArrowLeft,
+  ArrowDown,
   Send,
   Bot,
   User,
@@ -36,6 +37,7 @@ import {
   Search,
   Filter,
   AlertTriangle,
+  Keyboard,
 } from 'lucide-react';
 import { useTranslation } from '../store/languageStore';
 
@@ -79,6 +81,8 @@ const ChatPage = () => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingMessageContent, setEditingMessageContent] = useState('');
   const [limitWarning, setLimitWarning] = useState<string | null>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showShortcutsPanel, setShowShortcutsPanel] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -172,12 +176,12 @@ const ChatPage = () => {
     };
   }, []);
 
-  // Scroll to bottom — keeps messages anchored at bottom
+  // Scroll to bottom — smooth scroll for new messages
   useEffect(() => {
     const container = document.getElementById('chat-messages-container');
     if (container) {
       requestAnimationFrame(() => {
-        container.scrollTop = container.scrollHeight;
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       });
     }
   }, [chat.messages, isLoading]);
@@ -190,6 +194,49 @@ const ChatPage = () => {
     }
   }, [input]);
 
+  // Track scroll position for "scroll to bottom" button
+  useEffect(() => {
+    const container = document.getElementById('chat-messages-container');
+    if (!container) return;
+    const handleScroll = () => {
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      setShowScrollButton(distanceFromBottom > 200);
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToBottom = () => {
+    const container = document.getElementById('chat-messages-container');
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
+  };
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+O — new chat
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'O') {
+        e.preventDefault();
+        handleNewChat();
+      }
+      // Ctrl+/ — toggle shortcuts panel
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setShowShortcutsPanel(prev => !prev);
+      }
+      // Escape — close panels/stop generation
+      if (e.key === 'Escape') {
+        if (showShortcutsPanel) { setShowShortcutsPanel(false); return; }
+        if (showMenu) { setShowMenu(false); return; }
+        if (isLoading) { handleStop(); return; }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showShortcutsPanel, showMenu, isLoading]);
+
   const quickPrompts = [
     { icon: Lightbulb, text: t('chat.promptResearch'), color: 'from-yellow-500 to-orange-500', category: t('chat.categoryResearch') },
     { icon: Beaker, text: t('chat.promptScience'), color: 'from-green-500 to-emerald-500', category: t('chat.categoryScience') },
@@ -199,9 +246,13 @@ const ChatPage = () => {
     { icon: Code, text: t('chat.promptCode'), color: 'from-indigo-500 to-violet-500', category: t('chat.categoryCode') },
   ];
 
-  // ========== REAL AI API CALL (AI model routing) ==========
+  // ========== REAL AI API CALL (AI model routing + SSE STREAMING) ==========
 
-  const generateAIResponse = async (userMessage: string, previousMessages: Message[]): Promise<{ content: string; taskType: string }> => {
+  const generateAIResponse = async (
+    userMessage: string, 
+    previousMessages: Message[],
+    onChunk?: (text: string) => void
+  ): Promise<{ content: string; taskType: string }> => {
     try {
       // Build conversation context from last messages
       const contextMessages = previousMessages.slice(-6).map(m => 
@@ -284,7 +335,8 @@ const ChatPage = () => {
       // Create AbortController for this request
       abortControllerRef.current = new AbortController();
 
-      const response = await fetch(`${API_URL}/ai/generate`, {
+      // Use streaming endpoint for real-time response
+      const response = await fetch(`${API_URL}/ai/generate-stream`, {
         method: 'POST',
         headers: getAuthorizationHeaders(),
         body: JSON.stringify({
@@ -297,17 +349,56 @@ const ChatPage = () => {
         signal: abortControllerRef.current.signal,
       });
 
-      const responseText = await response.text();
-      if (!responseText) {
+      if (!response.ok) {
+        const errText = await response.text();
+        let errMsg = t('chat.generationError');
+        try { const errData = JSON.parse(errText); errMsg = errData.error || errData.message || errMsg; } catch { /* ignore */ }
+        return { content: `⚠️ ${errMsg}`, taskType: 'chat' };
+      }
+
+      // Read SSE stream
+      const reader = response.body?.getReader();
+      if (!reader) {
         return { content: `⚠️ ${t('chat.serverUnavailable')}`, taskType: 'chat' };
       }
 
-      const data = JSON.parse(responseText);
-      if (data.success && data.content) {
-        return { content: data.content, taskType };
+      const decoder = new TextDecoder();
+      let accumulated = '';
+      let fullContent = '';
+      let sseBuffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split('\n\n');
+        sseBuffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.error) {
+              return { content: `⚠️ ${data.error}`, taskType: 'chat' };
+            }
+            if (data.content) {
+              accumulated += data.content;
+              onChunk?.(accumulated);
+            }
+            if (data.done) {
+              fullContent = data.fullContent || accumulated;
+            }
+          } catch { /* ignore partial JSON */ }
+        }
       }
 
-      return { content: `⚠️ ${data.error || t('chat.generationError')}`, taskType: 'chat' };
+      const finalContent = fullContent || accumulated;
+      if (!finalContent) {
+        return { content: `⚠️ ${t('chat.serverUnavailable')}`, taskType: 'chat' };
+      }
+
+      return { content: finalContent, taskType };
     } catch (error: unknown) {
       // Check if request was aborted
       if (error instanceof Error && error.name === 'AbortError') {
@@ -344,41 +435,60 @@ const ChatPage = () => {
       timestamp: new Date(),
     };
 
+    const streamMsgId = `msg-${Date.now() + 1}`;
     const newMessages = [...chat.messages, userMessage];
     const newTitle = chat.messages.length === 0 ? input.trim().slice(0, 40) + (input.length > 40 ? '...' : '') : chat.title;
     
+    // Add user message + streaming placeholder
     setChat(prev => ({
       ...prev,
-      messages: newMessages,
+      messages: [...newMessages, {
+        id: streamMsgId,
+        role: 'assistant' as const,
+        content: '▍',
+        timestamp: new Date(),
+      }],
       title: newTitle,
       updatedAt: new Date(),
     }));
+    const savedInput = input.trim();
     setInput('');
-    localStorage.removeItem(`chat-draft-${chat.id}`); // Clear draft
+    localStorage.removeItem(`chat-draft-${chat.id}`);
     setIsLoading(true);
 
     // Increment usage
     subscription.incrementChatMessages();
 
-    // Generate AI response via real API
+    // Generate AI response via streaming API
     try {
-      const { content: aiResponse, taskType: detectedType } = await generateAIResponse(input.trim(), chat.messages);
+      const { content: aiResponse, taskType: detectedType } = await generateAIResponse(
+        savedInput, 
+        chat.messages,
+        // onChunk callback — update streaming message in real-time
+        (currentText: string) => {
+          setChat(prev => ({
+            ...prev,
+            messages: prev.messages.map(m => 
+              m.id === streamMsgId ? { ...m, content: currentText + '▍' } : m
+            ),
+          }));
+        }
+      );
       
-      const aiMessage: Message = {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: aiResponse,
-        timestamp: new Date(),
-        taskType: detectedType,
-      };
-
+      // Replace streaming placeholder with final content
       setChat(prev => ({
         ...prev,
-        messages: [...prev.messages, aiMessage],
+        messages: prev.messages.map(m => 
+          m.id === streamMsgId ? { ...m, content: aiResponse, taskType: detectedType, timestamp: new Date() } : m
+        ),
         updatedAt: new Date(),
       }));
     } catch (error) {
-      // error handled by UI
+      // Remove streaming placeholder on error
+      setChat(prev => ({
+        ...prev,
+        messages: prev.messages.filter(m => m.id !== streamMsgId),
+      }));
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
@@ -393,7 +503,19 @@ const ChatPage = () => {
     const userMessage = chat.messages[messageIndex - 1];
     
     try {
-      const { content: newResponse, taskType: newType } = await generateAIResponse(userMessage.content, chat.messages.slice(0, messageIndex - 1));
+      const { content: newResponse, taskType: newType } = await generateAIResponse(
+        userMessage.content, 
+        chat.messages.slice(0, messageIndex - 1),
+        // onChunk — update message in real-time during regeneration
+        (currentText: string) => {
+          setChat(prev => ({
+            ...prev,
+            messages: prev.messages.map(m => 
+              m.id === messageId ? { ...m, content: currentText + '▍' } : m
+            ),
+          }));
+        }
+      );
       
       setChat(prev => ({
         ...prev,
@@ -529,33 +651,42 @@ const ChatPage = () => {
     };
     updatedMessages.push(editedMessage);
 
+    const streamMsgId = `msg-${Date.now()}`;
+    // Add user message + streaming placeholder
     setChat(prev => ({
       ...prev,
-      messages: updatedMessages,
+      messages: [...updatedMessages, {
+        id: streamMsgId,
+        role: 'assistant' as const,
+        content: '▍',
+        timestamp: new Date(),
+      }],
       updatedAt: new Date(),
     }));
     setEditingMessageId(null);
     setEditingMessageContent('');
     setIsLoading(true);
 
-    // Regenerate AI response
+    // Regenerate AI response with streaming
     try {
       const { content: aiResponse, taskType: detectedType } = await generateAIResponse(
         editingMessageContent.trim(), 
-        updatedMessages.slice(0, -1)
+        updatedMessages.slice(0, -1),
+        (currentText: string) => {
+          setChat(prev => ({
+            ...prev,
+            messages: prev.messages.map(m => 
+              m.id === streamMsgId ? { ...m, content: currentText + '▍' } : m
+            ),
+          }));
+        }
       );
       
-      const aiMessage: Message = {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: aiResponse,
-        timestamp: new Date(),
-        taskType: detectedType,
-      };
-
       setChat(prev => ({
         ...prev,
-        messages: [...prev.messages, aiMessage],
+        messages: prev.messages.map(m => 
+          m.id === streamMsgId ? { ...m, content: aiResponse, taskType: detectedType, timestamp: new Date() } : m
+        ),
         updatedAt: new Date(),
       }));
     } catch (error) {
@@ -705,11 +836,13 @@ const ChatPage = () => {
         return <h1 key={i} className="text-xl font-bold mb-3">{line.slice(2)}</h1>;
       }
       
-      // Bold and italic
+      // Bold, italic, inline code, and URL links
       let processedLine = line
         .replace(/\*\*(.*?)\*\*/g, '<strong class="text-text-primary font-semibold">$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-purple-500/20 text-purple-300 rounded text-sm">$1</code>');
+        .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-purple-500/20 text-purple-300 rounded text-sm font-mono">$1</code>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline underline-offset-2 hover:text-purple-300 transition-colors">$1</a>')
+        .replace(/(^|[^"'])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline underline-offset-2 hover:text-purple-300 transition-colors break-all">$2</a>');
       
       // Tables
       if (line.startsWith('|')) {
@@ -791,25 +924,34 @@ const ChatPage = () => {
     return codeBlocks.map((block, index) => {
       const match = block.match(/```(\w+)?\n([\s\S]*?)```/);
       if (!match) return null;
-      const [, language, code] = match;
+      const [, lang, code] = match;
+      const lines = code.trim().split('\n');
       
       return (
-        <div key={index} className="my-4 rounded-xl overflow-hidden border border-border-primary bg-bg-tertiary">
+        <div key={index} className="my-4 rounded-xl overflow-hidden border border-border-primary bg-bg-tertiary group/code">
           <div className="px-4 py-2 bg-bg-secondary flex items-center justify-between border-b border-border-primary">
             <div className="flex items-center gap-2">
               <Code size={14} className="text-purple-400" />
-              <span className="text-xs text-text-muted font-mono">{language || 'code'}</span>
+              <span className="text-xs text-text-muted font-mono">{lang || 'code'}</span>
+              <span className="text-[10px] text-text-muted/40">{lines.length} {language === 'ru' ? 'строк' : 'lines'}</span>
             </div>
             <button
               onClick={() => handleCopy(code.trim(), `code-${index}`)}
-              className="flex items-center gap-1.5 px-2 py-1 hover:bg-bg-tertiary rounded text-xs text-text-muted hover:text-text-primary transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 hover:bg-bg-tertiary rounded-lg text-xs text-text-muted hover:text-text-primary transition-colors"
             >
               {copied === `code-${index}` ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
               {copied === `code-${index}` ? t('chat.copied') : t('chat.copy')}
             </button>
           </div>
           <pre className="p-4 overflow-x-auto">
-            <code className="text-sm text-text-primary font-mono leading-relaxed">{code.trim()}</code>
+            <code className="text-sm font-mono leading-relaxed">
+              {lines.map((ln, lineIdx) => (
+                <div key={lineIdx} className="flex">
+                  <span className="select-none text-text-muted/30 w-8 text-right mr-4 flex-shrink-0 text-xs leading-relaxed">{lineIdx + 1}</span>
+                  <span className="text-text-primary">{ln}</span>
+                </div>
+              ))}
+            </code>
           </pre>
         </div>
       );
@@ -1171,9 +1313,33 @@ const ChatPage = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {chat.messages.map((message, msgIndex) => (
+              {chat.messages.map((message, msgIndex) => {
+                // Date separator between messages from different days
+                const prevMessage = msgIndex > 0 ? chat.messages[msgIndex - 1] : null;
+                const msgDate = new Date(message.timestamp);
+                const prevDate = prevMessage ? new Date(prevMessage.timestamp) : null;
+                const showDateSeparator = !prevDate || 
+                  msgDate.toDateString() !== prevDate.toDateString();
+
+                const formatDateSeparator = (date: Date) => {
+                  const today = new Date();
+                  const yesterday = new Date(today);
+                  yesterday.setDate(yesterday.getDate() - 1);
+                  if (date.toDateString() === today.toDateString()) return language === 'ru' ? 'Сегодня' : 'Today';
+                  if (date.toDateString() === yesterday.toDateString()) return language === 'ru' ? 'Вчера' : 'Yesterday';
+                  return date.toLocaleDateString(language === 'ru' ? 'ru-RU' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : language === 'zh' ? 'zh-CN' : language === 'kz' ? 'kk-KZ' : 'en-US', { day: 'numeric', month: 'long' });
+                };
+
+                return (
+                <div key={message.id}>
+                  {showDateSeparator && (
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="flex-1 h-px bg-border-primary" />
+                      <span className="text-[11px] text-text-muted/60 font-medium px-2">{formatDateSeparator(msgDate)}</span>
+                      <div className="flex-1 h-px bg-border-primary" />
+                    </div>
+                  )}
                 <motion.div
-                  key={message.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: Math.min(msgIndex * 0.03, 0.3) }}
@@ -1189,11 +1355,11 @@ const ChatPage = () => {
                     <div className={`rounded-2xl px-5 py-3.5 ${
                       message.role === 'user' 
                         ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/20' 
-                        : 'bg-bg-secondary border border-border-primary shadow-sm'
-                    }`}>
+                        : `bg-bg-secondary border shadow-sm ${message.content.includes('▍') ? 'border-purple-500/40 shadow-purple-500/10' : 'border-border-primary'}`
+                    } transition-colors duration-300`}>
                       {message.role === 'assistant' ? (
                         <div className="prose prose-invert max-w-none text-[15px]">
-                          {regeneratingId === message.id ? (
+                          {regeneratingId === message.id && !message.content.includes('▍') ? (
                             <div className="flex items-center gap-2">
                               <RefreshCw size={16} className="animate-spin text-purple-400" />
                               <span className="text-text-muted">{t('chat.regenerating')}</span>
@@ -1234,12 +1400,17 @@ const ChatPage = () => {
                       )}
                     </div>
                     
-                    {/* Timestamp + action buttons */}
-                    <div className={`flex items-center gap-1 mt-1.5 ${message.role === 'user' ? 'justify-end mr-1' : 'ml-1'}`}>
-                      <span className="text-[11px] text-text-muted/60 mr-2">
+                    {/* Timestamp + word count + action buttons */}
+                    <div className={`flex items-center gap-1 mt-1.5 flex-wrap ${message.role === 'user' ? 'justify-end mr-1' : 'ml-1'}`}>
+                      <span className="text-[11px] text-text-muted/60 mr-1">
                         {formatMessageTime(message.timestamp)}
                       </span>
-                      {message.role === 'assistant' && !regeneratingId && (
+                      {message.role === 'assistant' && message.content.length > 200 && !message.content.includes('▍') && (
+                        <span className="text-[11px] text-text-muted/40 mr-1">
+                          {message.content.split(/\s+/).filter(Boolean).length} {language === 'ru' ? 'сл.' : 'words'}
+                        </span>
+                      )}
+                      {message.role === 'assistant' && !regeneratingId && !message.content.includes('▍') && (
                         <>
                         <button
                           onClick={() => handleCopy(message.content, message.id)}
@@ -1313,33 +1484,65 @@ const ChatPage = () => {
                     </div>
                   )}
                 </motion.div>
-              ))}
+                </div>
+                );
+              })}
               
-              {isLoading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-3"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-purple-500/20 mt-1">
-                    <Bot size={18} className="text-white" />
-                  </div>
-                  <div className="bg-bg-secondary border border-border-primary rounded-2xl px-5 py-3.5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="flex gap-1.5">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      </div>
-                      <span className="text-sm text-text-muted">{t('chat.thinking')}</span>
-                    </div>
-                  </div>
-              </motion.div>
-              )}
+              {/* Loading indicator removed — streaming messages show ▍ cursor directly */}
             </div>
           )}
           </div>
+
+          {/* Scroll to bottom button */}
+          <AnimatePresence>
+            {showScrollButton && chat.messages.length > 0 && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                onClick={scrollToBottom}
+                className="sticky bottom-4 left-1/2 -translate-x-1/2 ml-[calc(50%-20px)] w-10 h-10 rounded-full bg-purple-500/90 text-white shadow-lg shadow-purple-500/30 flex items-center justify-center hover:bg-purple-500 transition-colors z-10"
+                aria-label="Scroll to bottom"
+              >
+                <ArrowDown size={18} />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Keyboard shortcuts panel */}
+        <AnimatePresence>
+          {showShortcutsPanel && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-24 right-6 bg-bg-secondary border border-border-primary rounded-2xl p-5 shadow-xl z-50 w-72"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-text-primary flex items-center gap-2">
+                  <Keyboard size={16} className="text-purple-400" />
+                  {language === 'ru' ? 'Горячие клавиши' : 'Keyboard Shortcuts'}
+                </h3>
+                <button onClick={() => setShowShortcutsPanel(false)} className="text-text-muted hover:text-text-primary text-xs">✕</button>
+              </div>
+              <div className="space-y-2 text-sm">
+                {[
+                  { keys: 'Enter', desc: language === 'ru' ? 'Отправить сообщение' : 'Send message' },
+                  { keys: 'Shift + Enter', desc: language === 'ru' ? 'Новая строка' : 'New line' },
+                  { keys: 'Ctrl + Shift + O', desc: language === 'ru' ? 'Новый чат' : 'New chat' },
+                  { keys: 'Ctrl + /', desc: language === 'ru' ? 'Горячие клавиши' : 'Shortcuts' },
+                  { keys: 'Escape', desc: language === 'ru' ? 'Остановить / Закрыть' : 'Stop / Close' },
+                ].map(s => (
+                  <div key={s.keys} className="flex items-center justify-between">
+                    <span className="text-text-muted">{s.desc}</span>
+                    <kbd className="px-2 py-0.5 bg-bg-tertiary border border-border-primary rounded text-[11px] text-text-secondary font-mono">{s.keys}</kbd>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Input */}
         <div className="flex-shrink-0 px-4 py-4 border-t border-border-primary bg-bg-primary">
@@ -1419,6 +1622,14 @@ const ChatPage = () => {
               <p className="text-[11px] text-text-muted/40">
                 {subscription.getRemainingLimits().chatMessages}/{subscription.getLimits().chatMessagesPerDay} {t('chat.messagesToday')}
               </p>
+              <span className="text-text-muted/20">•</span>
+              <button
+                onClick={() => setShowShortcutsPanel(prev => !prev)}
+                className="text-[11px] text-text-muted/40 hover:text-purple-400 transition-colors flex items-center gap-1"
+              >
+                <Keyboard size={10} />
+                <span>Ctrl + /</span>
+              </button>
             </div>
           </div>
         </div>

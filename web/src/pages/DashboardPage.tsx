@@ -327,12 +327,27 @@ const DashboardPage = () => {
           <div className="flex items-center justify-between mb-4 gap-2">
             <div className="min-w-0">
               <h1 className="text-xl md:text-2xl font-bold text-text-primary truncate">
-                {activeTab === 'all' && t('nav.allProjects')}
-                {activeTab === 'presentations' && t('nav.presentations')}
-                {activeTab === 'dissertations' && t('nav.dissertations')}
+                {(() => {
+                  const hour = new Date().getHours();
+                  const greeting = hour < 6 ? (language === 'ru' ? 'Доброй ночи' : 'Good night')
+                    : hour < 12 ? (language === 'ru' ? 'Доброе утро' : 'Good morning')
+                    : hour < 18 ? (language === 'ru' ? 'Добрый день' : 'Good afternoon')
+                    : (language === 'ru' ? 'Добрый вечер' : 'Good evening');
+                  return `${greeting}, ${user?.name?.split(' ')[0] || ''}`;
+                })()}{' '}
+                <span className="text-lg font-normal text-text-muted">
+                  — {activeTab === 'all' && t('nav.allProjects')}
+                  {activeTab === 'presentations' && t('nav.presentations')}
+                  {activeTab === 'dissertations' && t('nav.dissertations')}
+                </span>
               </h1>
               <p className="text-text-muted">
                 {filteredItems.length} {filteredItems.length === 1 ? t('dashboard.item') : t('dashboard.items')}
+                {stats.streak > 1 && (
+                  <span className="ml-2 text-xs text-amber-400">
+                    🔥 {stats.streak} {language === 'ru' ? 'дн. подряд' : 'day streak'}
+                  </span>
+                )}
               </p>
             </div>
             
