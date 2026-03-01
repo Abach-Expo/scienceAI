@@ -1886,7 +1886,26 @@ ${!selectedChapter
     }
     
     // Генерируем без дублирования сообщения (user msg already added above)
-    await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
+    const result = await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
+    
+    // Автоматически вставляем сгенерированный текст в редактор (если выбран раздел)
+    if (result && selectedChapter) {
+      const currentContent = getSelectedContent().content;
+      updateContent((currentContent ? currentContent + '\n\n' : '') + result);
+      setAiMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `✅ Текст добавлен в раздел «${getSelectedContent().title}».\n📊 Слов: ~${result.split(/\s+/).length.toLocaleString()}`,
+        timestamp: new Date(),
+      }]);
+    } else if (result && !selectedChapter) {
+      setAiMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: '💡 Выберите раздел слева, чтобы вставить текст в документ. Или нажмите ➕ на сообщении выше.',
+        timestamp: new Date(),
+      }]);
+    }
   };
 
   const generateSection = async () => {
