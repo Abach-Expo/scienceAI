@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import OnboardingTour from '../components/OnboardingTour';
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 import {
   ArrowLeft,
   Bold,
@@ -583,9 +583,9 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 10. Добавь 1-2 риторических вопроса для живости текста`;
 
       // Вызываем AI через стриминг endpoint (SSE) — обходит Vercel 10s timeout
-      const response = await fetch(`${API_URL}/ai/generate-stream`, {
+      // fetchWithAuth auto-refreshes expired JWT tokens
+      const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
         method: 'POST',
-        headers: getAuthorizationHeaders(),
         body: JSON.stringify({
           taskType: 'dissertation',
           systemPrompt,
@@ -910,9 +910,8 @@ ${fullContent.slice(-4000)}
 ✓ Риторические вопросы для вовлечения читателя
 ✓ Конкретика: цифры, даты, имена исследователей`;
 
-        const response = await fetch(`${API_URL}/ai/generate-stream`, {
+        const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
           method: 'POST',
-          headers: getAuthorizationHeaders(),
           body: JSON.stringify({
             taskType: 'dissertation',
             systemPrompt,
@@ -1047,9 +1046,8 @@ ${fullContent.slice(-4000)}
     try {
       const abortController = new AbortController();
       
-      const response = await fetch(`${API_URL}/dissertation/generate`, {
+      const response = await fetchWithAuth(`${API_URL}/dissertation/generate`, {
         method: 'POST',
-        headers: getAuthorizationHeaders(),
         signal: abortController.signal,
         body: JSON.stringify({
           topic: dissertation.title,
@@ -1295,9 +1293,8 @@ ${fullContent.slice(-4000)}
         scienceField: SCIENCE_FIELDS.find(f => f.id === dissertation.scienceField)?.name || 'Не указано'
       };
 
-      const response = await fetch(`${API_URL}/ai/generate`, {
+      const response = await fetchWithAuth(`${API_URL}/ai/generate`, {
         method: 'POST',
-        headers: getAuthorizationHeaders(),
         body: JSON.stringify({
           taskType: 'analysis',
           prompt: message,
@@ -1569,9 +1566,8 @@ ${selectedChapter
         // Информационный вопрос — отвечаем без генерации текста для диссертации
         setIsGenerating(true);
         try {
-          const questionResponse = await fetch(`${API_URL}/ai/generate`, {
+          const questionResponse = await fetchWithAuth(`${API_URL}/ai/generate`, {
             method: 'POST',
-            headers: getAuthorizationHeaders(),
             body: JSON.stringify({
               taskType: 'chat',
               prompt: message,
@@ -1766,9 +1762,8 @@ ${dissertationContext}
           ? `${userText}\n\n${fileContents}` 
           : `Проанализируй прикреплённый документ. Дай подробную оценку содержания, структуры, качества аргументации и рекомендации по улучшению.\n\n${fileContents}`;
 
-        const response = await fetch(`${API_URL}/ai/generate-stream`, {
+        const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
           method: 'POST',
-          headers: getAuthorizationHeaders(),
           body: JSON.stringify({
             taskType: 'analysis',
             systemPrompt: fileAnalysisSystemPrompt,
@@ -2611,9 +2606,8 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
         timestamp: new Date(),
       }]);
 
-      const response = await fetch(`${API_URL}/ai/generate`, {
+      const response = await fetchWithAuth(`${API_URL}/ai/generate`, {
         method: 'POST',
-        headers: getAuthorizationHeaders(),
         body: JSON.stringify({
           taskType: 'outline',
           systemPrompt: `Ты — эксперт по написанию научных работ с 30-летним опытом научного руководства.

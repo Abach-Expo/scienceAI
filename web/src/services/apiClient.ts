@@ -148,4 +148,45 @@ export function getAuthorizationHeaders(): Record<string, string> {
   };
 }
 
+/**
+ * fetch() wrapper with automatic 401 token refresh.
+ * Use for streaming / SSE endpoints where `apiClient` can't be used because
+ * we need access to the raw `Response` object (ReadableStream).
+ *
+ * On a 401 response it will attempt one refresh and retry the request with the
+ * new token.  If refresh fails the user is logged out and the 401 response is
+ * returned so callers can surface an appropriate error message.
+ */
+export async function fetchWithAuth(
+  url: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const buildHeaders = (): Record<string, string> => ({
+    'Content-Type': 'application/json',
+    ...getAuthHeaders(),
+    ...(init?.headers as Record<string, string> || {}),
+  });
+
+  const doFetch = () =>
+    fetch(url, {
+      ...init,
+      headers: buildHeaders(),
+    });
+
+  let response = await doFetch();
+
+  if (response.status === 401 && useAuthStore.getState().isAuthenticated) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      // Retry with the fresh token
+      response = await doFetch();
+    } else {
+      // Refresh failed — log out
+      useAuthStore.getState().logout();
+    }
+  }
+
+  return response;
+}
+
 export default apiClient;

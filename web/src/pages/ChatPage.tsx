@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import DOMPurify from 'dompurify';
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import {
   ArrowLeft,
@@ -335,10 +335,9 @@ const ChatPage = () => {
       // Create AbortController for this request
       abortControllerRef.current = new AbortController();
 
-      // Use streaming endpoint for real-time response
-      const response = await fetch(`${API_URL}/ai/generate-stream`, {
+      // Use streaming endpoint for real-time response (fetchWithAuth auto-refreshes expired tokens)
+      const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
         method: 'POST',
-        headers: getAuthorizationHeaders(),
         body: JSON.stringify({
           taskType,
           systemPrompt,
@@ -353,6 +352,12 @@ const ChatPage = () => {
         const errText = await response.text();
         let errMsg = t('chat.generationError');
         try { const errData = JSON.parse(errText); errMsg = errData.error || errData.message || errMsg; } catch { /* ignore */ }
+        // If still 401 after refresh attempt — session is dead, user must re-login
+        if (response.status === 401) {
+          errMsg = language === 'ru'
+            ? 'Сессия истекла. Пожалуйста, войдите заново.'
+            : 'Session expired. Please log in again.';
+        }
         return { content: `⚠️ ${errMsg}`, taskType: 'chat' };
       }
 
