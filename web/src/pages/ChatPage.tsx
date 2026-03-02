@@ -481,13 +481,36 @@ const ChatPage = () => {
       );
       
       // Replace streaming placeholder with final content
+      const finalMessage: Message = {
+        id: streamMsgId,
+        role: 'assistant',
+        content: aiResponse,
+        taskType: detectedType,
+        timestamp: new Date(),
+      };
       setChat(prev => ({
         ...prev,
         messages: prev.messages.map(m => 
-          m.id === streamMsgId ? { ...m, content: aiResponse, taskType: detectedType, timestamp: new Date() } : m
+          m.id === streamMsgId ? finalMessage : m
         ),
         updatedAt: new Date(),
       }));
+
+      // Auto-open academic content in the workspace editor
+      if (detectedType && detectedType !== 'chat' && aiResponse.length > 300) {
+        // Add redirect notice to chat
+        setChat(prev => ({
+          ...prev,
+          messages: [...prev.messages, {
+            id: `msg-redirect-${Date.now()}`,
+            role: 'assistant' as const,
+            content: '📝 Открываю текст в рабочем пространстве...',
+            timestamp: new Date(),
+          }],
+        }));
+        // Small delay so the user sees the notice
+        setTimeout(() => handleOpenInEditor(finalMessage), 1000);
+      }
     } catch (error) {
       // Remove streaming placeholder on error
       setChat(prev => ({
