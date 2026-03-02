@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavigateFunction } from 'react-router-dom';
+import FocusTrap from '../FocusTrap';
 import {
   Sparkles,
   Layers,
@@ -90,6 +91,7 @@ const DashboardSidebar = ({
           <button
             onClick={() => setMobileOpen(false)}
             className="md:hidden p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-all"
+            aria-label="Close menu"
           >
             <X size={20} />
           </button>
@@ -246,15 +248,20 @@ const DashboardSidebar = ({
               className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
             />
             {/* Drawer */}
-            <motion.aside
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="md:hidden fixed inset-y-0 left-0 z-50 w-[280px] max-w-[85vw] bg-bg-secondary flex flex-col shadow-2xl"
-            >
-              {sidebarContent}
-            </motion.aside>
+            <FocusTrap active={mobileOpen}>
+              <motion.aside
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="md:hidden fixed inset-y-0 left-0 z-50 w-[280px] max-w-[85vw] bg-bg-secondary flex flex-col shadow-2xl"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Navigation menu"
+              >
+                {sidebarContent}
+              </motion.aside>
+            </FocusTrap>
           </>
         )}
       </AnimatePresence>

@@ -3334,7 +3334,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                       ? 'bg-purple-500/20 text-purple-400' 
                       : 'hover:bg-bg-tertiary text-text-secondary'
                   }`}
-                  aria-label={`Выбрать ${chapter.title}`}
+                  aria-label={`Select chapter: ${chapter.title}`}
                 >
                   {chapter.title}
                 </button>
@@ -3342,7 +3342,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   onClick={() => addSubchapter(chapter.id)}
                   className="p-1 hover:bg-bg-tertiary rounded transition-colors opacity-0 group-hover:opacity-100"
                   title="Добавить подраздел"
-                  aria-label="Добавить подраздел"
+                  aria-label="Add subsection"
                 >
                   <Plus size={12} className="text-text-muted" />
                 </button>
@@ -3353,7 +3353,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   }}
                   className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover:opacity-100"
                   title="Удалить главу"
-                  aria-label="Удалить главу"
+                  aria-label="Delete chapter"
                 >
                   <Trash2 size={12} className="text-red-400" />
                 </button>
@@ -3376,7 +3376,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                             ? 'bg-purple-500/20 text-purple-400' 
                             : 'hover:bg-bg-tertiary text-text-muted'
                         }`}
-                        aria-label={`Выбрать ${sub.title}`}
+                        aria-label={`Select subsection: ${sub.title}`}
                       >
                         {sub.title}
                       </button>
@@ -3388,7 +3388,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                           }}
                           className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover/sub:opacity-100"
                           title="Удалить подраздел"
-                          aria-label="Удалить подраздел"
+                          aria-label="Delete subsection"
                         >
                           <Trash2 size={10} className="text-red-400" />
                         </button>

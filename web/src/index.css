@@ -10,8 +10,8 @@
   --bg-secondary: 18 18 26;
   --bg-tertiary: 26 26 37;
   --text-primary: 255 255 255;
-  --text-secondary: 160 160 176;
-  --text-muted: 96 96 112;
+  --text-secondary: 170 170 186;
+  --text-muted: 130 130 148;
   --accent-primary: 139 92 246;
   --accent-secondary: 236 72 153;
   --border-primary: 42 42 53;
@@ -26,7 +26,7 @@
   --bg-tertiary: 232 232 237;
   --text-primary: 26 26 46;
   --text-secondary: 74 74 90;
-  --text-muted: 138 138 154;
+  --text-muted: 108 108 124;
   --accent-primary: 124 58 237;
   --accent-secondary: 219 39 119;
   --border-primary: 209 213 219;
@@ -40,8 +40,8 @@
   --bg-secondary: 22 27 34;
   --bg-tertiary: 33 38 45;
   --text-primary: 240 246 252;
-  --text-secondary: 139 148 158;
-  --text-muted: 72 79 88;
+  --text-secondary: 148 158 168;
+  --text-muted: 100 110 120;
   --accent-primary: 88 166 255;
   --accent-secondary: 188 140 255;
   --border-primary: 48 54 61;
@@ -70,6 +70,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -477,7 +478,7 @@ body {
     --bg-tertiary: 232 232 237;
     --text-primary: 26 26 46;
     --text-secondary: 74 74 90;
-    --text-muted: 138 138 154;
+    --text-muted: 108 108 124;
     --accent-primary: 124 58 237;
     --accent-secondary: 219 39 119;
     --border-primary: 209 213 219;

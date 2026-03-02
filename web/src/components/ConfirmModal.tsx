@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertTriangle, CheckCircle, Info, Trash2 } from 'lucide-react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
+import FocusTrap from './FocusTrap';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -61,6 +62,16 @@ const ConfirmModal = ({
 
   const colors = colorMap[type];
 
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -69,6 +80,10 @@ const ConfirmModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-modal-title"
+          aria-describedby="confirm-modal-message"
         >
           {/* Backdrop */}
           <motion.div
@@ -80,64 +95,67 @@ const ConfirmModal = ({
           />
 
           {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', duration: 0.3 }}
-            className={`relative w-full max-w-md rounded-2xl bg-[#12121A] border ${colors.border} shadow-2xl overflow-hidden`}
-          >
-            {/* Close button */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-bg-tertiary hover:bg-bg-secondary flex items-center justify-center text-text-secondary hover:text-text-primary transition-all"
+          <FocusTrap active={isOpen}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', duration: 0.3 }}
+              className={`relative w-full max-w-md rounded-2xl bg-bg-secondary border ${colors.border} shadow-2xl overflow-hidden`}
             >
-              <X size={16} />
-            </button>
+              {/* Close button */}
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-bg-tertiary hover:bg-bg-primary flex items-center justify-center text-text-secondary hover:text-text-primary transition-all"
+                aria-label="Close dialog"
+              >
+                <X size={16} />
+              </button>
 
-            {/* Content */}
-            <div className="p-6">
-              {/* Icon */}
-              <div className={`w-14 h-14 rounded-xl ${colors.icon} flex items-center justify-center mb-4`}>
-                {iconMap[type]}
+              {/* Content */}
+              <div className="p-6">
+                {/* Icon */}
+                <div className={`w-14 h-14 rounded-xl ${colors.icon} flex items-center justify-center mb-4`}>
+                  {iconMap[type]}
+                </div>
+
+                {/* Title */}
+                <h3 id="confirm-modal-title" className="text-xl font-bold text-text-primary mb-2">{title}</h3>
+
+                {/* Message */}
+                <div id="confirm-modal-message" className="text-text-secondary text-sm mb-6">{message}</div>
+
+                {/* Buttons */}
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onClose}
+                    disabled={loading}
+                    className="flex-1 py-3 rounded-xl bg-bg-tertiary hover:bg-bg-primary text-text-primary font-medium transition-all disabled:opacity-50"
+                  >
+                    {cancelText}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      onConfirm();
+                      if (!loading) onClose();
+                    }}
+                    disabled={loading}
+                    className={`flex-1 py-3 rounded-xl ${colors.button} text-white font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2`}
+                  >
+                    {loading ? (
+                      <span className="animate-spin">⏳</span>
+                    ) : (
+                      confirmText
+                    )}
+                  </motion.button>
+                </div>
               </div>
-
-              {/* Title */}
-              <h3 className="text-xl font-bold text-text-primary mb-2">{title}</h3>
-
-              {/* Message */}
-              <div className="text-text-secondary text-sm mb-6">{message}</div>
-
-              {/* Buttons */}
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onClose}
-                  disabled={loading}
-                  className="flex-1 py-3 rounded-xl bg-bg-tertiary hover:bg-bg-secondary text-text-primary font-medium transition-all disabled:opacity-50"
-                >
-                  {cancelText}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    onConfirm();
-                    if (!loading) onClose();
-                  }}
-                  disabled={loading}
-                  className={`flex-1 py-3 rounded-xl ${colors.button} text-white font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2`}
-                >
-                  {loading ? (
-                    <span className="animate-spin">⏳</span>
-                  ) : (
-                    confirmText
-                  )}
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </FocusTrap>
         </motion.div>
       )}
     </AnimatePresence>
@@ -211,31 +229,33 @@ export const AlertModal = ({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', duration: 0.3 }}
-            className={`relative w-full max-w-md rounded-2xl bg-[#12121A] border ${colors.border} shadow-2xl overflow-hidden`}
-          >
-            <div className="p-6 text-center">
-              <div className={`w-14 h-14 rounded-xl ${colors.icon} flex items-center justify-center mx-auto mb-4`}>
-                {iconMap[type]}
+          <FocusTrap active={isOpen}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', duration: 0.3 }}
+              className={`relative w-full max-w-md rounded-2xl bg-bg-secondary border ${colors.border} shadow-2xl overflow-hidden`}
+            >
+              <div className="p-6 text-center">
+                <div className={`w-14 h-14 rounded-xl ${colors.icon} flex items-center justify-center mx-auto mb-4`}>
+                  {iconMap[type]}
+                </div>
+
+                <h3 className="text-xl font-bold text-text-primary mb-2">{title}</h3>
+                <div className="text-text-secondary text-sm mb-6">{message}</div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onClose}
+                  className={`w-full py-3 rounded-xl ${colors.button} text-white font-medium transition-all`}
+                >
+                  {buttonText}
+                </motion.button>
               </div>
-
-              <h3 className="text-xl font-bold text-text-primary mb-2">{title}</h3>
-              <div className="text-text-secondary text-sm mb-6">{message}</div>
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onClose}
-                className={`w-full py-3 rounded-xl ${colors.button} text-white font-medium transition-all`}
-              >
-                {buttonText}
-              </motion.button>
-            </div>
-          </motion.div>
+            </motion.div>
+          </FocusTrap>
         </motion.div>
       )}
     </AnimatePresence>

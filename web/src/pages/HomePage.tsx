@@ -27,6 +27,9 @@ import {
   HelpCircle,
   Sun,
   Moon,
+  Menu,
+  X,
+  Monitor,
 } from 'lucide-react';
 
 const HomePage = () => {
@@ -37,13 +40,18 @@ const HomePage = () => {
   const [currentTheme, setCurrentTheme] = useState(() => {
     return document.documentElement.getAttribute('data-theme') || 'dark';
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const toggleTheme = () => {
-    const next = currentTheme === 'dark' ? 'light' : 'dark';
+  const cycleTheme = () => {
+    const themes = ['dark', 'light', 'midnight'];
+    const currentIndex = themes.indexOf(currentTheme);
+    const next = themes[(currentIndex + 1) % themes.length];
     setCurrentTheme(next);
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('app_theme', next);
   };
+
+  const themeIcon = currentTheme === 'dark' ? <Sun size={20} /> : currentTheme === 'light' ? <Moon size={20} /> : <Monitor size={20} />;
 
   const scrollToDemo = () => {
     demoRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -210,17 +218,19 @@ const HomePage = () => {
             <span className="text-xl font-bold text-text-primary">Science AI</span>
           </div>
           
-          <div className="flex items-center gap-4">
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-4">
             <button
-              onClick={toggleTheme}
+              onClick={cycleTheme}
               className="p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-all"
-              title={currentTheme === 'dark' ? t('home.lightTheme') : t('home.darkTheme')}
+              title={currentTheme === 'dark' ? t('home.lightTheme') : currentTheme === 'light' ? t('home.darkTheme') : t('home.lightTheme')}
+              aria-label="Switch theme"
             >
-              {currentTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              {themeIcon}
             </button>
             <button
               onClick={() => navigate('/pricing')}
-              className="hidden sm:block px-4 py-2 rounded-xl text-text-secondary hover:text-text-primary transition-colors"
+              className="px-4 py-2 rounded-xl text-text-secondary hover:text-text-primary transition-colors"
             >
               {t('home.navPricing')}
             </button>
@@ -240,7 +250,61 @@ const HomePage = () => {
               <ArrowRight size={18} />
             </motion.button>
           </div>
+
+          {/* Mobile hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              onClick={cycleTheme}
+              className="p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-all"
+              aria-label="Switch theme"
+            >
+              {themeIcon}
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-all"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden overflow-hidden border-t border-border-primary/50 mt-3"
+            >
+              <div className="py-3 space-y-1">
+                <button
+                  onClick={() => { navigate('/pricing'); setMobileMenuOpen(false); }}
+                  className="w-full text-left px-4 py-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  {t('home.navPricing')}
+                </button>
+                <button
+                  onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }}
+                  className="w-full text-left px-4 py-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  {t('home.navLogin')}
+                </button>
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }}
+                  className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium flex items-center justify-center gap-2 mt-2"
+                >
+                  <Sparkles size={18} />
+                  {t('home.navStartNow')}
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
 
 

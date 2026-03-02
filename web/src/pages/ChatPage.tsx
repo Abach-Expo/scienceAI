@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify';
 import { API_URL } from '../config';
 import { fetchWithAuth } from '../services/apiClient';
 import { useSubscriptionStore } from '../store/subscriptionStore';
+import FocusTrap from '../components/FocusTrap';
 import {
   ArrowLeft,
   ArrowDown,
@@ -997,19 +998,23 @@ const ChatPage = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => setLimitWarning(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="limit-warning-title"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-bg-secondary border border-border-primary rounded-2xl p-6 max-w-md shadow-xl"
-            >
+            <FocusTrap active={!!limitWarning}>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-bg-secondary border border-border-primary rounded-2xl p-6 max-w-md shadow-xl"
+              >
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
                   <AlertTriangle size={24} className="text-amber-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-text-primary">{t('chat.limitReached')}</h3>
+                <h3 id="limit-warning-title" className="text-lg font-semibold text-text-primary">{t('chat.limitReached')}</h3>
               </div>
               <p className="text-text-secondary mb-6">{limitWarning}</p>
               <div className="flex gap-3">
@@ -1027,6 +1032,7 @@ const ChatPage = () => {
                 </button>
               </div>
             </motion.div>
+            </FocusTrap>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1040,36 +1046,41 @@ const ChatPage = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => setDeleteConfirm(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-confirm-title"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-bg-secondary border border-border-primary rounded-2xl p-6 max-w-sm shadow-xl"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
-                  <Trash2 size={24} className="text-red-400" />
+            <FocusTrap active={!!deleteConfirm}>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-bg-secondary border border-border-primary rounded-2xl p-6 max-w-sm shadow-xl"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+                    <Trash2 size={24} className="text-red-400" />
+                  </div>
+                  <h3 id="delete-confirm-title" className="text-lg font-semibold text-text-primary">{t('chat.deleteChat')}</h3>
                 </div>
-                <h3 className="text-lg font-semibold text-text-primary">{t('chat.deleteChat')}</h3>
-              </div>
-              <p className="text-text-secondary mb-6">{t('chat.deleteChatConfirm')}</p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 px-4 py-2 rounded-xl bg-bg-tertiary text-text-primary hover:bg-bg-primary transition-colors"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  onClick={() => confirmDeleteChat(deleteConfirm)}
-                  className="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
-                >
-                  {t('common.delete')}
-                </button>
-              </div>
-            </motion.div>
+                <p className="text-text-secondary mb-6">{t('chat.deleteChatConfirm')}</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteConfirm(null)}
+                    className="flex-1 px-4 py-2 rounded-xl bg-bg-tertiary text-text-primary hover:bg-bg-primary transition-colors"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    onClick={() => confirmDeleteChat(deleteConfirm)}
+                    className="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
+                  >
+                    {t('common.delete')}
+                  </button>
+                </div>
+              </motion.div>
+            </FocusTrap>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1290,19 +1301,27 @@ const ChatPage = () => {
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain" id="chat-messages-container">
           <div className="max-w-4xl mx-auto p-4 md:p-6 min-h-full flex flex-col justify-end">
             {chat.messages.length === 0 ? (
-              <div className="py-12 text-center">
+              <div className="py-12 text-center relative">
+                {/* Decorative background blurs */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-[80px]" />
+                  <div className="absolute bottom-1/4 right-1/3 w-48 h-48 bg-pink-500/10 rounded-full blur-[60px]" />
+                </div>
+                
                 <motion.div 
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30"
+                  transition={{ type: 'spring', damping: 15 }}
+                  className="relative w-28 h-28 mx-auto rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center mb-8 shadow-xl shadow-purple-500/25"
                 >
-                  <Sparkles size={48} className="text-white" />
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 animate-pulse-slow opacity-50 blur-xl" />
+                  <Sparkles size={52} className="text-white relative z-10 drop-shadow-lg" />
                 </motion.div>
                 <motion.h2 
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-3xl font-bold text-text-primary mb-3"
+                  transition={{ delay: 0.1, type: 'spring', damping: 20 }}
+                  className="text-3xl md:text-4xl font-bold text-text-primary mb-3 relative"
                 >
                   {t('chat.greeting')}
               </motion.h2>
@@ -1318,22 +1337,25 @@ const ChatPage = () => {
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto"
+                transition={{ delay: 0.3, type: 'spring', damping: 20 }}
+                className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-3xl mx-auto relative"
               >
                 {quickPrompts.map((prompt, index) => (
                   <motion.button
                     key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + index * 0.06 }}
                     whileHover={{ scale: 1.03, y: -4 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => handleQuickPrompt(prompt.text)}
-                    className="p-5 rounded-2xl bg-bg-secondary border border-border-primary hover:border-purple-500/50 transition-all text-left group relative overflow-hidden"
+                    className="p-4 md:p-5 rounded-2xl bg-bg-secondary/80 backdrop-blur-sm border border-border-primary hover:border-purple-500/40 transition-all text-left group relative overflow-hidden"
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${prompt.color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${prompt.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                      <prompt.icon size={24} className="text-white" />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${prompt.color} opacity-0 group-hover:opacity-[0.08] transition-opacity duration-300`} />
+                    <div className={`w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${prompt.color} flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
+                      <prompt.icon size={22} className="text-white" />
                     </div>
-                    <p className="text-sm font-medium text-text-primary mb-1">{prompt.text}</p>
+                    <p className="text-sm font-medium text-text-primary mb-1 line-clamp-2">{prompt.text}</p>
                     <p className="text-xs text-text-muted">{prompt.category}</p>
                   </motion.button>
                 ))}
@@ -1374,7 +1396,7 @@ const ChatPage = () => {
                   className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
                 >
                   {message.role === 'assistant' && (
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-purple-500/20 mt-1">
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-purple-500/20 mt-1 ${message.content.includes('▍') ? 'animate-pulse-slow' : ''}`}>
                       <Bot size={18} className="text-white" />
                     </div>
                   )}
@@ -1382,9 +1404,9 @@ const ChatPage = () => {
                   <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
                     <div className={`rounded-2xl px-5 py-3.5 ${
                       message.role === 'user' 
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/20' 
-                        : `bg-bg-secondary border shadow-sm ${message.content.includes('▍') ? 'border-purple-500/40 shadow-purple-500/10' : 'border-border-primary'}`
-                    } transition-colors duration-300`}>
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/20 rounded-br-md' 
+                        : `bg-bg-secondary border shadow-sm rounded-bl-md ${message.content.includes('▍') ? 'border-purple-500/40 shadow-purple-500/10' : 'border-border-primary hover:border-border-secondary'}`
+                    } transition-all duration-300`}>
                       {message.role === 'assistant' ? (
                         <div className="prose prose-invert max-w-none text-[15px]">
                           {regeneratingId === message.id && !message.content.includes('▍') ? (
@@ -1573,12 +1595,14 @@ const ChatPage = () => {
         </AnimatePresence>
 
         {/* Input */}
-        <div className="flex-shrink-0 px-4 py-4 border-t border-border-primary bg-bg-primary">
+        <div className="flex-shrink-0 px-4 py-3 md:py-4 border-t border-border-primary bg-bg-primary/95 backdrop-blur-xl">
           <div className="max-w-4xl mx-auto">
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="bg-bg-secondary/90 backdrop-blur-xl border border-border-primary rounded-2xl p-2 shadow-lg"
+              className={`bg-bg-secondary/90 backdrop-blur-xl border rounded-2xl p-2 shadow-lg transition-all duration-300 ${
+                input.trim() ? 'border-purple-500/30 shadow-purple-500/5' : 'border-border-primary'
+              }`}
             >
               <div className="flex items-end gap-2">
                 <div className="flex-1 relative">
