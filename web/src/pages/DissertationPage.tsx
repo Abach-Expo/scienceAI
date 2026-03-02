@@ -3759,9 +3759,9 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 exit={{ width: 0, opacity: 0 }}
                 className="fixed inset-y-0 right-0 z-50 w-[90vw] max-w-[400px] md:relative md:z-auto md:w-auto md:max-w-none border-l border-border-primary bg-bg-secondary/95 md:bg-bg-secondary/50 overflow-hidden flex flex-col"
               >
-                <div className="w-full md:w-[400px] flex flex-col h-full">
+                <div className="w-full md:w-[400px] flex flex-col h-full overflow-hidden">
                   {/* Header */}
-                  <div className="p-4 border-b border-border-primary">
+                  <div className="p-4 border-b border-border-primary flex-shrink-0">
                     <h3 className="font-semibold text-text-primary flex items-center gap-2">
                       <Brain size={20} className="text-purple-400" />
                       AI Помощник для диссертации
@@ -3772,7 +3772,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   </div>
                   
                   {/* Quick Actions - сворачиваемые */}
-                  <div data-tour="quick-actions" className="border-b border-border-primary">
+                  <div data-tour="quick-actions" className="border-b border-border-primary flex-shrink-0">
                     <button
                       onClick={() => setShowQuickActions(!showQuickActions)}
                       className="w-full p-4 flex items-center justify-between hover:bg-bg-tertiary/50 transition-colors"
@@ -3816,7 +3816,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   </div>
                   
                   {/* 🚀 СУПЕР ФУНКЦИИ - Большой объём - сворачиваемые */}
-                  <div className="border-b border-border-primary bg-gradient-to-r from-fuchsia-500/5 to-violet-500/5">
+                  <div className="border-b border-border-primary bg-gradient-to-r from-fuchsia-500/5 to-violet-500/5 flex-shrink-0">
                     <button
                       onClick={() => setShowLargeActions(!showLargeActions)}
                       className="w-full p-4 flex items-center justify-between hover:bg-fuchsia-500/10 transition-colors"
@@ -3885,7 +3885,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   
                   {/* Progress */}
                   {isGenerating && (
-                    <div className="px-4 py-3 bg-purple-500/10 border-b border-border-primary">
+                    <div className="px-4 py-3 bg-purple-500/10 border-b border-border-primary flex-shrink-0">
                       <div className="flex items-center gap-2 mb-2">
                         <RefreshCw size={14} className="animate-spin text-purple-400" />
                         <span className="text-sm text-purple-400">Генерация текста...</span>
@@ -3901,7 +3901,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   )}
                   
                   {/* Messages */}
-                  <div ref={aiMessagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <div ref={aiMessagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
                     {aiMessages.length === 0 ? (
                       <div className="text-center text-text-muted text-sm py-8">
                         <Lightbulb size={32} className="mx-auto mb-3 opacity-50" />
@@ -3954,7 +3954,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   </div>
                   
                   {/* Input */}
-                  <div className="p-4 border-t border-border-primary">
+                  <div className="p-4 border-t border-border-primary flex-shrink-0">
                     {/* Attached files preview */}
                     {attachedFiles.length > 0 && (
                       <div className="mb-2 space-y-1">
