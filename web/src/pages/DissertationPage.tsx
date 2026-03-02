@@ -75,6 +75,7 @@ const DissertationPage = () => {
   const { confirm, ConfirmDialog } = useConfirm();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abstractTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const aiMessagesContainerRef = useRef<HTMLDivElement>(null);
   
   // Подписка и лимиты
   const subscription = useSubscriptionStore();
@@ -92,6 +93,17 @@ const DissertationPage = () => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<ParsedFile[]>([]);
+
+  // Auto-scroll AI chat to bottom when messages change or during streaming
+  useEffect(() => {
+    const container = aiMessagesContainerRef.current;
+    if (container) {
+      requestAnimationFrame(() => {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      });
+    }
+  }, [aiMessages]);
+
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -3889,7 +3901,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   )}
                   
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <div ref={aiMessagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
                     {aiMessages.length === 0 ? (
                       <div className="text-center text-text-muted text-sm py-8">
                         <Lightbulb size={32} className="mx-auto mb-3 opacity-50" />
