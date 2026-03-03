@@ -76,6 +76,7 @@ const DissertationPage = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abstractTextareaRef = useRef<HTMLTextAreaElement>(null);
   const aiMessagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Подписка и лимиты
   const subscription = useSubscriptionStore();
@@ -94,7 +95,27 @@ const DissertationPage = () => {
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<ParsedFile[]>([]);
 
-  // Auto-scroll disabled — chat stays where user scrolled
+  // Auto-scroll — как в настоящих AI-чатах (ChatGPT / Claude)
+  useEffect(() => {
+    const container = aiMessagesContainerRef.current;
+    const endElement = messagesEndRef.current;
+
+    if (!container || !endElement) return;
+
+    // Во время стриминга — всегда следим за концом (мгновенно)
+    if (isGenerating) {
+      endElement.scrollIntoView({ behavior: 'auto', block: 'end' });
+    } 
+    // Когда генерация закончена — плавно, только если пользователь был внизу
+    else {
+      const isNearBottom = 
+        container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+
+      if (isNearBottom) {
+        endElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }
+  }, [aiMessages, isGenerating]);
 
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -3926,29 +3947,37 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   )}
                   
                   {/* Messages */}
-                  <div ref={aiMessagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" style={{ overflowAnchor: 'none' }}>
+                  {/* Messages */}
+                  <div 
+                    ref={aiMessagesContainerRef} 
+                    className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-border-primary scrollbar-track-transparent"
+                  >
                     {aiMessages.length === 0 ? (
-                      <div className="text-center text-text-muted text-sm py-8">
-                        <Lightbulb size={32} className="mx-auto mb-3 opacity-50" />
-                        <p>Используйте быстрые действия или</p>
-                        <p>введите свой запрос ниже</p>
+                      <div className="h-full flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center mb-4">
+                          <Brain size={32} className="text-purple-400" />
+                        </div>
+                        <p className="text-text-muted">AI готов помочь с диссертацией</p>
+                        <p className="text-xs text-text-muted mt-1">Просто напишите запрос или используйте быстрые действия</p>
                       </div>
                     ) : (
-                      aiMessages.map((msg) => (
-                        <div
+                      aiMessages.map((msg, index) => (
+                        <motion.div
                           key={msg.id}
-                          className={`p-3 rounded-xl ${
-                            msg.role === 'user' 
-                              ? 'bg-purple-500/20 ml-8' 
-                              : 'bg-bg-tertiary mr-4'
-                          }`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: index * 0.01 }}
+                          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className="text-xs text-text-muted">
-                              {msg.role === 'user' ? '👤 Вы' : '🤖 AI'}
-                            </span>
+                          <div
+                            className={`max-w-[85%] p-4 rounded-2xl ${
+                              msg.role === 'user'
+                                ? 'bg-purple-600 text-white rounded-br-none'
+                                : 'bg-bg-tertiary border border-border-primary rounded-bl-none'
+                            }`}
+                          >
                             {msg.role === 'assistant' && !msg.content.startsWith('❌') && !msg.content.startsWith('⚠️') && !msg.content.startsWith('✅') && (
-                              <div className="flex gap-1">
+                              <div className="flex justify-end gap-1 mb-2">
                                 <button
                                   onClick={() => copyToClipboard(msg.content, msg.id)}
                                   className="p-1 hover:bg-bg-primary rounded transition-colors"
@@ -3969,17 +3998,20 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                                 </button>
                               </div>
                             )}
+                            <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                              {msg.content}
+                            </div>
                           </div>
-                          <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
-                            {msg.content}
-                          </div>
-                        </div>
+                        </motion.div>
                       ))
                     )}
+
+                    {/* Dummy элемент для точного скролла */}
+                    <div ref={messagesEndRef} className="h-1" />
                   </div>
                   
-                  {/* Input */}
-                  <div className="p-4 border-t border-border-primary flex-shrink-0">
+                  {/* Input — всегда внизу, как в настоящих чатах */}
+                  <div className="p-4 border-t border-border-primary bg-bg-secondary/95 backdrop-blur-xl flex-shrink-0">
                     {/* Attached files preview */}
                     {attachedFiles.length > 0 && (
                       <div className="mb-2 space-y-1">
@@ -4025,10 +4057,10 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                             handleAIGenerate();
                           }
                         }}
-                        placeholder={attachedFiles.length > 0 ? "Добавьте комментарий к файлам... (Enter для отправки)" : "Введите запрос для AI... (Enter для отправки)"}
-                        rows={3}
+                        placeholder={attachedFiles.length > 0 ? "Комментарий к файлам..." : "Напишите запрос..."}
+                        rows={1}
                         disabled={isGenerating}
-                        className="w-full p-3 pl-11 pr-12 bg-bg-tertiary border border-border-primary rounded-xl resize-none focus:outline-none focus:border-purple-500 text-sm disabled:opacity-50"
+                        className="w-full resize-y min-h-[52px] max-h-[160px] p-4 pl-12 pr-14 bg-bg-tertiary border border-border-primary rounded-2xl focus:outline-none focus:border-purple-500 text-sm leading-relaxed"
                       />
                       {/* Paperclip button */}
                       <button
