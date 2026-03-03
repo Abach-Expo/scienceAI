@@ -31,7 +31,7 @@ const lazyRetry = (importFn: () => Promise<{ default: React.ComponentType }>, re
 const HomePage = lazy(() => lazyRetry(() => import('./pages/HomePage')));
 const PresentationsPage = lazy(() => lazyRetry(() => import('./pages/PresentationsPage')));
 const AuthPage = lazy(() => lazyRetry(() => import('./pages/AuthPage')));
-const DashboardPage = lazy(() => lazyRetry(() => import('./pages/DashboardPage')));
+const ScienceAIChat = lazy(() => lazyRetry(() => import('./pages/ScienceAIChat')));
 const ChatPage = lazy(() => lazyRetry(() => import('./pages/ChatPage')));
 const DissertationPage = lazy(() => lazyRetry(() => import('./pages/DissertationPage')));
 const AcademicWorksPage = lazy(() => lazyRetry(() => import('./pages/AcademicWorksPage')));
@@ -92,7 +92,7 @@ const AppContent = () => {
               
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<ScienceAIChat />} />
                 <Route path="/presentations" element={<PresentationsPage />} />
                 <Route path="/presentations/:id" element={<PresentationsPage />} />
                 <Route path="/chat" element={<ChatPage />} />
