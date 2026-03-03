@@ -94,18 +94,7 @@ const DissertationPage = () => {
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<ParsedFile[]>([]);
 
-  // Auto-scroll AI chat to bottom when messages change — only if user is near the bottom
-  useEffect(() => {
-    const container = aiMessagesContainerRef.current;
-    if (container) {
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
-      if (isNearBottom) {
-        requestAnimationFrame(() => {
-          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-        });
-      }
-    }
-  }, [aiMessages]);
+  // Auto-scroll disabled — chat stays where user scrolled
 
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
