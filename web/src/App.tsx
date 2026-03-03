@@ -40,6 +40,8 @@ const ProfileSetupPage = lazy(() => lazyRetry(() => import('./pages/ProfileSetup
 const PricingPage = lazy(() => lazyRetry(() => import('./pages/PricingPage')));
 const PrivacyPage = lazy(() => lazyRetry(() => import('./pages/PrivacyPage')));
 const TermsPage = lazy(() => lazyRetry(() => import('./pages/TermsPage')));
+const NewProjectPage = lazy(() => lazyRetry(() => import('./pages/NewProjectPage')));
+const WorkspaceSetupPage = lazy(() => lazyRetry(() => import('./pages/WorkspaceSetupPage')));
 const NotFoundPage = lazy(() => lazyRetry(() => import('./pages/NotFoundPage')));
 
 import { NotificationProvider } from './components/NotificationSystem';
@@ -105,6 +107,8 @@ const AppContent = () => {
               </Route>
               
               {/* Public routes */}
+              <Route path="/new-project" element={<NewProjectPage />} />
+              <Route path="/workspace-setup" element={<ProtectedRoute><WorkspaceSetupPage /></ProtectedRoute>} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />

@@ -243,7 +243,7 @@ const HomePage = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/new-project')}
               className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium flex items-center gap-2"
             >
               {t('home.navStartNow')}
@@ -295,7 +295,7 @@ const HomePage = () => {
                 </button>
                 <motion.button
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }}
+                  onClick={() => { navigate('/new-project'); setMobileMenuOpen(false); }}
                   className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium flex items-center justify-center gap-2 mt-2"
                 >
                   <Sparkles size={18} />
@@ -355,7 +355,7 @@ const HomePage = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/new-project')}
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-purple-500/30"
               >
                 <Sparkles size={22} />
@@ -486,7 +486,7 @@ const HomePage = () => {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/new-project')}
                 className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/30"
                 title={t('home.watchDemo')}
               >
@@ -591,7 +591,7 @@ const HomePage = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/new-project')}
               className="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-lg shadow-lg shadow-purple-500/30"
             >
               {t('home.startForPrice')}
@@ -774,7 +774,7 @@ const HomePage = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/new-project')}
                 className="px-10 py-5 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-xl flex items-center justify-center gap-3 mx-auto shadow-lg shadow-purple-500/30"
               >
                 <Sparkles size={24} />

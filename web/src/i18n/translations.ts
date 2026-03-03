@@ -704,6 +704,33 @@ export const translations = {
       paymentFailedRetry: 'Не удалось создать платёж. Попробуйте позже.',
       connectionError: 'Ошибка подключения к платёжной системе. Проверьте интернет-соединение.',
     },
+
+    // New Project page
+    newProject: {
+      title: 'Начать проект',
+      subtitle: 'Выберите тип работы — AI поможет на каждом шаге',
+      hint: 'Вы можете сменить тип проекта в любой момент',
+      chatTitle: 'AI Чат',
+      chatDesc: 'Задайте вопрос, решите задачу, проанализируйте данные',
+      presentationTitle: 'Презентация',
+      presentationDesc: 'Создайте профессиональную презентацию с помощью AI за минуты',
+      dissertationTitle: 'Диссертация',
+      dissertationDesc: 'Напишите научную работу с AI-ассистентом. Форматирование, проверка, генерация',
+      academicTitle: 'Академические работы',
+      academicDesc: 'Эссе, курсовые, рефераты, апелляции. Реальные источники и авто-цитирование',
+    },
+
+    // Workspace Setup
+    workspaceSetup: {
+      welcomeTitle: 'Настраиваем рабочее пространство...',
+      greetingDissertation: 'Привет! 👋 Я помогу вам подготовить диссертацию.\n\nРасскажите: какая тема вашей работы? На каком языке пишете? Какой объём и сроки?',
+      greetingAcademic: 'Привет! 👋 Я помогу вам с академической работой.\n\nКакой тип работы вам нужен (эссе, курсовая, реферат)? Какая тема и требования?',
+      inputPlaceholder: 'Опишите вашу задачу...',
+      goToWorkspace: 'Перейти в рабочее пространство',
+      skipToWorkspace: 'Пропустить и перейти к работе →',
+      opening: 'Открываем рабочее пространство...',
+      errorRetry: 'Произошла ошибка. Попробуйте ещё раз.',
+    },
   },
   
   en: {
@@ -1383,6 +1410,33 @@ export const translations = {
       paymentFailedRetry: 'Could not create payment. Please try again later.',
       connectionError: 'Connection error to payment system. Check your internet connection.',
     },
+
+    // New Project page
+    newProject: {
+      title: 'Start a Project',
+      subtitle: 'Choose your work type — AI will guide you every step',
+      hint: 'You can change the project type at any time',
+      chatTitle: 'AI Chat',
+      chatDesc: 'Ask questions, solve problems, analyze data',
+      presentationTitle: 'Presentation',
+      presentationDesc: 'Create professional presentations with AI in minutes',
+      dissertationTitle: 'Dissertation',
+      dissertationDesc: 'Write academic papers with AI assistant. Formatting, checking, generation',
+      academicTitle: 'Academic Works',
+      academicDesc: 'Essays, term papers, reports, appeals. Real sources and auto-citations',
+    },
+
+    // Workspace Setup
+    workspaceSetup: {
+      welcomeTitle: 'Setting up your workspace...',
+      greetingDissertation: 'Hi! 👋 I\'ll help you prepare your dissertation.\n\nTell me: what\'s your topic? What language are you writing in? What\'s the target length and deadline?',
+      greetingAcademic: 'Hi! 👋 I\'ll help you with your academic work.\n\nWhat type of work do you need (essay, term paper, report)? What\'s the topic and requirements?',
+      inputPlaceholder: 'Describe your task...',
+      goToWorkspace: 'Go to Workspace',
+      skipToWorkspace: 'Skip and go to workspace →',
+      opening: 'Opening workspace...',
+      errorRetry: 'An error occurred. Please try again.',
+    },
   },
   
   // ================== KAZAKH ==================
@@ -1990,6 +2044,31 @@ export const translations = {
       citations: 'дәйексөз',
       noWorksYet: 'Әлі жұмыс жоқ. Біріншісін жасаңыз!',
     },
+
+    newProject: {
+      title: 'Жобаны бастау',
+      subtitle: 'Жұмыс түрін таңдаңыз — AI әр қадамда көмектеседі',
+      hint: 'Жоба түрін кез келген уақытта өзгертуге болады',
+      chatTitle: 'AI Чат',
+      chatDesc: 'Сұрақ қойыңыз, есепті шешіңіз, деректерді талдаңыз',
+      presentationTitle: 'Презентация',
+      presentationDesc: 'AI көмегімен кәсіби презентация жасаңыз',
+      dissertationTitle: 'Диссертация',
+      dissertationDesc: 'AI-көмекшімен ғылыми жұмыс жазыңыз',
+      academicTitle: 'Академиялық жұмыстар',
+      academicDesc: 'Эссе, курстық, реферат. Нақты дереккөздер мен авто-дәйексөз',
+    },
+
+    workspaceSetup: {
+      welcomeTitle: 'Жұмыс кеңістігін дайындау...',
+      greetingDissertation: 'Сәлем! 👋 Диссертацияңызды дайындауға көмектесемін.\n\nТақырыбыңыз қандай? Қай тілде жазасыз? Көлемі мен мерзімі?',
+      greetingAcademic: 'Сәлем! 👋 Академиялық жұмысыңызға көмектесемін.\n\nСізге қандай жұмыс керек? Тақырыбы мен талаптары қандай?',
+      inputPlaceholder: 'Тапсырмаңызды сипаттаңыз...',
+      goToWorkspace: 'Жұмыс кеңістігіне өту',
+      skipToWorkspace: 'Өткізіп жіберу →',
+      opening: 'Жұмыс кеңістігін ашу...',
+      errorRetry: 'Қате орын алды. Қайтадан көріңіз.',
+    },
   },
 
   // ================== GERMAN ==================
@@ -2565,6 +2644,31 @@ export const translations = {
       genericButton: 'Erstellen',
       quickTips: 'Tipps für den Einstieg',
       searchLabel: 'Suche',
+    },
+
+    newProject: {
+      title: 'Projekt starten',
+      subtitle: 'Wählen Sie den Arbeitstyp — KI hilft bei jedem Schritt',
+      hint: 'Sie können den Projekttyp jederzeit ändern',
+      chatTitle: 'KI-Chat',
+      chatDesc: 'Fragen stellen, Probleme lösen, Daten analysieren',
+      presentationTitle: 'Präsentation',
+      presentationDesc: 'Erstellen Sie professionelle Präsentationen mit KI',
+      dissertationTitle: 'Dissertation',
+      dissertationDesc: 'Akademische Arbeiten mit KI-Assistent schreiben',
+      academicTitle: 'Akademische Arbeiten',
+      academicDesc: 'Essays, Hausarbeiten, Berichte. Echte Quellen und Auto-Zitate',
+    },
+
+    workspaceSetup: {
+      welcomeTitle: 'Arbeitsbereich wird eingerichtet...',
+      greetingDissertation: 'Hallo! 👋 Ich helfe Ihnen bei Ihrer Dissertation.\n\nWas ist Ihr Thema? In welcher Sprache schreiben Sie? Welcher Umfang und welche Frist?',
+      greetingAcademic: 'Hallo! 👋 Ich helfe Ihnen bei Ihrer akademischen Arbeit.\n\nWelche Art von Arbeit benötigen Sie? Was ist das Thema und die Anforderungen?',
+      inputPlaceholder: 'Beschreiben Sie Ihre Aufgabe...',
+      goToWorkspace: 'Zum Arbeitsbereich',
+      skipToWorkspace: 'Überspringen →',
+      opening: 'Arbeitsbereich wird geöffnet...',
+      errorRetry: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
     },
   },
   
@@ -3152,6 +3256,31 @@ export const translations = {
       citations: 'citas',
       noWorksYet: 'Aún no hay trabajos. ¡Crea el primero!',
     },
+
+    newProject: {
+      title: 'Iniciar proyecto',
+      subtitle: 'Elige el tipo de trabajo — la IA te guiará en cada paso',
+      hint: 'Puedes cambiar el tipo de proyecto en cualquier momento',
+      chatTitle: 'Chat IA',
+      chatDesc: 'Haz preguntas, resuelve problemas, analiza datos',
+      presentationTitle: 'Presentación',
+      presentationDesc: 'Crea presentaciones profesionales con IA en minutos',
+      dissertationTitle: 'Disertación',
+      dissertationDesc: 'Escribe trabajos académicos con asistente IA',
+      academicTitle: 'Trabajos académicos',
+      academicDesc: 'Ensayos, trabajos de curso, informes. Fuentes reales y citas automáticas',
+    },
+
+    workspaceSetup: {
+      welcomeTitle: 'Configurando espacio de trabajo...',
+      greetingDissertation: '¡Hola! 👋 Te ayudaré a preparar tu disertación.\n\n¿Cuál es tu tema? ¿En qué idioma escribes? ¿Cuál es la extensión y el plazo?',
+      greetingAcademic: '¡Hola! 👋 Te ayudaré con tu trabajo académico.\n\n¿Qué tipo de trabajo necesitas? ¿Cuál es el tema y los requisitos?',
+      inputPlaceholder: 'Describe tu tarea...',
+      goToWorkspace: 'Ir al espacio de trabajo',
+      skipToWorkspace: 'Saltar e ir al trabajo →',
+      opening: 'Abriendo espacio de trabajo...',
+      errorRetry: 'Ocurrió un error. Inténtalo de nuevo.',
+    },
   },
   
   // ================== CHINESE ==================
@@ -3737,6 +3866,31 @@ export const translations = {
       aiDetect: 'AI检测',
       citations: '引用',
       noWorksYet: '暂无论文。创建第一篇！',
+    },
+
+    newProject: {
+      title: '开始项目',
+      subtitle: '选择工作类型 — AI 将全程指导',
+      hint: '您可以随时更改项目类型',
+      chatTitle: 'AI 聊天',
+      chatDesc: '提问、解决问题、分析数据',
+      presentationTitle: '演示文稿',
+      presentationDesc: '使用 AI 在几分钟内创建专业演示文稿',
+      dissertationTitle: '学位论文',
+      dissertationDesc: '使用 AI 助手撰写学术论文。格式化、检查、生成',
+      academicTitle: '学术作品',
+      academicDesc: '论文、课程论文、报告。真实来源和自动引用',
+    },
+
+    workspaceSetup: {
+      welcomeTitle: '正在设置工作区...',
+      greetingDissertation: '你好！👋 我将帮助你准备论文。\n\n你的主题是什么？用什么语言写？目标长度和截止日期是什么？',
+      greetingAcademic: '你好！👋 我将帮助你完成学术作品。\n\n你需要什么类型的作品？主题和要求是什么？',
+      inputPlaceholder: '描述您的任务...',
+      goToWorkspace: '前往工作区',
+      skipToWorkspace: '跳过并前往工作区 →',
+      opening: '正在打开工作区...',
+      errorRetry: '发生错误。请重试。',
     },
   },
 };
