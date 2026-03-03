@@ -89,18 +89,21 @@ const DissertationPage = () => {
   const [selectedSubchapter, setSelectedSubchapter] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
-  const [showAIPanel, setShowAIPanel] = useState(true);
+  const [showAIPanel, setShowAIPanel] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<ParsedFile[]>([]);
 
-  // Auto-scroll AI chat to bottom when messages change or during streaming
+  // Auto-scroll AI chat to bottom when messages change — only if user is near the bottom
   useEffect(() => {
     const container = aiMessagesContainerRef.current;
     if (container) {
-      requestAnimationFrame(() => {
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-      });
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+      if (isNearBottom) {
+        requestAnimationFrame(() => {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        });
+      }
     }
   }, [aiMessages]);
 
@@ -444,8 +447,8 @@ const DissertationPage = () => {
   }, []);
 
   // ================== AI ФУНКЦИЯ ЧЕРЕЗ БЭКЕНД ==================
-  const generateHumanText = async (prompt: string, context: string = '', options: { skipUserMessage?: boolean; retries?: number } = {}) => {
-    const { skipUserMessage = false, retries = 2 } = options;
+  const generateHumanText = async (prompt: string, context: string = '', options: { skipUserMessage?: boolean; retries?: number; onEditorChunk?: (text: string) => void } = {}) => {
+    const { skipUserMessage = false, retries = 2, onEditorChunk } = options;
     
     // Проверка лимитов
     const limitCheck = subscription.canGenerateDissertationContent();
@@ -629,12 +632,21 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 
       // Add a streaming assistant message placeholder
       const streamMsgId = Date.now().toString();
-      setAiMessages(prev => [...prev, {
-        id: streamMsgId,
-        role: 'assistant',
-        content: '▍',
-        timestamp: new Date(),
-      }]);
+      if (!onEditorChunk) {
+        setAiMessages(prev => [...prev, {
+          id: streamMsgId,
+          role: 'assistant',
+          content: '▍',
+          timestamp: new Date(),
+        }]);
+      } else {
+        setAiMessages(prev => [...prev, {
+          id: streamMsgId,
+          role: 'assistant',
+          content: '📝 Пишу текст в редактор...',
+          timestamp: new Date(),
+        }]);
+      }
 
       while (true) {
         const { done, value } = await reader.read();
@@ -655,12 +667,23 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
             
             if (data.content) {
               streamedText += data.content;
-              // Update the streaming message in real-time
-              setAiMessages(prev => prev.map(msg => 
-                msg.id === streamMsgId 
-                  ? { ...msg, content: streamedText + '▍' }
-                  : msg
-              ));
+              // Stream to editor if callback provided, otherwise to chat
+              if (onEditorChunk) {
+                onEditorChunk(streamedText);
+                // Update progress in chat message
+                const wordCount = streamedText.split(/\s+/).length;
+                setAiMessages(prev => prev.map(msg => 
+                  msg.id === streamMsgId 
+                    ? { ...msg, content: `📝 Пишу текст в редактор... (${wordCount} слов)` }
+                    : msg
+                ));
+              } else {
+                setAiMessages(prev => prev.map(msg => 
+                  msg.id === streamMsgId 
+                    ? { ...msg, content: streamedText + '▍' }
+                    : msg
+                ));
+              }
               setGenerationProgress(prev => Math.min(prev + 0.5, 95));
             }
             
@@ -690,11 +713,22 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
       subscription.incrementDissertationGenerations();
 
       // Update streaming message with final content
-      setAiMessages(prev => prev.map(msg => 
-        msg.id === streamMsgId 
-          ? { ...msg, content: generatedText }
-          : msg
-      ));
+      if (onEditorChunk) {
+        // Also push final content to editor
+        onEditorChunk(generatedText);
+        const wordCount = generatedText.split(/\s+/).length;
+        setAiMessages(prev => prev.map(msg => 
+          msg.id === streamMsgId 
+            ? { ...msg, content: `✅ Текст записан в редактор.\n📊 Слов: ~${wordCount.toLocaleString()}` }
+            : msg
+        ));
+      } else {
+        setAiMessages(prev => prev.map(msg => 
+          msg.id === streamMsgId 
+            ? { ...msg, content: generatedText }
+            : msg
+        ));
+      }
 
       setTimeout(() => setGenerationProgress(0), 500);
       return generatedText;
@@ -1897,26 +1931,34 @@ ${!selectedChapter
       return;
     }
     
-    // Генерируем без дублирования сообщения (user msg already added above)
-    const result = await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
-    
-    // Автоматически вставляем сгенерированный текст в редактор (если выбран раздел)
-    if (result && selectedChapter) {
-      const currentContent = getSelectedContent().content;
-      updateContent((currentContent ? currentContent + '\n\n' : '') + result);
-      setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `✅ Текст добавлен в раздел «${getSelectedContent().title}».\n📊 Слов: ~${result.split(/\s+/).length.toLocaleString()}`,
-        timestamp: new Date(),
-      }]);
-    } else if (result && !selectedChapter) {
-      setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: '💡 Выберите раздел слева, чтобы вставить текст в документ. Или нажмите ➕ на сообщении выше.',
-        timestamp: new Date(),
-      }]);
+    // Генерируем — если раздел выбран, стримим прямо в редактор
+    if (selectedChapter) {
+      const baseContent = getSelectedContent().content;
+      const prefix = baseContent ? baseContent + '\n\n' : '';
+      
+      const result = await generateHumanText(fullPrompt, getSelectedContent().content, { 
+        skipUserMessage: true,
+        onEditorChunk: (streamedText) => {
+          updateContent(prefix + streamedText);
+        },
+      });
+      
+      // Final content — overwrite with server-postprocessed version if different
+      if (result) {
+        updateContent(prefix + result);
+      }
+    } else {
+      // Нет выбранного раздела — пишем в чат как раньше
+      const result = await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
+      
+      if (result) {
+        setAiMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: '💡 Выберите раздел слева, чтобы вставить текст в документ. Или нажмите ➕ на сообщении выше.',
+          timestamp: new Date(),
+        }]);
+      }
     }
   };
 
