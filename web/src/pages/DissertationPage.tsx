@@ -1481,13 +1481,7 @@ ${fullContent.slice(-4000)}
 
   // Умный ответ на основе намерения
   const handleSmartResponse = async (message: string, intentAnalysis: IntentAnalysis) => {
-    // Добавляем сообщение пользователя
-    setAiMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      role: 'user',
-      content: message,
-      timestamp: new Date(),
-    }]);
+    // Сообщение пользователя уже добавлено в handleAIGenerate — НЕ дублируем
 
     const { intent, confidence, clarificationNeeded, detectedTopic } = intentAnalysis;
     
@@ -3932,7 +3926,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   )}
                   
                   {/* Messages */}
-                  <div ref={aiMessagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+                  <div ref={aiMessagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" style={{ overflowAnchor: 'none' }}>
                     {aiMessages.length === 0 ? (
                       <div className="text-center text-text-muted text-sm py-8">
                         <Lightbulb size={32} className="mx-auto mb-3 opacity-50" />
