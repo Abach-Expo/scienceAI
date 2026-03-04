@@ -579,7 +579,7 @@ const ScienceAIChat = () => {
       ? `КОНТЕКСТ ПРЕДЫДУЩЕГО РАЗГОВОРА:\n${contextMessages}\n\nНовое сообщение: ${userMessage}`
       : userMessage;
 
-    const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
+    const response = await fetchWithAuth(`${API_URL}/llm/stream`, {
       method: 'POST',
       body: JSON.stringify({ taskType: 'chat', systemPrompt: SYSTEM_PROMPT, userPrompt, temperature: 0.75, maxTokens: 3000 }),
       signal: controller.signal,

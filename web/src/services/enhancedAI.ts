@@ -679,7 +679,7 @@ ${stylePrompt}
       try {
         onProgress?.(20 + attempt * 10, `Генерация (${tryModel}, попытка ${attempt + 1})...`);
         
-        const response = await fetch(`${API_URL}/ai/generate`, {
+        const response = await fetch(`${API_URL}/llm/generate`, {
           method: 'POST',
           headers: getAuthorizationHeaders(),
           body: JSON.stringify({

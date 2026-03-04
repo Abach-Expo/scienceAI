@@ -1151,7 +1151,7 @@ AI любит сенсационные эпитеты — настоящий у�
         setGenerationProgress(30);
         setGenerationPhase(t('academicWorks.phaseGenerating'));
         
-        const response = await fetch(`${API_URL}/ai/generate`, {
+        const response = await fetch(`${API_URL}/llm/generate`, {
           method: 'POST',
           headers: getAuthorizationHeaders(),
           body: JSON.stringify({

@@ -672,7 +672,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 
       // Вызываем AI через стриминг endpoint (SSE) — обходит Vercel 10s timeout
       // fetchWithAuth auto-refreshes expired JWT tokens
-      const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
+      const response = await fetchWithAuth(`${API_URL}/llm/stream`, {
         method: 'POST',
         body: JSON.stringify({
           taskType: 'dissertation',
@@ -1029,7 +1029,7 @@ ${fullContent.slice(-4000)}
 ✓ Риторические вопросы для вовлечения читателя
 ✓ Конкретика: цифры, даты, имена исследователей`;
 
-        const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
+        const response = await fetchWithAuth(`${API_URL}/llm/stream`, {
           method: 'POST',
           body: JSON.stringify({
             taskType: 'dissertation',
@@ -1481,7 +1481,7 @@ ${fullContent.slice(-4000)}
         scienceField: SCIENCE_FIELDS.find(f => f.id === dissertation.scienceField)?.name || 'Не указано'
       };
 
-      const response = await fetchWithAuth(`${API_URL}/ai/generate`, {
+      const response = await fetchWithAuth(`${API_URL}/llm/generate`, {
         method: 'POST',
         body: JSON.stringify({
           taskType: 'analysis',
@@ -1748,7 +1748,7 @@ ${selectedChapter
         // Информационный вопрос — отвечаем без генерации текста для диссертации
         setIsGenerating(true);
         try {
-          const questionResponse = await fetchWithAuth(`${API_URL}/ai/generate`, {
+          const questionResponse = await fetchWithAuth(`${API_URL}/llm/generate`, {
             method: 'POST',
             body: JSON.stringify({
               taskType: 'chat',
@@ -1944,7 +1944,7 @@ ${dissertationContext}
           ? `${userText}\n\n${fileContents}` 
           : `Проанализируй прикреплённый документ. Дай подробную оценку содержания, структуры, качества аргументации и рекомендации по улучшению.\n\n${fileContents}`;
 
-        const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
+        const response = await fetchWithAuth(`${API_URL}/llm/stream`, {
           method: 'POST',
           body: JSON.stringify({
             taskType: 'analysis',
@@ -2815,7 +2815,7 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
         timestamp: new Date(),
       }]);
 
-      const response = await fetchWithAuth(`${API_URL}/ai/generate`, {
+      const response = await fetchWithAuth(`${API_URL}/llm/generate`, {
         method: 'POST',
         body: JSON.stringify({
           taskType: 'outline',

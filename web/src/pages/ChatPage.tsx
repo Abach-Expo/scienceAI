@@ -336,8 +336,8 @@ const ChatPage = () => {
       // Create AbortController for this request
       abortControllerRef.current = new AbortController();
 
-      // Use streaming endpoint for real-time response (fetchWithAuth auto-refreshes expired tokens)
-      const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
+      // Use LLM Gateway streaming endpoint (Science AI)
+      const response = await fetchWithAuth(`${API_URL}/llm/stream`, {
         method: 'POST',
         body: JSON.stringify({
           taskType,

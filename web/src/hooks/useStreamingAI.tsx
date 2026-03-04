@@ -64,7 +64,7 @@ export function useStreamingAI() {
     });
 
     try {
-      const response = await fetch(`${API_URL}/ai/generate-stream`, {
+      const response = await fetch(`${API_URL}/llm/stream`, {
         method: 'POST',
         headers: getAuthorizationHeaders(),
         body: JSON.stringify({

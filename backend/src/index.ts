@@ -33,6 +33,7 @@ import presentationRoutes from './routes/presentation.routes';
 import citationsRoutes from './routes/citations.routes';
 import proxyRoutes from './routes/proxy.routes';
 import usageRoutes from './routes/usage.routes';
+import llmGatewayRoutes from './routes/llmGateway.routes';
 
 // ==========================================
 // SECURITY: Validate required env variables
@@ -216,6 +217,7 @@ app.use('/api/presentations', presentationRoutes);
 app.use('/api/citations', citationsRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/usage', usageRoutes);
+app.use('/api/llm', aiLimiter, llmGatewayRoutes);
 
 // Sentry error handler - must be before custom error handler
 app.use(sentryErrorHandler());

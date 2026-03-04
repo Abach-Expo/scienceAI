@@ -46,7 +46,7 @@ describe('aiServer', () => {
       expect(result.model).toBe('gpt-4o');
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/ai/generate',
+        'http://localhost:3001/api/llm/generate',
         expect.objectContaining({
           headers: expect.objectContaining({
             'Authorization': 'Bearer test-token',

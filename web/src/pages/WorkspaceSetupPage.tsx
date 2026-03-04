@@ -151,7 +151,7 @@ Answer in the language the user writes in.
 Be concise, friendly, and helpful. Use Markdown formatting.
 After 2-3 exchanges when you have enough information, tell the user their workspace is ready and summarize the project plan.`;
 
-      const response = await fetchWithAuth(`${API_URL}/ai/generate-stream`, {
+      const response = await fetchWithAuth(`${API_URL}/llm/stream`, {
         method: 'POST',
         body: JSON.stringify({
           prompt: contextMessages

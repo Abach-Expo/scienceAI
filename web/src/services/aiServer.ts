@@ -1,6 +1,7 @@
 /**
  * Серверный AI API клиент
- * API ключ хранится ТОЛЬКО на сервере, не виден в браузере
+ * Все запросы проходят через LLM Gateway (Science AI)
+ * API ключи хранятся ТОЛЬКО на сервере, не видны в браузере
  */
 
 import { API_URL } from '../config';
@@ -13,15 +14,20 @@ interface GenerateResponse {
   model?: string;
   provider?: string;
   usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+    promptTokens?: number;
+    completionTokens?: number;
+    totalTokens?: number;
   };
+  latencyMs?: number;
 }
 
 /**
- * Генерирует текст через серверный API (ключ на сервере)
- * @param systemPrompt - Системный промпт
+ * Генерирует текст через LLM Gateway (Science AI)
+ * Gateway автоматически добавляет системные промпты, стили и ограничения
+ * @param systemPrompt - Системный промпт (будет дополнен базовым промптом Science AI)
  * @param userPrompt - Промпт пользователя
  * @param options - Дополнительные параметры
  */
@@ -31,19 +37,19 @@ export async function generateAI(
   options?: {
     temperature?: number;
     maxTokens?: number;
-    taskType?: string; // Claude routing: dissertation, essay, coursework, chat, etc.
+    taskType?: string;
   }
 ): Promise<{ content: string; error?: string; model?: string; provider?: string }> {
   try {
-    const response = await fetch(`${API_URL}/ai/generate`, {
+    const response = await fetch(`${API_URL}/llm/generate`, {
       method: 'POST',
       headers: getAuthorizationHeaders(),
       body: JSON.stringify({
         systemPrompt,
         userPrompt,
+        taskType: options?.taskType || 'chat',
         temperature: options?.temperature ?? 0.85,
         maxTokens: options?.maxTokens ?? 4000,
-        ...(options?.taskType ? { taskType: options.taskType } : {}),
       }),
     });
 
@@ -88,17 +94,91 @@ export async function generateAI(
 }
 
 /**
- * Проверяет доступность AI сервера
+ * Проверяет доступность AI Gateway
  */
 export async function checkAIServerStatus(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_URL}/ai/usage`, {
+    const response = await fetch(`${API_URL}/llm/status`, {
       method: 'GET',
       headers: getAuthorizationHeaders(),
     });
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Чат через LLM Gateway с поддержкой истории разговора
+ * @param message - Сообщение пользователя
+ * @param options - Параметры: taskType, conversationHistory, temperature, maxTokens
+ */
+export async function chatAI(
+  message: string,
+  options?: {
+    taskType?: string;
+    conversationHistory?: Array<{ role: string; content: string }>;
+    temperature?: number;
+    maxTokens?: number;
+  }
+): Promise<{ content: string; error?: string; model?: string }> {
+  try {
+    const response = await fetch(`${API_URL}/llm/chat`, {
+      method: 'POST',
+      headers: getAuthorizationHeaders(),
+      body: JSON.stringify({
+        message,
+        taskType: options?.taskType || 'chat',
+        conversationHistory: options?.conversationHistory,
+        options: {
+          temperature: options?.temperature,
+          maxTokens: options?.maxTokens,
+        },
+      }),
+    });
+
+    const responseText = await response.text();
+    if (!responseText) {
+      return { content: '', error: 'Сервер вернул пустой ответ' };
+    }
+
+    let data: GenerateResponse;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      return { content: '', error: 'Некорректный JSON от сервера' };
+    }
+
+    if (!response.ok || !data.success) {
+      return { content: '', error: data.error || `Ошибка сервера (${response.status})` };
+    }
+
+    return {
+      content: data.content || '',
+      model: data.model || 'Science AI',
+    };
+  } catch (error: unknown) {
+    const message2 = error instanceof Error ? error.message : 'Ошибка соединения с сервером';
+    return { content: '', error: message2 };
+  }
+}
+
+/**
+ * Получить список доступных моделей Science AI
+ */
+export async function getAvailableModels(): Promise<Array<{ id: string; name: string; description: string }>> {
+  try {
+    const response = await fetch(`${API_URL}/llm/models`, {
+      method: 'GET',
+      headers: getAuthorizationHeaders(),
+    });
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return data.models || [];
+  } catch {
+    return [];
   }
 }
 
@@ -160,6 +240,8 @@ export function createServerOpenAI(taskType?: string) {
 
 export default {
   generateAI,
+  chatAI,
   checkAIServerStatus,
+  getAvailableModels,
   createServerOpenAI,
 };

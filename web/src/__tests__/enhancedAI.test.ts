@@ -62,7 +62,7 @@ describe('enhancedAI auth integration', () => {
     // Verify that the request was made with auth headers
     expect(fetchMock).toHaveBeenCalled();
     const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toContain('/ai/generate');
+    expect(url).toContain('/llm/generate');
     expect(options.headers).toHaveProperty('Authorization', 'Bearer test-token');
   });
 
