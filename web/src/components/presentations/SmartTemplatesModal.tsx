@@ -55,6 +55,22 @@ interface TemplateCustomization {
 
 // ==================== ДОПОЛНИТЕЛЬНЫЕ ШАБЛОНЫ ====================
 
+// Preview images for templates (Unsplash)
+const TEMPLATE_PREVIEW_IMAGES: Record<string, string> = {
+  'pitch-deck': 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=600&h=400&fit=crop',
+  'sales-deck': 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&h=400&fit=crop',
+  'course-lesson': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&h=400&fit=crop',
+  'product-launch': 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&h=400&fit=crop',
+  'quarterly-report': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop',
+  'creative-portfolio': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&h=400&fit=crop',
+  'tech-demo': 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=600&h=400&fit=crop',
+  'company-intro': 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop',
+  'webinar': 'https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?w=600&h=400&fit=crop',
+  'case-study': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop',
+  'thesis-defense': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop',
+  'social-impact': 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop',
+};
+
 const EXTENDED_TEMPLATES: SmartTemplate[] = [
   ...SMART_TEMPLATES,
   {
@@ -373,14 +389,26 @@ export default function SmartTemplatesModal({
                       onClick={() => handleSelectTemplate(template)}
                       className="group relative p-4 rounded-2xl border-2 border-gray-800 hover:border-purple-500 bg-gray-800/50 text-left transition-all"
                     >
-                      {/* Preview gradient */}
+                      {/* Preview image */}
                       <div 
-                        className="h-32 rounded-xl mb-4 flex items-center justify-center text-5xl"
+                        className="h-32 rounded-xl mb-4 overflow-hidden relative"
                         style={{
                           background: `linear-gradient(135deg, ${template.colorScheme[0]}20, ${template.colorScheme[1]}20)`,
                         }}
                       >
-                        {template.icon}
+                        {TEMPLATE_PREVIEW_IMAGES[template.id] ? (
+                          <img 
+                            src={TEMPLATE_PREVIEW_IMAGES[template.id]} 
+                            alt={template.name}
+                            className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-5xl">
+                            {template.icon}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-xl" />
                       </div>
                       
                       <h3 className="font-semibold text-white mb-1">
@@ -416,12 +444,20 @@ export default function SmartTemplatesModal({
                 {/* Selected Template Preview */}
                 {selectedTemplate && (
                   <div 
-                    className="p-6 rounded-2xl flex items-center gap-6"
+                    className="p-6 rounded-2xl flex items-center gap-6 overflow-hidden"
                     style={{
                       background: `linear-gradient(135deg, ${selectedTemplate.colorScheme[0]}20, ${selectedTemplate.colorScheme[1]}20)`,
                     }}
                   >
-                    <div className="text-5xl">{selectedTemplate.icon}</div>
+                    {TEMPLATE_PREVIEW_IMAGES[selectedTemplate.id] ? (
+                      <img 
+                        src={TEMPLATE_PREVIEW_IMAGES[selectedTemplate.id]} 
+                        alt={selectedTemplate.name}
+                        className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="text-5xl flex-shrink-0">{selectedTemplate.icon}</div>
+                    )}
                     <div>
                       <h3 className="text-xl font-bold text-white">
                         {language === 'ru' ? selectedTemplate.name : selectedTemplate.nameEn}

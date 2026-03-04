@@ -134,6 +134,8 @@ const DissertationPage = () => {
 
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const aiInputRef = useRef<HTMLTextAreaElement>(null);
+  const [aiTextareaHeight, setAiTextareaHeight] = useState(52);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -330,6 +332,17 @@ const DissertationPage = () => {
 
   // ── Auto-task from ScienceAIChat redirect ──
   const autoTaskProcessedRef = useRef(false);
+
+  // ── Framer-powered auto-resize AI textarea ──
+  useEffect(() => {
+    if (aiInputRef.current) {
+      aiInputRef.current.style.height = '0px';
+      const sh = aiInputRef.current.scrollHeight;
+      const newH = Math.min(Math.max(sh, 52), 200);
+      aiInputRef.current.style.height = newH + 'px';
+      setAiTextareaHeight(newH);
+    }
+  }, [aiPrompt]);
   const [pendingAutoGenerate, setPendingAutoGenerate] = useState(false);
 
   useEffect(() => {
@@ -4285,6 +4298,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     
                     <div className="relative">
                       <textarea
+                        ref={aiInputRef}
                         value={aiPrompt}
                         onChange={(e) => setAiPrompt(e.target.value)}
                         onKeyDown={(e) => {
@@ -4296,8 +4310,8 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                         placeholder={attachedFiles.length > 0 ? "Комментарий к файлам..." : "Напишите запрос..."}
                         rows={1}
                         disabled={isGenerating}
-                        className="w-full resize-y min-h-[52px] max-h-[160px] p-4 pl-12 pr-14 rounded-2xl text-sm leading-relaxed text-white/90 placeholder-white/25 focus:outline-none"
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', transition: 'border-color 0.2s' }}
+                        className="w-full resize-none min-h-[52px] p-4 pl-12 pr-14 rounded-2xl text-sm leading-relaxed text-white/90 placeholder-white/25 focus:outline-none"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', transition: 'border-color 0.2s', height: aiTextareaHeight, maxHeight: 200, lineHeight: '1.6' }}
                         onFocus={(e) => (e.target.style.borderColor = 'rgba(139,92,246,0.3)')}
                         onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.06)')}
                       />

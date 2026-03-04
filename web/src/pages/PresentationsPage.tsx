@@ -74,7 +74,10 @@ import {
   BarChart,
   AlertCircle,
   Menu,
+  Paperclip,
+  RefreshCw,
 } from 'lucide-react';
+import { parseFile, formatFileForPrompt, ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, formatFileSize, type ParsedFile } from '../utils/fileParser';
 
 export function PresentationsPage() {
   useDocumentTitle('Презентации');
@@ -96,6 +99,11 @@ export function PresentationsPage() {
   const [workspaceSteps, setWorkspaceSteps] = useState<WorkspaceStep[]>([]);
   const [currentWorkspaceStep, setCurrentWorkspaceStep] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [chatTextareaHeight, setChatTextareaHeight] = useState(56);
+  const [attachedFiles, setAttachedFiles] = useState<ParsedFile[]>([]);
+  const [isParsingFile, setIsParsingFile] = useState(false);
   
   // Состояния
   const [presentations, setPresentations] = useState<Presentation[]>([]);
@@ -170,6 +178,17 @@ export function PresentationsPage() {
   const fullscreenRef = useRef<HTMLDivElement>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
   const autoTaskProcessedRef = useRef(false);
+
+  // ── Framer-powered auto-resize chat textarea ──
+  useEffect(() => {
+    if (chatInputRef.current) {
+      chatInputRef.current.style.height = '0px';
+      const sh = chatInputRef.current.scrollHeight;
+      const newH = Math.min(Math.max(sh, 56), 200);
+      chatInputRef.current.style.height = newH + 'px';
+      setChatTextareaHeight(newH);
+    }
+  }, [chatInput]);
   const [pendingAutoTask, setPendingAutoTask] = useState<string | null>(null);
   
   // ==================== ЭФФЕКТЫ ====================
@@ -399,11 +418,63 @@ export function PresentationsPage() {
   
   // ==================== ЧАТ И WORKSPACE ====================
   
+  // File attachment handlers
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsParsingFile(true);
+    const newFiles: ParsedFile[] = [];
+
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        setChatMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `⚠️ Файл "${file.name}" слишком большой (${formatFileSize(file.size)}). Максимум: ${formatFileSize(MAX_FILE_SIZE)}`,
+          timestamp: new Date(),
+        }]);
+        continue;
+      }
+
+      try {
+        const parsed = await parseFile(file);
+        newFiles.push(parsed);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Не удалось прочитать файл';
+        setChatMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `❌ ${file.name}: ${msg}`,
+          timestamp: new Date(),
+        }]);
+      }
+    }
+
+    if (newFiles.length > 0) {
+      setAttachedFiles(prev => [...prev, ...newFiles]);
+    }
+
+    setIsParsingFile(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeAttachedFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+  
   const handleChatSubmit = async () => {
-    if (!chatInput.trim() || isGenerating) return;
+    const hasFiles = attachedFiles.length > 0;
+    if ((!chatInput.trim() && !hasFiles) || isGenerating) return;
     
     // Умный анализ намерения
     const intentAnalysis = analyzeIntent(chatInput);
+    
+    // Если есть файлы но нет текста или текст короткий — всегда генерировать  
+    if (hasFiles && intentAnalysis.intent !== 'generate_presentation') {
+      // Files attached = always generate presentation
+      intentAnalysis.intent = 'generate_presentation' as const;
+    }
     
     // Если это не запрос на создание презентации — отвечаем как чат
     if (intentAnalysis.intent !== 'generate_presentation') {
@@ -457,16 +528,30 @@ export function PresentationsPage() {
     }
     
     // Это запрос на создание презентации
+    // Build prompt with file content
+    const userText = chatInput.trim();
+    let fileContents = '';
+    if (hasFiles) {
+      fileContents = attachedFiles.map(f => formatFileForPrompt(f)).join('\n\n');
+    }
+    
+    const displayMessage = userText 
+      ? (hasFiles ? `${userText}\n\n📎 ${attachedFiles.map(f => f.name).join(', ')}` : userText)
+      : `📎 ${attachedFiles.map(f => f.name).join(', ')}`;
+    
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: chatInput,
+      content: displayMessage,
       timestamp: new Date(),
     };
     
     setChatMessages(prev => [...prev, userMessage]);
-    const prompt = chatInput;
+    const prompt = fileContents 
+      ? `${userText || 'Создай презентацию на основе содержимого файла'}\n\n--- СОДЕРЖИМОЕ ФАЙЛОВ ---\n${fileContents}`
+      : userText;
     setChatInput('');
+    setAttachedFiles([]);
     
     // Переходим в workspace и начинаем генерацию
     setViewMode('workspace');
@@ -1086,13 +1171,13 @@ LAYOUTS: title(слайд 1), content, content-image, image-content, full-image,
       return { intent: 'status', confidence: 0.85 };
     }
     
-    // Вопросы
-    if (/^(что такое|как работает|почему|зачем|когда|где|сколько)\s/i.test(lower)) {
+    // Вопросы (только если очень короткие, иначе это тема)
+    if (/^(что такое|как работает|почему|зачем|когда|где|сколько)\s/i.test(lower) && lower.length < 20) {
       return { intent: 'question', confidence: 0.8 };
     }
     
-    // Если длина > 15 символов и нет явных паттернов чата — это тема презентации
-    if (lower.length > 15) {
+    // Если длина > 5 символов и нет явных паттернов чата — это тема презентации
+    if (lower.length > 5) {
       return { intent: 'generate_presentation', confidence: 0.9, detectedTopic: message };
     }
     
@@ -4798,9 +4883,45 @@ Layout: ${slide.layout}`
       {/* Поле ввода */}
       <div className="p-6 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10,10,16,0.92)', backdropFilter: 'blur(24px)' }}>
         <div className="max-w-3xl mx-auto">
+          {/* Attached files preview */}
+          {attachedFiles.length > 0 && (
+            <div className="mb-2 space-y-1">
+              {attachedFiles.map((file, index) => (
+                <div
+                  key={`${file.name}-${index}`}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs"
+                >
+                  <FileText size={14} className="text-purple-400 shrink-0" />
+                  <span className="text-white/80 truncate flex-1">{file.name}</span>
+                  <span className="text-white/40 shrink-0">{formatFileSize(file.size)}</span>
+                  {file.truncated && (
+                    <span className="text-yellow-400 shrink-0" title="Файл обрезан из-за размера">⚠️</span>
+                  )}
+                  <button
+                    onClick={() => removeAttachedFile(index)}
+                    className="p-0.5 hover:bg-red-500/20 rounded transition-colors shrink-0"
+                  >
+                    <X size={12} className="text-red-400" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={ACCEPTED_FILE_TYPES}
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          
           <div className="flex gap-3">
             <div className="flex-1 relative">
               <textarea
+                ref={chatInputRef}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -4809,19 +4930,31 @@ Layout: ${slide.layout}`
                     handleChatSubmit();
                   }
                 }}
-                placeholder="Опишите тему презентации... (Enter для отправки)"
-                className="w-full px-5 py-4 pr-14 rounded-2xl text-white/90 placeholder-white/25 resize-none transition-all"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', outline: 'none' }}
+                placeholder={attachedFiles.length > 0 ? "Комментарий к файлам (или Enter для генерации)..." : "Опишите тему презентации... (Enter для отправки)"}
+                className="w-full px-5 py-4 pl-12 pr-14 rounded-2xl text-white/90 placeholder-white/25 resize-none transition-all"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', outline: 'none', height: chatTextareaHeight, maxHeight: 200, lineHeight: '1.6' }}
                 onFocus={(e) => { e.currentTarget.style.border = '1px solid rgba(139,92,246,0.3)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(139,92,246,0.08)'; }}
                 onBlur={(e) => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = 'none'; }}
-                rows={2}
                 disabled={isGenerating}
               />
+              {/* Paperclip button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isGenerating || isParsingFile}
+                className="absolute bottom-3 left-3 p-2 rounded-lg hover:bg-white/[0.04] text-white/30 hover:text-violet-400 transition-colors disabled:opacity-50"
+                title="Прикрепить файл (PDF, DOCX, TXT и др.)"
+              >
+                {isParsingFile ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <Paperclip size={16} />
+                )}
+              </button>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleChatSubmit}
-                disabled={!chatInput.trim() || isGenerating}
+                disabled={(!chatInput.trim() && attachedFiles.length === 0) || isGenerating}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl text-white flex items-center justify-center disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.9), rgba(139,92,246,0.9))', boxShadow: '0 0 20px rgba(236,72,153,0.25)' }}
               >
@@ -4839,24 +4972,24 @@ Layout: ${slide.layout}`
             <select
               value={slideCount}
               onChange={(e) => setSlideCount(Number(e.target.value))}
-              className="px-3 py-1.5 rounded-lg bg-transparent text-white/50"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+              className="px-3 py-1.5 rounded-lg text-white/50 cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}
             >
-              <option value={5}>5 слайдов</option>
-              <option value={8}>8 слайдов</option>
-              <option value={10}>10 слайдов</option>
-              <option value={15}>15 слайдов</option>
-              <option value={20}>20 слайдов</option>
+              <option value={5} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>5 слайдов</option>
+              <option value={8} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>8 слайдов</option>
+              <option value={10} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>10 слайдов</option>
+              <option value={15} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>15 слайдов</option>
+              <option value={20} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>20 слайдов</option>
             </select>
             
             <select
               value={selectedTheme.id}
               onChange={(e) => setSelectedTheme(THEMES.find(t => t.id === e.target.value) || THEMES[0])}
-              className="px-3 py-1.5 rounded-lg bg-transparent text-white/50"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+              className="px-3 py-1.5 rounded-lg text-white/50 cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}
             >
               {THEMES.slice(0, 8).map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>{t.name}</option>
               ))}
             </select>
             
@@ -4874,11 +5007,11 @@ Layout: ${slide.layout}`
               <select
                 value={imageSource}
                 onChange={(e) => setImageSource(e.target.value as 'dalle' | 'pexels')}
-                className="px-3 py-1.5 rounded-lg bg-transparent text-white/50"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                className="px-3 py-1.5 rounded-lg text-white/50 cursor-pointer"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}
               >
-                <option value="dalle">🎨 AI генерация</option>
-                <option value="pexels">📷 Pexels (реальные фото)</option>
+                <option value="dalle" style={{ background: '#1a1a2e', color: '#e0e0e0' }}>🎨 AI генерация</option>
+                <option value="pexels" style={{ background: '#1a1a2e', color: '#e0e0e0' }}>📷 Pexels (реальные фото)</option>
               </select>
             )}
             
