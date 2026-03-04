@@ -884,7 +884,7 @@ const ScienceAIChat = () => {
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             onKeyDown={handleInputKeyDown}
-            placeholder="Напишите запрос..."
+            placeholder="Напишите запрос или попросите создать диссертацию, презентацию, курсовую..."
             rows={1}
             disabled={isLoading}
             aria-label="Сообщение для ИИ-ассистента"
@@ -1122,6 +1122,34 @@ const ScienceAIChat = () => {
                       {action.label}
                     </motion.button>
                   ))}
+                </motion.div>
+
+                {/* ═══ Smart capabilities hint ═══ */}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
+                  className="mt-10 max-w-xl mx-auto">
+                  <p className="text-white/25 text-xs uppercase tracking-widest mb-4">✨ Умный ассистент — просто опишите задачу</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      { icon: GraduationCap, title: 'Диссертации и работы', examples: ['«Напиши диссертацию на тему экономика»', '«Курсовая по психологии на 30 страниц»', '«Диплом про ИИ в медицине»'], iconBg: 'bg-violet-500/10', iconColor: 'text-violet-400/70' },
+                      { icon: Layers, title: 'Презентации', examples: ['«Создай презентацию про космос»', '«Слайды по маркетингу на 15 слайдов»'], iconBg: 'bg-fuchsia-500/10', iconColor: 'text-fuchsia-400/70' },
+                      { icon: MessageSquare, title: 'Вопросы и помощь', examples: ['«Объясни методологию исследования»', '«Найди источники по теме»', '«Расширь этот текст»'], iconBg: 'bg-indigo-500/10', iconColor: 'text-indigo-400/70' },
+                    ].map((cap, i) => (
+                      <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.75 + i * 0.08 }}
+                        className="text-left p-4 rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                        <div className={`w-8 h-8 rounded-lg ${cap.iconBg} flex items-center justify-center mb-3`}>
+                          <cap.icon size={16} className={cap.iconColor} />
+                        </div>
+                        <p className="text-white/60 text-sm font-medium mb-2">{cap.title}</p>
+                        <div className="space-y-1">
+                          {cap.examples.map((ex, j) => (
+                            <p key={j} className="text-white/25 text-xs leading-relaxed">{ex}</p>
+                          ))}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <p className="text-white/20 text-[11px] mt-4">💡 ИИ автоматически определит тип задачи и откроет нужное рабочее пространство</p>
                 </motion.div>
               </motion.div>
             </div>
