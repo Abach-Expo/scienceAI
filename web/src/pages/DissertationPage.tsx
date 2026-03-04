@@ -64,7 +64,7 @@ const AntiAIDetectionLazy = lazy(() => import('../components/AntiAIDetection').t
 import { parseFile, formatFileForPrompt, ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, formatFileSize, type ParsedFile } from '../utils/fileParser';
 
 // Extracted dissertation modules
-import type { Chapter, DocumentType, DocumentTypeConfig, Dissertation, Citation, AIMessage } from './dissertation';
+import type { Chapter, DocumentType, DocumentTypeConfig, Dissertation, Citation, AIMessage, ThinkingStep } from './dissertation';
 import { DOCUMENT_TYPES, SCIENCE_FIELDS, formatCitationGOST, checkUniqueness, generateBibliography, getHumanWritingSystemPrompt, exportToPDF } from './dissertation';
 
 const DissertationPage = () => {
@@ -95,17 +95,18 @@ const DissertationPage = () => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<ParsedFile[]>([]);
+  const [expandedThinking, setExpandedThinking] = useState<Set<string>>(new Set());
 
-  // Auto-scroll — как в настоящих AI-чатах (ChatGPT / Claude)
+  // Auto-scroll — только контейнер сообщений скроллится, экран стоит на месте
   useEffect(() => {
     const container = aiMessagesContainerRef.current;
     const endElement = messagesEndRef.current;
 
     if (!container || !endElement) return;
 
-    // Во время стриминга — всегда следим за концом (мгновенно)
+    // Во время стриминга — всегда следим за концом (внутри контейнера)
     if (isGenerating) {
-      endElement.scrollIntoView({ behavior: 'auto', block: 'end' });
+      container.scrollTop = container.scrollHeight;
     } 
     // Когда генерация закончена — плавно, только если пользователь был внизу
     else {
@@ -113,10 +114,23 @@ const DissertationPage = () => {
         container.scrollHeight - container.scrollTop - container.clientHeight < 150;
 
       if (isNearBottom) {
-        endElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       }
     }
   }, [aiMessages, isGenerating]);
+
+  // Авто-раскрытие thinking блоков пока они активны
+  useEffect(() => {
+    const activeThinking = aiMessages.find(m => m.isThinking && m.thinkingActive);
+    if (activeThinking) {
+      setExpandedThinking(prev => {
+        if (prev.has(activeThinking.id)) return prev;
+        const next = new Set(prev);
+        next.add(activeThinking.id);
+        return next;
+      });
+    }
+  }, [aiMessages]);
 
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1128,11 +1142,27 @@ ${fullContent.slice(-4000)}
 
     setIsGenerating(true);
 
+    // Создаём thinking-сообщение (как у Grok)
+    const thinkingMsgId = `thinking-${Date.now()}`;
     setAiMessages(prev => [...prev, {
-      id: Date.now().toString(),
+      id: thinkingMsgId,
       role: 'assistant',
-      content: `🎓 **Запускаю автономную генерацию!**\n\n🤖 ИИ самостоятельно:\n1. Спланирует структуру\n2. Напишет каждую главу\n3. Соберёт полный документ\n\n📄 Целевой объём: **~${targetPages} страниц** (${(targetPages * 280).toLocaleString()} слов)\n📑 Тип: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || 'Диссертация'}\n⏱️ Примерное время: ${Math.ceil(targetPages * 0.3)} минут\n\n💡 Просто ждите — всё произойдёт автоматически.`,
+      content: `Генерация: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || 'Диссертация'} · ~${targetPages} стр.`,
       timestamp: new Date(),
+      isThinking: true,
+      thinkingActive: true,
+      thinkingSteps: [{
+        phase: 'planning',
+        phaseLabel: 'Планирование структуры',
+        currentChapter: 0,
+        totalChapters: 0,
+        chapterTitle: 'Анализ темы',
+        wordsGenerated: 0,
+        pagesGenerated: 0,
+        percentComplete: 0,
+        estimatedTimeRemaining: targetPages * 18,
+        timestamp: new Date(),
+      }],
     }]);
 
     try {
@@ -1189,32 +1219,40 @@ ${fullContent.slice(-4000)}
           });
           setGenerationProgress(data.percentComplete as number);
 
-          const progressMsg = `📝 **Генерация: ${data.percentComplete}%**\n\n` +
-            `📌 Фаза: ${data.phase === 'planning' ? 'Планирование структуры' : data.phase === 'generating' ? 'Написание текста' : data.phase === 'assembling' ? 'Сборка документа' : 'Готово!'}\n` +
-            `📑 Глава: ${data.currentChapter}/${data.totalChapters} — «${data.chapterTitle}»\n` +
-            `📊 Написано: ${(data.wordsGenerated as number).toLocaleString()} слов (~${data.pagesGenerated} стр.)\n` +
-            `⏱️ Осталось: ~${Math.ceil((data.estimatedTimeRemaining as number) / 60)} мин.`;
+          // Обновляем thinking-шаги
+          const phaseLabel = data.phase === 'planning' ? 'Планирование структуры' 
+            : data.phase === 'generating' ? 'Написание текста' 
+            : data.phase === 'assembling' ? 'Сборка документа' 
+            : 'Готово!';
 
-          setAiMessages(prev => {
-            const updated = [...prev];
-            const lastIdx = updated.length - 1;
-            if (lastIdx >= 0 && updated[lastIdx].content.startsWith('📝 **Генерация:')) {
-              updated[lastIdx] = { ...updated[lastIdx], content: progressMsg };
-            } else {
-              updated.push({
-                id: `progress-${Date.now()}`,
-                role: 'assistant',
-                content: progressMsg,
-                timestamp: new Date(),
-              });
-            }
-            return updated;
-          });
+          const newStep: ThinkingStep = {
+            phase: data.phase as ThinkingStep['phase'],
+            phaseLabel,
+            currentChapter: data.currentChapter as number,
+            totalChapters: data.totalChapters as number,
+            chapterTitle: data.chapterTitle as string,
+            wordsGenerated: data.wordsGenerated as number,
+            pagesGenerated: data.pagesGenerated as number,
+            percentComplete: data.percentComplete as number,
+            estimatedTimeRemaining: data.estimatedTimeRemaining as number,
+            timestamp: new Date(),
+          };
+
+          setAiMessages(prev => prev.map(msg => 
+            msg.id === thinkingMsgId 
+              ? { 
+                  ...msg, 
+                  content: `Генерация: ${data.percentComplete}% · ${(data.wordsGenerated as number).toLocaleString()} слов · ~${data.pagesGenerated} стр.`,
+                  thinkingSteps: [...(msg.thinkingSteps || []), newStep],
+                }
+              : msg
+          ));
         }
 
         if (data.type === 'result') {
           const resultChapters = (data.chapters as Array<{ title: string; content: string; number: number }>) || [];
           
+          // Пишем контент в РЕДАКТОР (в главы), а не в чат
           setDissertation(prev => {
             const newChapters = [...prev.chapters];
             
@@ -1250,20 +1288,52 @@ ${fullContent.slice(-4000)}
           subscription.incrementDissertationGenerations();
           subscription.incrementLargeChapterGeneration();
 
+          const generationTimeSec = Math.round(((data.metadata as Record<string, number>)?.generationTime || 0) / 1000);
+
+          // Завершаем thinking-блок
+          setAiMessages(prev => prev.map(msg => 
+            msg.id === thinkingMsgId 
+              ? { 
+                  ...msg, 
+                  content: `Генерация завершена: ${(data.totalWords as number)?.toLocaleString() || '?'} слов · ~${data.totalPages || '?'} стр. · ${generationTimeSec} сек.`,
+                  thinkingActive: false,
+                  thinkingSteps: [...(msg.thinkingSteps || []), {
+                    phase: 'done' as const,
+                    phaseLabel: 'Готово!',
+                    currentChapter: resultChapters.length,
+                    totalChapters: resultChapters.length,
+                    chapterTitle: 'Все главы записаны в редактор',
+                    wordsGenerated: data.totalWords as number,
+                    pagesGenerated: data.totalPages as number,
+                    percentComplete: 100,
+                    estimatedTimeRemaining: 0,
+                    timestamp: new Date(),
+                  }],
+                }
+              : msg
+          ));
+
+          // Сообщение о завершении — без упоминания моделей
           setAiMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'assistant',
-            content: `🎉 **Диссертация сгенерирована!**\n\n` +
-              `📄 Объём: **${(data.totalWords as number)?.toLocaleString() || '?'} слов** (~${data.totalPages || '?'} стр.)\n` +
-              `📑 Глав: ${resultChapters.length}\n` +
-              `⏱️ Время: ${Math.round(((data.metadata as Record<string, number>)?.generationTime || 0) / 1000)} сек.\n` +
-              `🤖 Модель: ${(data.metadata as Record<string, string>)?.model || 'AI'}\n\n` +
-              `**Что дальше:**\n` +
-              `1. Проверьте и отредактируйте текст\n` +
-              `2. Запустите проверку на уникальность\n` +
-              `3. Экспортируйте в PDF`,
+            content: `✅ Текст записан в редактор.\n\n📄 Объём: **${(data.totalWords as number)?.toLocaleString() || '?'} слов** (~${data.totalPages || '?'} стр.)\n📑 Глав: ${resultChapters.length}\n⏱️ Время: ${generationTimeSec} сек.\n\nВыберите главу слева для просмотра и редактирования.`,
             timestamp: new Date(),
           }]);
+
+          // Автоматически открываем первую главу с контентом
+          const firstFilledChapter = resultChapters.find(ch => ch.content && ch.content.length > 0);
+          if (firstFilledChapter) {
+            const matchedChapter = dissertation.chapters.find(ch => {
+              const chLower = ch.title.toLowerCase();
+              const resLower = firstFilledChapter.title.toLowerCase();
+              return chLower.includes(resLower) || resLower.includes(chLower);
+            });
+            if (matchedChapter) {
+              setSelectedChapter(matchedChapter.id);
+              setSelectedSubchapter(null);
+            }
+          }
         }
       };
 
@@ -1288,6 +1358,10 @@ ${fullContent.slice(-4000)}
 
     } catch (error) {
       console.error('Full dissertation generation error:', error);
+      // Закрываем thinking-блок с ошибкой
+      setAiMessages(prev => prev.map(msg => 
+        msg.id === thinkingMsgId ? { ...msg, thinkingActive: false } : msg
+      ));
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
@@ -3204,7 +3278,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
   const progressPercentage = Math.round((wordCount / dissertation.targetWordCount) * 100);
 
   return (
-    <div className="min-h-screen bg-bg-primary flex overflow-x-hidden">
+    <div className="h-screen bg-bg-primary flex overflow-hidden">
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setShowSidebarMobile(prev => !prev)}
@@ -3536,7 +3610,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 border-b border-border-primary bg-bg-secondary/50 flex items-center gap-2 md:gap-4 pl-14 md:pl-4">
           <div className="flex items-center gap-3">
@@ -3610,7 +3684,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
         </div>
 
         {/* Editor */}
-        <div className="flex-1 flex">
+        <div className="flex-1 flex min-h-0 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 md:p-8">
             {selectedChapter === 'abstract' ? (
               <div className="max-w-3xl mx-auto">
@@ -3992,7 +4066,6 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   )}
                   
                   {/* Messages */}
-                  {/* Messages */}
                   <div 
                     ref={aiMessagesContainerRef} 
                     className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-border-primary scrollbar-track-transparent"
@@ -4014,6 +4087,90 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                           transition={{ duration: 0.2, delay: index * 0.01 }}
                           className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
+                          {/* Thinking block (Grok-style) */}
+                          {msg.isThinking ? (
+                            <div className="max-w-[90%] w-full">
+                              <button
+                                onClick={() => setExpandedThinking(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(msg.id)) next.delete(msg.id);
+                                  else next.add(msg.id);
+                                  return next;
+                                })}
+                                className="w-full flex items-center gap-2 p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 hover:border-purple-500/40 transition-all group"
+                              >
+                                {msg.thinkingActive ? (
+                                  <Loader2 size={16} className="text-purple-400 animate-spin shrink-0" />
+                                ) : (
+                                  <CheckCircle size={16} className="text-green-400 shrink-0" />
+                                )}
+                                <span className="text-xs text-text-secondary flex-1 text-left truncate">
+                                  {msg.thinkingActive ? 'Думаю...' : 'Процесс завершён'}
+                                  {msg.thinkingSteps && msg.thinkingSteps.length > 0 && (
+                                    <span className="text-text-muted ml-2">
+                                      {(() => {
+                                        const lastStep = msg.thinkingSteps[msg.thinkingSteps.length - 1];
+                                        return `${lastStep.percentComplete}% · ${lastStep.wordsGenerated.toLocaleString()} слов`;
+                                      })()}
+                                    </span>
+                                  )}
+                                </span>
+                                <ChevronDown 
+                                  size={14} 
+                                  className={`text-text-muted transition-transform duration-200 shrink-0 ${expandedThinking.has(msg.id) ? 'rotate-180' : ''}`} 
+                                />
+                              </button>
+                              <AnimatePresence>
+                                {expandedThinking.has(msg.id) && msg.thinkingSteps && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="mt-2 ml-2 pl-4 border-l-2 border-purple-500/20 space-y-2 py-2">
+                                      {msg.thinkingSteps.map((step, stepIdx) => (
+                                        <div key={stepIdx} className="flex items-start gap-2">
+                                          <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+                                            step.phase === 'done' ? 'bg-green-400' 
+                                            : step.phase === 'planning' ? 'bg-blue-400'
+                                            : step.phase === 'assembling' ? 'bg-yellow-400'
+                                            : 'bg-purple-400'
+                                          }`} />
+                                          <div className="text-xs text-text-muted leading-relaxed">
+                                            <span className="text-text-secondary font-medium">{step.phaseLabel}</span>
+                                            {step.chapterTitle && (
+                                              <span className="ml-1">— {step.chapterTitle}</span>
+                                            )}
+                                            {step.wordsGenerated > 0 && (
+                                              <span className="ml-1 text-purple-400">
+                                                ({step.wordsGenerated.toLocaleString()} слов, ~{step.pagesGenerated} стр.)
+                                              </span>
+                                            )}
+                                            {step.percentComplete > 0 && step.phase !== 'done' && (
+                                              <div className="mt-1 h-1 bg-bg-tertiary rounded-full overflow-hidden w-32">
+                                                <div 
+                                                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-300" 
+                                                  style={{ width: `${step.percentComplete}%` }} 
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                      {msg.thinkingActive && (
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse shrink-0" />
+                                          <span className="text-xs text-purple-400 animate-pulse">Обработка...</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          ) : (
                           <div
                             className={`max-w-[85%] p-4 rounded-2xl ${
                               msg.role === 'user'
@@ -4047,6 +4204,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                               {msg.content}
                             </div>
                           </div>
+                          )}
                         </motion.div>
                       ))
                     )}

@@ -63,7 +63,6 @@ interface DissertationResult {
     actualPages: number;
     generationTime: number; // мс
     chaptersCount: number;
-    model: string;
   };
 }
 
@@ -358,7 +357,6 @@ export class DissertationService {
         actualPages: totalPages,
         generationTime,
         chaptersCount: totalChapters,
-        model: this.anthropic ? 'Claude Sonnet 4 + GPT-4o' : 'GPT-4o',
       },
     };
   }

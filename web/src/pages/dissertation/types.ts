@@ -56,9 +56,28 @@ export interface Citation {
   type: 'book' | 'article' | 'website' | 'dissertation' | 'conference';
 }
 
+export interface ThinkingStep {
+  phase: 'planning' | 'generating' | 'assembling' | 'done';
+  phaseLabel: string;
+  currentChapter: number;
+  totalChapters: number;
+  chapterTitle: string;
+  wordsGenerated: number;
+  pagesGenerated: number;
+  percentComplete: number;
+  estimatedTimeRemaining: number;
+  timestamp: Date;
+}
+
 export interface AIMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  /** When true, this message is a "thinking" block (collapsible progress) */
+  isThinking?: boolean;
+  /** Steps collected during full dissertation generation */
+  thinkingSteps?: ThinkingStep[];
+  /** Whether the thinking process is still active */
+  thinkingActive?: boolean;
 }
