@@ -422,9 +422,9 @@ const ScienceAIChat = () => {
   const userName = user?.name || user?.email?.split('@')[0] || 'Пользователь';
 
   // ═══════════════════════════════════════════
-  // SHARED INPUT AREA
+  // SHARED INPUT AREA (render function, NOT a component — avoids remount flicker)
   // ═══════════════════════════════════════════
-  const InputArea = ({ isWelcome = false }: { isWelcome?: boolean }) => (
+  const renderInputArea = (isWelcome = false) => (
     <div className={isWelcome ? 'relative' : 'relative z-20 border-t border-white/[0.04] p-4'}
       style={isWelcome ? undefined : { background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(24px)' }}
     >
@@ -705,7 +705,7 @@ const ScienceAIChat = () => {
 
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                   className="mb-10">
-                  <InputArea isWelcome />
+                  {renderInputArea(true)}
                 </motion.div>
 
                 <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
@@ -795,7 +795,7 @@ const ScienceAIChat = () => {
                 )}
               </AnimatePresence>
 
-              <InputArea />
+              {renderInputArea()}
             </>
           )}
         </div>
