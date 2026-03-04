@@ -96,9 +96,22 @@ const NewProjectPage = () => {
     <PageTransition className="min-h-screen bg-bg-primary relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-500/10 rounded-full blur-[120px] animate-pulse delay-700" />
-        <div className="absolute top-1/2 right-1/3 w-[300px] h-[300px] bg-violet-500/8 rounded-full blur-[100px] animate-pulse delay-1000" />
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, -20, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-purple-500/[0.07] rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{ x: [0, -20, 0], y: [0, 30, 0], scale: [1, 1.15, 1] }}
+          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+          className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-500/[0.07] rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{ x: [0, 15, 0], y: [0, -15, 0] }}
+          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-1/2 right-1/3 w-[300px] h-[300px] bg-violet-500/[0.05] rounded-full blur-[100px]"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.02)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]" />
       </div>
 
       {/* Back button */}
@@ -107,7 +120,7 @@ const NewProjectPage = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1 }}
         onClick={() => navigate(-1)}
-        className="fixed top-6 left-6 z-20 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-bg-secondary/80 backdrop-blur-xl border border-border-primary/50 text-text-secondary hover:text-text-primary hover:border-border-secondary transition-all group"
+        className="fixed top-6 left-6 z-20 flex items-center gap-2 px-4 py-2.5 rounded-xl frosted-panel border border-white/[0.06] text-text-secondary hover:text-text-primary hover:border-purple-500/30 transition-all group"
       >
         <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
         <span className="text-sm font-medium">{t('common.back')}</span>
@@ -126,11 +139,11 @@ const NewProjectPage = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-            className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-500/25"
+            className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-500/30"
           >
             <Sparkles size={36} className="text-white" />
           </motion.div>
-          <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4 tracking-tight">
             {t('newProject.title')}
           </h1>
           <p className="text-lg text-text-secondary max-w-xl mx-auto">
@@ -151,7 +164,7 @@ const NewProjectPage = () => {
               onClick={type.onClick}
               onMouseEnter={() => setHoveredId(type.id)}
               onMouseLeave={() => setHoveredId(null)}
-              className={`relative p-6 md:p-8 rounded-2xl bg-gradient-to-br ${type.gradient} border ${type.borderColor} transition-all text-left group backdrop-blur-sm overflow-hidden`}
+              className={`relative p-6 md:p-8 rounded-2xl bg-gradient-to-br ${type.gradient} border ${type.borderColor} transition-all text-left group backdrop-blur-sm overflow-hidden shadow-lg shadow-black/5 hover:shadow-xl`}
             >
               {/* Hover glow */}
               <AnimatePresence>

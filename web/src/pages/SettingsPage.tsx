@@ -194,24 +194,27 @@ const SettingsPage = () => {
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="px-4 md:px-6 py-4 border-b border-border-primary bg-bg-secondary/50 backdrop-blur-sm"
+        className="frosted-panel !rounded-none px-4 md:px-6 py-4 border-b border-white/[0.06]"
       >
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-xl glass border border-border-primary flex items-center justify-center text-text-secondary hover:text-text-primary"
+            className="w-10 h-10 rounded-xl bg-bg-tertiary/50 border border-white/[0.06] flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
           >
             <ArrowLeft size={20} />
           </motion.button>
           
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+            <motion.div
+              whileHover={{ rotate: 5 }}
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20"
+            >
               <Sparkles className="text-white" size={22} />
-            </div>
+            </motion.div>
             <div>
-              <h1 className="text-lg font-bold text-text-primary">{t('settings.title')}</h1>
+              <h1 className="text-lg font-bold text-text-primary tracking-tight">{t('settings.title')}</h1>
               <p className="text-xs text-text-muted">{t('settings.appConfiguration')}</p>
             </div>
           </div>
@@ -224,14 +227,14 @@ const SettingsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card"
+          className="card-premium"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20">
               <User size={24} className="text-white" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-text-primary">{t('settings.profile')}</h2>
+              <h2 className="text-xl font-bold text-text-primary tracking-tight">{t('settings.profile')}</h2>
               <p className="text-sm text-text-muted">{t('settings.profileDesc')}</p>
             </div>
             {userData?.avatar && (
@@ -250,7 +253,7 @@ const SettingsPage = () => {
                 value={profileForm.firstName}
                 onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
                 placeholder={t('settings.firstNamePlaceholder')}
-                className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
+                className="w-full px-4 py-3.5 rounded-xl bg-bg-tertiary/50 border border-white/[0.06] text-text-primary placeholder-text-muted focus:outline-none focus:border-purple-500/40 input-premium transition-all"
               />
             </div>
             <div>
@@ -263,7 +266,7 @@ const SettingsPage = () => {
                 value={profileForm.lastName}
                 onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
                 placeholder={t('settings.lastNamePlaceholder')}
-                className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
+                className="w-full px-4 py-3.5 rounded-xl bg-bg-tertiary/50 border border-white/[0.06] text-text-primary placeholder-text-muted focus:outline-none focus:border-purple-500/40 input-premium transition-all"
               />
             </div>
           </div>
@@ -280,7 +283,7 @@ const SettingsPage = () => {
                 value={profileForm.organization}
                 onChange={(e) => setProfileForm({ ...profileForm, organization: e.target.value })}
                 placeholder={t('settings.organizationPlaceholder')}
-                className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
+                className="w-full px-4 py-3.5 rounded-xl bg-bg-tertiary/50 border border-white/[0.06] text-text-primary placeholder-text-muted focus:outline-none focus:border-purple-500/40 input-premium transition-all"
               />
             </div>
             <div>
@@ -294,7 +297,7 @@ const SettingsPage = () => {
                 value={profileForm.position}
                 onChange={(e) => setProfileForm({ ...profileForm, position: e.target.value })}
                 placeholder={t('settings.positionPlaceholder')}
-                className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
+                className="w-full px-4 py-3.5 rounded-xl bg-bg-tertiary/50 border border-white/[0.06] text-text-primary placeholder-text-muted focus:outline-none focus:border-purple-500/40 input-premium transition-all"
               />
             </div>
           </div>
@@ -311,7 +314,7 @@ const SettingsPage = () => {
                 type="email"
                 value={userData?.email || ''}
                 disabled
-                className="flex-1 px-4 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-muted cursor-not-allowed"
+                className="flex-1 px-4 py-3.5 rounded-xl bg-bg-tertiary/30 border border-white/[0.04] text-text-muted cursor-not-allowed"
               />
               {userData?.provider === 'google' && (
                 <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-medium">
@@ -323,11 +326,11 @@ const SettingsPage = () => {
 
           <div className="flex gap-3">
             <motion.button
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSaveProfile}
               disabled={profileSaving}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold flex items-center gap-2"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 via-purple-600 to-pink-600 text-white font-semibold flex items-center gap-2 shadow-lg shadow-purple-500/20 btn-ripple"
             >
               {profileSaving ? (
                 <span className="animate-spin">⏳</span>
@@ -355,14 +358,14 @@ const SettingsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.03 }}
-            className="card"
+            className="card-premium"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
                 <KeyRound size={24} className="text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text-primary">{t('settings.changePassword')}</h2>
+                <h2 className="text-xl font-bold text-text-primary tracking-tight">{t('settings.changePassword')}</h2>
                 <p className="text-sm text-text-muted">{t('settings.changePasswordDesc')}</p>
               </div>
             </div>
@@ -393,7 +396,7 @@ const SettingsPage = () => {
                     value={passwordForm.current}
                     onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-12 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
+                    className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-bg-tertiary/50 border border-white/[0.06] text-text-primary placeholder-text-muted focus:outline-none focus:border-purple-500/40 input-premium transition-all"
                   />
                   <button
                     type="button"
@@ -416,7 +419,7 @@ const SettingsPage = () => {
                     value={passwordForm.newPass}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPass: e.target.value })}
                     placeholder={t('auth.passwordPlaceholder')}
-                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-bg-tertiary/50 border border-white/[0.06] text-text-primary placeholder-text-muted focus:outline-none focus:border-purple-500/40 input-premium transition-all"
                   />
                 </div>
               </div>
@@ -432,7 +435,7 @@ const SettingsPage = () => {
                     value={passwordForm.confirm}
                     onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
                     placeholder={t('settings.repeatPasswordPlaceholder')}
-                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-bg-tertiary border border-border-primary text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-bg-tertiary/50 border border-white/[0.06] text-text-primary placeholder-text-muted focus:outline-none focus:border-purple-500/40 input-premium transition-all"
                   />
                 </div>
               </div>
@@ -475,7 +478,7 @@ const SettingsPage = () => {
                   setPasswordSaving(false);
                 }
               }}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold flex items-center gap-2 disabled:opacity-50"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-orange-500/20 btn-ripple"
             >
               {passwordSaving ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -492,7 +495,7 @@ const SettingsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="card"
+          className="card-premium"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${
@@ -506,7 +509,7 @@ const SettingsPage = () => {
                <Zap size={24} className="text-white" />}
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-text-primary">{t('settings.subscription')}</h2>
+              <h2 className="text-xl font-bold text-text-primary tracking-tight">{t('settings.subscription')}</h2>
               <p className="text-sm text-text-muted">{t('settings.subscriptionDesc')}</p>
             </div>
             
@@ -754,14 +757,14 @@ const SettingsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="card"
+          className="card-premium"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
               <Globe size={24} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">{t('settings.language')}</h2>
+              <h2 className="text-xl font-bold text-text-primary tracking-tight">{t('settings.language')}</h2>
               <p className="text-sm text-text-muted">{t('settings.languageDesc')}</p>
             </div>
           </div>
@@ -804,14 +807,14 @@ const SettingsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="card"
+          className="card-premium"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
               <Palette size={24} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">{t('settings.theme')}</h2>
+              <h2 className="text-xl font-bold text-text-primary tracking-tight">{t('settings.theme')}</h2>
               <p className="text-sm text-text-muted">{t('settings.themeDesc')}</p>
             </div>
           </div>
@@ -855,19 +858,19 @@ const SettingsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="card"
+          className="card-premium"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
               <Bell size={24} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">{t('settings.notifications')}</h2>
+              <h2 className="text-xl font-bold text-text-primary tracking-tight">{t('settings.notifications')}</h2>
               <p className="text-sm text-text-muted">{t('settings.notificationsDesc')}</p>
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-bg-secondary border border-border-primary">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-bg-tertiary/30 border border-white/[0.06]">
             <div>
               <p className="text-text-primary font-medium">{notifications ? t('settings.enabled') : t('settings.disabled')}</p>
               <p className="text-sm text-text-muted">{t('settings.notificationsToggle')}</p>
@@ -891,7 +894,7 @@ const SettingsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.27 }}
-          className="card"
+          className="card-premium"
         >
           <ReferralProgram />
         </motion.div>
@@ -901,14 +904,14 @@ const SettingsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="card"
+          className="card-premium"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/20">
               <Trash2 size={24} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">{t('settings.dangerZone')}</h2>
+              <h2 className="text-xl font-bold text-text-primary tracking-tight">{t('settings.dangerZone')}</h2>
               <p className="text-sm text-text-muted">{t('settings.dangerZoneDesc')}</p>
             </div>
           </div>
@@ -949,10 +952,10 @@ const SettingsPage = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSave}
-            className={`px-8 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${
+            className={`px-8 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all btn-ripple ${
               saved
                 ? 'bg-accent-success text-white'
-                : 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
+                : 'bg-gradient-to-r from-purple-500 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/20'
             }`}
           >
             {saved ? (

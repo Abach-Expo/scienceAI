@@ -257,25 +257,34 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen bg-bg-primary flex">
       {/* Левая часть - Форма */}
-      <div className="flex-1 flex items-center justify-center p-4 md:p-8">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8 relative">
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          className="w-full max-w-md relative"
         >
           {/* Лого */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-              <Sparkles className="text-white" size={26} />
+          <motion.div 
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex items-center gap-3 mb-10 cursor-pointer"
+            onClick={() => navigate('/')}
+          >
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+              <Sparkles className="text-white" size={24} />
             </div>
-            <span className="text-2xl font-bold text-text-primary">Science AI</span>
-          </div>
+            <span className="text-2xl font-bold text-text-primary tracking-tight">Science AI</span>
+          </motion.div>
 
           {/* Заголовок */}
-          <h1 className="text-3xl font-bold text-text-primary mb-2">
+          <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">
             {mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}
           </h1>
-          <p className="text-text-muted mb-8">
+          <p className="text-text-muted mb-8 text-[15px]">
             {mode === 'login' 
               ? t('auth.loginSubtitle') 
               : t('auth.registerSubtitle')}
@@ -306,9 +315,9 @@ const AuthPage = () => {
 
           {/* Разделитель */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-border-primary" />
-            <span className="text-text-muted text-sm">{t('auth.or')}</span>
-            <div className="flex-1 h-px bg-border-primary" />
+            <div className="flex-1 separator-gradient" />
+            <span className="text-text-muted text-xs uppercase tracking-wider font-medium">{t('auth.or')}</span>
+            <div className="flex-1 separator-gradient" />
           </div>
 
           {/* Ошибка сервера */}
@@ -354,7 +363,7 @@ const AuthPage = () => {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder={t('auth.namePlaceholder')}
-                      className={`w-full pl-12 pr-4 py-3 rounded-xl glass border ${errors.name ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all`}
+                      className={`w-full pl-12 pr-4 py-3.5 rounded-xl bg-bg-tertiary/50 border ${errors.name ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary input-premium transition-all`}
                     />
                   </div>
                   {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
@@ -375,7 +384,7 @@ const AuthPage = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="your@email.com"
-                  className={`w-full pl-12 pr-4 py-3 rounded-xl glass border ${errors.email ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all`}
+                  className={`w-full pl-12 pr-4 py-3.5 rounded-xl bg-bg-tertiary/50 border ${errors.email ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary input-premium transition-all`}
                 />
               </div>
               {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
@@ -394,7 +403,7 @@ const AuthPage = () => {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••"
-                  className={`w-full pl-12 pr-12 py-3 rounded-xl glass border ${errors.password ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all`}
+                  className={`w-full pl-12 pr-12 py-3.5 rounded-xl bg-bg-tertiary/50 border ${errors.password ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary input-premium transition-all`}
                 />
                 <button
                   type="button"
@@ -427,7 +436,7 @@ const AuthPage = () => {
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                       placeholder="••••••••"
-                      className={`w-full pl-12 pr-4 py-3 rounded-xl glass border ${errors.confirmPassword ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary transition-all`}
+                      className={`w-full pl-12 pr-4 py-3.5 rounded-xl bg-bg-tertiary/50 border ${errors.confirmPassword ? 'border-red-500' : 'border-border-primary'} text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary input-premium transition-all`}
                     />
                   </div>
                   {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword}</p>}
@@ -448,12 +457,12 @@ const AuthPage = () => {
             )}
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01, y: -1 }}
+              whileTap={{ scale: 0.99 }}
               type="submit"
               disabled={isLoading}
               data-testid="auth-submit-button"
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-500 via-purple-600 to-pink-600 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-shadow duration-300 btn-ripple"
             >
               {isLoading ? (
                 <Loader2 size={20} className="animate-spin" />
@@ -467,14 +476,14 @@ const AuthPage = () => {
           </form>
 
           {/* Переключение режима */}
-          <p className="text-center text-text-muted mt-6">
+          <p className="text-center text-text-muted mt-8 text-sm">
             {mode === 'login' ? t('auth.dontHaveAccount') : t('auth.alreadyHaveAccount')}
             <button
               onClick={() => {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setErrors({});
               }}
-              className="text-accent-primary hover:underline ml-2"
+              className="text-accent-primary hover:text-purple-300 font-medium ml-2 transition-colors"
             >
               {mode === 'login' ? t('auth.registerButton') : t('auth.loginButton')}
             </button>
@@ -483,24 +492,34 @@ const AuthPage = () => {
       </div>
 
       {/* Правая часть - Декоративная */}
-      <div className="hidden lg:flex flex-1 items-center justify-center p-8 relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 items-center justify-center p-12 relative overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-pink-500/20 rounded-full blur-[80px]" />
+          <motion.div 
+            animate={{ x: [0, 20, 0], y: [0, -15, 0] }}
+            transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+            className="absolute top-[20%] left-[20%] w-[400px] h-[400px] bg-purple-500/15 rounded-full blur-[120px]"
+          />
+          <motion.div 
+            animate={{ x: [0, -15, 0], y: [0, 10, 0] }}
+            transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
+            className="absolute bottom-[20%] right-[20%] w-[350px] h-[350px] bg-pink-500/12 rounded-full blur-[100px]"
+          />
+          {/* Grid pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,black_30%,transparent_100%)]" />
         </div>
 
         <div className="relative z-10 text-center max-w-lg">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
-            <h2 className="text-4xl font-bold text-text-primary mb-4">
+            <h2 className="text-4xl font-bold text-text-primary mb-4 tracking-tight">
               {t('auth.heroTitle')}
-              <span className="block text-2xl text-text-secondary mt-2">{t('auth.heroSubtitleLine')}</span>
+              <span className="block text-2xl text-text-secondary mt-3 font-normal">{t('auth.heroSubtitleLine')}</span>
             </h2>
-            <p className="text-text-secondary text-lg mb-8">
+            <p className="text-text-secondary text-lg mb-10 leading-relaxed">
               {t('auth.heroDescription')}
             </p>
 

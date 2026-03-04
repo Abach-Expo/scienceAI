@@ -203,7 +203,7 @@ const PricingPage = () => {
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="px-6 py-4 flex items-center justify-between max-w-7xl mx-auto"
+        className="frosted-panel !rounded-none px-6 py-4 flex items-center justify-between max-w-7xl mx-auto border-b border-white/[0.06]"
       >
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -217,10 +217,13 @@ const PricingPage = () => {
         </motion.button>
 
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+          <motion.div
+            whileHover={{ rotate: 5 }}
+            className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20"
+          >
             <Brain size={18} className="text-white" />
-          </div>
-          <span className="font-bold text-lg">Science AI</span>
+          </motion.div>
+          <span className="font-bold text-lg tracking-tight">Science AI</span>
         </div>
 
         <motion.button
@@ -234,12 +237,26 @@ const PricingPage = () => {
       </motion.header>
 
       {/* Hero Section */}
-      <section className="text-center py-16 px-6">
+      <section className="text-center py-16 px-6 relative">
+        {/* Animated background blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{ x: [0, 30, 0], y: [0, -20, 0], scale: [1, 1.1, 1] }}
+            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+            className="absolute top-10 left-1/4 w-[400px] h-[400px] bg-purple-500/[0.07] rounded-full blur-[100px]"
+          />
+          <motion.div
+            animate={{ x: [0, -20, 0], y: [0, 30, 0], scale: [1, 1.15, 1] }}
+            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+            className="absolute bottom-10 right-1/4 w-[350px] h-[350px] bg-pink-500/[0.07] rounded-full blur-[100px]"
+          />
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-sm mb-8"
+          className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-sm mb-8 floating-badge"
         >
           <Star size={14} className="fill-current" />
           {t('pricing.trustedBy')}
@@ -249,7 +266,7 @@ const PricingPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-4xl md:text-6xl font-bold mb-6"
+          className="relative text-4xl md:text-6xl font-bold mb-6 tracking-tight"
         >
           {t('pricing.heroTitle')}{' '}
           <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
@@ -261,7 +278,7 @@ const PricingPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-text-secondary text-lg max-w-2xl mx-auto mb-12"
+          className="relative text-text-secondary text-lg max-w-2xl mx-auto mb-12"
         >
           {t('pricing.heroSubtitle')}
         </motion.p>
@@ -445,11 +462,11 @@ const PricingPage = () => {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleSelectPlan(plan.id)}
                   disabled={isCurrentPlan}
-                  className={`w-full py-3 rounded-xl font-medium mb-6 transition-all flex items-center justify-center gap-2 ${
+                  className={`w-full py-3 rounded-xl font-medium mb-6 transition-all flex items-center justify-center gap-2 btn-ripple ${
                     plan.popular
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-500/25'
+                      ? 'bg-gradient-to-r from-purple-500 via-purple-600 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-500/25'
                       : plan.premium
-                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25'
+                        ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25'
                         : isCurrentPlan
                           ? 'bg-bg-tertiary text-text-muted cursor-not-allowed'
                           : 'bg-bg-tertiary hover:bg-bg-secondary text-text-primary'
@@ -553,9 +570,9 @@ const PricingPage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -4 }}
-                className="p-6 rounded-2xl bg-bg-secondary/50 border border-border-primary hover:border-border-secondary transition-all"
+                className="p-6 rounded-2xl card-premium transition-all"
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4`}>
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-lg`}>
                   {feature.icon}
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
@@ -567,13 +584,13 @@ const PricingPage = () => {
       </section>
 
       {/* FAQ / Trust Section */}
-      <section className="px-6 py-20 border-t border-border-primary">
+      <section className="px-6 py-20 border-t border-white/[0.06]">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex items-center justify-center gap-8 flex-wrap"
+            className="frosted-panel inline-flex items-center justify-center gap-8 flex-wrap px-8 py-5"
           >
             {[
               { icon: <Shield size={20} />, text: t('pricing.trustSSL') },
@@ -603,9 +620,9 @@ const PricingPage = () => {
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto text-center p-12 rounded-3xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30"
+          className="max-w-4xl mx-auto text-center p-12 rounded-3xl card-premium border-purple-500/20"
         >
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-3xl font-bold mb-4 tracking-tight">
             {t('pricing.ctaTitle')}
           </h2>
           <p className="text-text-secondary mb-8">
@@ -615,7 +632,7 @@ const PricingPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleSelectPlan('pro')}
-            className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow"
+            className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 via-purple-600 to-pink-500 font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow btn-ripple"
           >
             {t('pricing.ctaButton')}
           </motion.button>
@@ -623,7 +640,8 @@ const PricingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="px-6 py-8 border-t border-border-primary">
+      <footer className="px-6 py-8">
+        <div className="separator-gradient mb-8" />
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-text-muted text-sm">{t('pricing.footerCopyright')}</p>
           <div className="flex items-center gap-6 text-sm">

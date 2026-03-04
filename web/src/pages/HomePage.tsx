@@ -208,21 +208,26 @@ const HomePage = () => {
       <motion.nav
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-bg-primary/80 backdrop-blur-xl border-b border-border-primary/50"
+        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        className="fixed top-0 left-0 right-0 z-50 px-4 md:px-6 py-3 frosted-panel border-b border-white/[0.04]"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+          <motion.div 
+            className="flex items-center gap-3 cursor-pointer group"
+            whileHover={{ scale: 1.02 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:shadow-purple-500/40 transition-shadow">
               <Sparkles className="text-white" size={22} />
             </div>
-            <span className="text-xl font-bold text-text-primary">Science AI</span>
-          </div>
+            <span className="text-xl font-bold text-text-primary tracking-tight">Science AI</span>
+          </motion.div>
           
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-1">
             <button
               onClick={cycleTheme}
-              className="p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-all"
+              className="p-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-white/[0.06] transition-all duration-200"
               title={currentTheme === 'dark' ? t('home.lightTheme') : currentTheme === 'light' ? t('home.darkTheme') : t('home.lightTheme')}
               aria-label="Switch theme"
             >
@@ -230,24 +235,24 @@ const HomePage = () => {
             </button>
             <button
               onClick={() => navigate('/pricing')}
-              className="px-4 py-2 rounded-xl text-text-secondary hover:text-text-primary transition-colors"
+              className="px-4 py-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-white/[0.04] transition-all duration-200 text-sm font-medium"
             >
               {t('home.navPricing')}
             </button>
             <button
               onClick={() => navigate('/auth')}
-              className="px-4 py-2 rounded-xl text-text-secondary hover:text-text-primary transition-colors"
+              className="px-4 py-2.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-white/[0.04] transition-all duration-200 text-sm font-medium"
             >
               {t('home.navLogin')}
             </button>
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => navigate('/new-project')}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium flex items-center gap-2"
+              className="ml-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold flex items-center gap-2 text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow duration-300"
             >
               {t('home.navStartNow')}
-              <ArrowRight size={18} />
+              <ArrowRight size={16} />
             </motion.button>
           </div>
 
@@ -310,12 +315,26 @@ const HomePage = () => {
 
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 pt-20">
-        {/* Background Effects */}
+      <section className="relative min-h-screen flex items-center justify-center px-6 pt-24 pb-12">
+        {/* Background Effects — layered for depth */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-pink-500/20 rounded-full blur-[80px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px]" />
+          <motion.div 
+            animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+            className="absolute top-[15%] left-[20%] w-[500px] h-[500px] bg-purple-500/15 rounded-full blur-[120px]"
+          />
+          <motion.div 
+            animate={{ x: [0, -25, 0], y: [0, 15, 0] }}
+            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+            className="absolute bottom-[20%] right-[15%] w-[450px] h-[450px] bg-pink-500/12 rounded-full blur-[100px]"
+          />
+          <motion.div 
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-500/8 rounded-full blur-[140px]"
+          />
+          {/* Subtle grid pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black_40%,transparent_100%)]" />
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto text-center">
@@ -326,58 +345,90 @@ const HomePage = () => {
           >
             {/* Badge */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-border-primary mb-8"
+              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 20 }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full frosted-panel mb-8 floating-badge"
             >
-              <Rocket size={16} className="text-purple-400" />
-              <span className="text-sm text-text-secondary">{t('home.badge')}</span>
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500" />
+              </span>
+              <span className="text-sm text-text-secondary font-medium">{t('home.badge')}</span>
             </motion.div>
 
             {/* Title */}
-            <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-              <span className="text-text-primary">{t('home.heroTitle1')}</span>
-              <br />
-              <span className="gradient-text">{t('home.heroTitle2')}</span>
-              <br />
-              <span className="text-text-primary">{t('home.heroTitle3')}</span>
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 leading-[1.05] tracking-tight">
+              <motion.span
+                initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+                className="text-text-primary block"
+              >
+                {t('home.heroTitle1')}
+              </motion.span>
+              <motion.span
+                initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ delay: 0.45, duration: 0.6 }}
+                className="gradient-text block"
+              >
+                {t('home.heroTitle2')}
+              </motion.span>
+              <motion.span
+                initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                className="text-text-primary block"
+              >
+                {t('home.heroTitle3')}
+              </motion.span>
             </h1>
 
             {/* Subtitle */}
-            <p className="text-xl text-text-secondary max-w-2xl mx-auto mb-10">
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-12 leading-relaxed"
+            >
               {t('home.heroSubtitle')}
               <span className="text-purple-400 font-semibold"> {t('home.heroHighlight')}</span>{t('home.heroHighlightSuffix')}
-            </p>
+            </motion.p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            >
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => navigate('/new-project')}
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-purple-500/30"
+                className="w-full sm:w-auto px-10 py-4.5 rounded-2xl bg-gradient-to-r from-purple-500 via-purple-600 to-pink-600 text-white font-bold text-lg flex items-center justify-center gap-3 shadow-xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow duration-300 btn-ripple"
               >
-                <Sparkles size={22} />
-              {t('home.tryNow')}
+                <Sparkles size={20} />
+                {t('home.tryNow')}
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={scrollToDemo}
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl glass border border-border-primary text-text-primary font-bold text-lg flex items-center justify-center gap-3 hover:bg-white/5 transition-colors"
+                className="w-full sm:w-auto px-10 py-4.5 rounded-2xl frosted-panel text-text-primary font-bold text-lg flex items-center justify-center gap-3 hover:border-purple-500/30 transition-all duration-300"
               >
-                <Play size={22} />
+                <Play size={20} />
                 {t('home.watchDemo')}
               </motion.button>
-            </div>
+            </motion.div>
 
             {/* Stats with animated counters */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8"
+              transition={{ delay: 1.0 }}
+              className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x divide-border-primary/50"
             >
               {stats.map((stat, index) => (
                 <AnimatedStat key={index} value={stat.value} label={stat.label} delay={index * 150} />
@@ -388,41 +439,51 @@ const HomePage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 px-6">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-28 px-6 relative">
+        {/* Section background accent */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/[0.02] to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
+            <motion.span
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase text-purple-400 bg-purple-500/10 border border-purple-500/20 mb-6"
+            >
+              Features
+            </motion.span>
             <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
               {t('home.featuresTitle')}
               <span className="gradient-text">{t('home.featuresHighlight')}</span>
             </h2>
-            <p className="text-text-secondary text-lg max-w-2xl mx-auto">
+            <p className="text-text-secondary text-lg max-w-2xl mx-auto leading-relaxed">
               {t('home.featuresSubtitle')}
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="card group cursor-pointer relative overflow-hidden"
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ delay: index * 0.08, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                whileHover={{ y: -6 }}
+                className="card-premium p-6 group cursor-pointer relative overflow-hidden"
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500`} />
                 <div className="relative">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
-                    <feature.icon size={28} className="text-white" />
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
+                    <feature.icon size={24} className="text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-text-primary mb-2">{feature.title}</h3>
-                  <p className="text-text-secondary leading-relaxed">{feature.description}</p>
+                  <h3 className="text-lg font-bold text-text-primary mb-2 group-hover:text-purple-300 transition-colors duration-300">{feature.title}</h3>
+                  <p className="text-text-secondary text-sm leading-relaxed">{feature.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -617,30 +678,33 @@ const HomePage = () => {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {testimonials.map((item, index) => (
               <motion.div
                 key={item.name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true, margin: '-30px' }}
+                transition={{ delay: index * 0.08 }}
                 whileHover={{ y: -4 }}
-                className="card hover:border-purple-500/50 transition-all duration-300 group"
+                className="card-premium p-5 group"
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="text-3xl group-hover:scale-110 transition-transform">{item.avatar}</div>
-                  <div>
-                    <p className="font-semibold text-text-primary">{item.name}</p>
-                    <p className="text-sm text-text-muted">{item.role}</p>
+                {/* Quote mark */}
+                <div className="text-4xl font-serif gradient-text opacity-30 leading-none mb-2">“</div>
+                <p className="text-text-primary text-sm leading-relaxed mb-4">{item.text}</p>
+                <div className="separator-gradient mb-4" />
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">{item.avatar}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-text-primary text-sm truncate">{item.name}</p>
+                    <p className="text-xs text-text-muted truncate">{item.role}</p>
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[...Array(item.rating)].map((_, i) => (
+                      <Star key={i} size={12} className="text-yellow-400 fill-yellow-400" />
+                    ))}
                   </div>
                 </div>
-                <div className="flex gap-1 mb-3">
-                  {[...Array(item.rating)].map((_, i) => (
-                    <Star key={i} size={14} className="text-yellow-400 fill-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-text-primary text-sm leading-relaxed italic">"{item.text}"</p>
               </motion.div>
             ))}
           </div>
@@ -648,22 +712,28 @@ const HomePage = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 px-6 bg-gradient-to-b from-bg-primary to-bg-secondary/30">
-        <div className="max-w-3xl mx-auto">
+      <section className="py-28 px-6 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-bg-primary via-purple-500/[0.015] to-bg-primary pointer-events-none" />
+        <div className="max-w-3xl mx-auto relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-14"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-border-primary mb-4">
-              <HelpCircle size={16} className="text-purple-400" />
-              <span className="text-sm text-text-secondary">{t('home.faqBadge')}</span>
-            </div>
+            <motion.span
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase text-purple-400 bg-purple-500/10 border border-purple-500/20 mb-6"
+            >
+              <HelpCircle size={14} />
+              {t('home.faqBadge')}
+            </motion.span>
             <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
               {t('home.faqTitle')}
             </h2>
-            <p className="text-text-secondary text-lg">
+            <p className="text-text-secondary text-lg leading-relaxed">
               {t('home.faqSubtitle')}
             </p>
           </motion.div>
@@ -674,36 +744,32 @@ const HomePage = () => {
                 key={index}
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                className="card cursor-pointer"
+                viewport={{ once: true, margin: '-20px' }}
+                transition={{ delay: index * 0.04 }}
+                className={`card-premium p-5 cursor-pointer transition-all duration-300 ${openFaq === index ? 'border-purple-500/30' : ''}`}
                 onClick={() => setOpenFaq(openFaq === index ? null : index)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenFaq(openFaq === index ? null : index); } }}
                 aria-expanded={openFaq === index}
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-text-primary pr-4">{faq.question}</h3>
+                <div className="flex items-center justify-between gap-4">
+                  <h3 className="font-semibold text-text-primary text-[15px]">{faq.question}</h3>
                   <motion.div
                     animate={{ rotate: openFaq === index ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    className="flex-shrink-0"
                   >
-                    <ChevronDown size={20} className="text-text-muted" />
+                    <ChevronDown size={18} className={`transition-colors duration-200 ${openFaq === index ? 'text-purple-400' : 'text-text-muted'}`} />
                   </motion.div>
                 </div>
-                <AnimatePresence>
-                  {openFaq === index && (
-                    <motion.p
-                      initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                      animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
-                      exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                      className="text-text-secondary text-sm leading-relaxed overflow-hidden"
-                    >
+                <div className={`accordion-content ${openFaq === index ? 'open' : ''}`}>
+                  <div>
+                    <p className="text-text-secondary text-sm leading-relaxed pt-3">
                       {faq.answer}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+                    </p>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -711,11 +777,11 @@ const HomePage = () => {
       </section>
 
       {/* Trust Badges */}
-      <section className="py-12 px-6">
+      <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { icon: Shield, text: t('home.trustSSL'), color: 'text-green-400' },
+              { icon: Shield, text: t('home.trustSSL'), color: 'text-emerald-400' },
               { icon: Lock, text: t('home.trustData'), color: 'text-blue-400' },
               { icon: RefreshCw, text: t('home.trustRefund'), color: 'text-purple-400' },
               { icon: CreditCard, text: t('home.trustPayment'), color: 'text-pink-400' },
@@ -725,11 +791,11 @@ const HomePage = () => {
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center justify-center gap-2 p-4 rounded-xl glass border border-border-primary/50"
+                transition={{ delay: index * 0.08 }}
+                className="flex items-center justify-center gap-2.5 p-4 rounded-xl frosted-panel hover:border-purple-500/20 transition-all duration-300"
               >
-                <badge.icon size={18} className={badge.color} />
-                <span className="text-sm text-text-secondary">{badge.text}</span>
+                <badge.icon size={16} className={badge.color} />
+                <span className="text-sm text-text-secondary font-medium">{badge.text}</span>
               </motion.div>
             ))}
           </div>
@@ -791,61 +857,62 @@ const HomePage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-border-primary bg-bg-secondary/30">
+      <footer className="py-16 px-6 border-t border-border-primary/50 bg-bg-secondary/20">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-4 md:gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-8 md:gap-12 mb-12">
             {/* Brand */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
                   <Sparkles className="text-white" size={20} />
                 </div>
-                <span className="text-xl font-bold text-text-primary">Science AI</span>
+                <span className="text-xl font-bold text-text-primary tracking-tight">Science AI</span>
               </div>
-              <p className="text-text-muted text-sm">
+              <p className="text-text-muted text-sm leading-relaxed">
                 {t('home.footerDesc')}
               </p>
             </div>
 
             {/* Product */}
             <div>
-              <h4 className="font-semibold text-text-primary mb-4">{t('home.footerProduct')}</h4>
-              <div className="space-y-2">
-                <button onClick={() => navigate('/pricing')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerPricing')}</button>
-                <button onClick={scrollToDemo} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerHowItWorks')}</button>
-                <button onClick={() => navigate('/auth')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerRegister')}</button>
+              <h4 className="font-semibold text-text-primary mb-5 text-sm uppercase tracking-wider">{t('home.footerProduct')}</h4>
+              <div className="space-y-3">
+                <button onClick={() => navigate('/pricing')} className="block text-text-muted hover:text-purple-400 transition-colors text-sm">{t('home.footerPricing')}</button>
+                <button onClick={scrollToDemo} className="block text-text-muted hover:text-purple-400 transition-colors text-sm">{t('home.footerHowItWorks')}</button>
+                <button onClick={() => navigate('/auth')} className="block text-text-muted hover:text-purple-400 transition-colors text-sm">{t('home.footerRegister')}</button>
               </div>
             </div>
 
             {/* Legal */}
             <div>
-              <h4 className="font-semibold text-text-primary mb-4">{t('home.footerInfo')}</h4>
-              <div className="space-y-2">
-                <button onClick={() => navigate('/privacy')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerPrivacy')}</button>
-                <button onClick={() => navigate('/terms')} className="block text-text-muted hover:text-text-primary transition-colors text-sm">{t('home.footerTerms')}</button>
+              <h4 className="font-semibold text-text-primary mb-5 text-sm uppercase tracking-wider">{t('home.footerInfo')}</h4>
+              <div className="space-y-3">
+                <button onClick={() => navigate('/privacy')} className="block text-text-muted hover:text-purple-400 transition-colors text-sm">{t('home.footerPrivacy')}</button>
+                <button onClick={() => navigate('/terms')} className="block text-text-muted hover:text-purple-400 transition-colors text-sm">{t('home.footerTerms')}</button>
               </div>
             </div>
 
             {/* Contact */}
             <div>
-              <h4 className="font-semibold text-text-primary mb-4">{t('home.footerContacts')}</h4>
-              <div className="space-y-2">
-                <a href="mailto:support@science-ai.app" className="block text-text-muted hover:text-text-primary transition-colors text-sm">support@science-ai.app</a>
+              <h4 className="font-semibold text-text-primary mb-5 text-sm uppercase tracking-wider">{t('home.footerContacts')}</h4>
+              <div className="space-y-3">
+                <a href="mailto:support@science-ai.app" className="block text-text-muted hover:text-purple-400 transition-colors text-sm">support@science-ai.app</a>
                 <p className="text-text-muted text-sm">{t('home.footerResponseTime')}</p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-border-primary pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="separator-gradient" />
+          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-text-muted">
               {t('home.footerCopyright')}
             </p>
             <div className="flex items-center gap-4">
               <span className="text-xs text-text-muted">{t('home.footerSecurePayments')}</span>
-              <div className="flex items-center gap-2">
-                <div className="px-2 py-1 rounded bg-white/10 text-xs text-text-secondary">Visa</div>
-                <div className="px-2 py-1 rounded bg-white/10 text-xs text-text-secondary">Mastercard</div>
-                <div className="px-2 py-1 rounded bg-white/10 text-xs text-text-secondary">Apple Pay</div>
+              <div className="flex items-center gap-1.5">
+                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] text-xs text-text-secondary font-medium">Visa</div>
+                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] text-xs text-text-secondary font-medium">Mastercard</div>
+                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] text-xs text-text-secondary font-medium">Apple Pay</div>
               </div>
             </div>
           </div>
