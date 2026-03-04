@@ -783,8 +783,8 @@ const ScienceAIChat = () => {
   // SHARED INPUT AREA (render function — avoids remount)
   // ═══════════════════════════════════════════
   const renderInputArea = (isWelcome = false) => (
-    <div className={isWelcome ? 'relative' : 'relative z-20 border-t border-white/[0.06] p-4'}
-      style={isWelcome ? undefined : { background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(24px)' }}>
+    <div className={isWelcome ? 'relative' : 'relative z-20 border-t border-white/[0.03] p-4'}
+      style={isWelcome ? undefined : { background: 'rgba(5,5,8,0.92)', backdropFilter: 'blur(32px)' }}>
       <div className={isWelcome ? '' : 'max-w-3xl mx-auto'}>
 
         {/* Attached files */}
@@ -841,14 +841,23 @@ const ScienceAIChat = () => {
         <motion.div
           animate={{ height: textareaHeight + 24 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.5 }}
-          className={`relative rounded-2xl border overflow-hidden transition-colors duration-300 ${
+          className={`relative rounded-2xl overflow-hidden transition-all duration-300 ${
             isDragOver
-              ? 'border-violet-500/50 shadow-[0_0_40px_rgba(139,92,246,0.15)] bg-violet-500/5'
+              ? 'shadow-[0_0_50px_rgba(139,92,246,0.2)]'
               : isFocused
-                ? 'border-violet-500/25 shadow-[0_0_30px_rgba(139,92,246,0.06)]'
-                : 'border-white/[0.08]'
+                ? 'shadow-[0_0_40px_rgba(139,92,246,0.08)]'
+                : ''
           }`}
-          style={isDragOver ? undefined : { background: 'rgba(255,255,255,0.025)', backdropFilter: 'blur(40px)' }}
+          style={{
+            background: 'rgba(255,255,255,0.025)',
+            backdropFilter: 'blur(40px)',
+            border: isDragOver
+              ? '1px solid rgba(139,92,246,0.4)'
+              : isFocused
+                ? '1px solid rgba(139,92,246,0.2)'
+                : '1px solid rgba(255,255,255,0.06)',
+            boxShadow: isFocused ? '0 0 0 1px rgba(139,92,246,0.05), inset 0 1px 0 rgba(255,255,255,0.03)' : 'inset 0 1px 0 rgba(255,255,255,0.02)',
+          }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -910,14 +919,15 @@ const ScienceAIChat = () => {
             {isLoading ? (
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleStop}
                 aria-label="Остановить генерацию"
-                className="p-2 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors">
+                className="p-2.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all border border-red-500/20">
                 <X size={16} />
               </motion.button>
             ) : (
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => handleSend()}
+              <motion.button whileHover={{ scale: 1.08, boxShadow: '0 0 24px rgba(139,92,246,0.4)' }} whileTap={{ scale: 0.92 }} onClick={() => handleSend()}
                 disabled={!input.trim() && !hasAttachments}
                 aria-label="Отправить сообщение"
-                className="p-2 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white disabled:opacity-15 disabled:cursor-not-allowed transition-opacity">
+                className="p-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white disabled:opacity-10 disabled:cursor-not-allowed transition-all"
+                style={{ boxShadow: (input.trim() || hasAttachments) ? '0 0 20px rgba(139,92,246,0.3)' : 'none' }}>
                 <Send size={16} />
               </motion.button>
             )}
@@ -957,24 +967,27 @@ const ScienceAIChat = () => {
         {showSidebar && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />
+              onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
             <motion.aside
               initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -300, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed md:relative z-50 w-72 h-full flex flex-col border-r border-white/[0.06]"
-              style={{ background: 'rgba(10,10,15,0.95)', backdropFilter: 'blur(20px)' }}
+              className="fixed z-50 w-72 h-full flex flex-col border-r border-white/[0.04]"
+              style={{ background: 'rgba(8,8,14,0.97)', backdropFilter: 'blur(40px)', boxShadow: '4px 0 40px rgba(0,0,0,0.5), inset 1px 0 0 rgba(255,255,255,0.03)' }}
               role="navigation"
               aria-label="Боковая панель"
             >
-              <div className="p-4 flex items-center justify-between border-b border-white/[0.06]">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
-                    <Brain size={16} className="text-white" />
+              <div className="p-4 flex items-center justify-between border-b border-white/[0.04]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                    <Brain size={17} className="text-white" />
                   </div>
-                  <span className="font-semibold text-white text-sm">Science AI</span>
+                  <div>
+                    <span className="font-semibold text-white text-sm tracking-tight">Science AI</span>
+                    <p className="text-[10px] text-white/30 -mt-0.5">Научный ассистент</p>
+                  </div>
                 </div>
                 <button onClick={() => setShowSidebar(false)} aria-label="Закрыть меню"
-                  className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors md:hidden">
+                  className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors">
                   <X size={18} />
                 </button>
               </div>
@@ -1012,26 +1025,26 @@ const ScienceAIChat = () => {
                 ))}
               </div>
 
-              <div className="border-t border-white/[0.06] p-3 space-y-1">
-                <button onClick={() => navigate('/dissertation')} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors">
-                  <GraduationCap size={14} />Диссертации
+              <div className="border-t border-white/[0.04] p-3 space-y-0.5">
+                <button onClick={() => navigate('/dissertation')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/90 hover:bg-white/[0.04] transition-all group">
+                  <GraduationCap size={15} className="group-hover:text-violet-400 transition-colors" />Диссертации
                 </button>
-                <button onClick={() => navigate('/presentations')} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors">
-                  <Layers size={14} />Презентации
+                <button onClick={() => navigate('/presentations')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/90 hover:bg-white/[0.04] transition-all group">
+                  <Layers size={15} className="group-hover:text-fuchsia-400 transition-colors" />Презентации
                 </button>
-                <button onClick={() => navigate('/settings')} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors">
-                  <Settings size={14} />Настройки
+                <button onClick={() => navigate('/settings')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/90 hover:bg-white/[0.04] transition-all group">
+                  <Settings size={15} className="group-hover:text-indigo-400 transition-colors" />Настройки
                 </button>
               </div>
 
-              <div className="border-t border-white/[0.06] p-3">
-                <div className="flex items-center gap-2 px-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white text-xs font-bold">
+              <div className="border-t border-white/[0.04] p-3">
+                <div className="flex items-center gap-2.5 px-2 py-1">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/80 to-fuchsia-500/80 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-violet-500/10">
                     {userName.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white/80 truncate">{userName}</p>
-                    <p className="text-xs text-white/40 truncate">{user?.email}</p>
+                    <p className="text-sm text-white/85 truncate font-medium">{userName}</p>
+                    <p className="text-[11px] text-white/35 truncate">{user?.email}</p>
                   </div>
                 </div>
               </div>
@@ -1043,113 +1056,148 @@ const ScienceAIChat = () => {
       {/* ═══ MAIN AREA ═══ */}
       <div className="flex-1 flex flex-col min-w-0 relative">
 
-        {/* Background orbs */}
+        {/* Premium background — animated gradient orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-[0.025]"
-            style={{ background: 'radial-gradient(circle, rgb(139 92 246), transparent 70%)' }} />
-          <div className="absolute top-[30%] right-[-15%] w-[500px] h-[500px] rounded-full opacity-[0.02]"
-            style={{ background: 'radial-gradient(circle, rgb(99 102 241), transparent 70%)' }} />
-          <div className="absolute bottom-[-20%] left-[30%] w-[600px] h-[600px] rounded-full opacity-[0.015]"
-            style={{ background: 'radial-gradient(circle, rgb(217 70 239), transparent 70%)' }} />
+          <motion.div
+            animate={{ x: [0, 30, -20, 0], y: [0, -20, 30, 0], scale: [1, 1.1, 0.95, 1] }}
+            transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.06), rgba(139,92,246,0.02) 40%, transparent 70%)', filter: 'blur(40px)' }} />
+          <motion.div
+            animate={{ x: [0, -25, 15, 0], y: [0, 25, -15, 0], scale: [1, 0.9, 1.05, 1] }}
+            transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut', delay: 5 }}
+            className="absolute top-[25%] right-[-15%] w-[600px] h-[600px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.05), rgba(99,102,241,0.015) 40%, transparent 70%)', filter: 'blur(40px)' }} />
+          <motion.div
+            animate={{ x: [0, 20, -25, 0], y: [0, -30, 20, 0] }}
+            transition={{ duration: 35, repeat: Infinity, ease: 'easeInOut', delay: 10 }}
+            className="absolute bottom-[-15%] left-[25%] w-[650px] h-[650px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(217,70,239,0.04), rgba(217,70,239,0.01) 40%, transparent 70%)', filter: 'blur(40px)' }} />
+          {/* Subtle grid overlay */}
+          <div className="absolute inset-0 opacity-[0.015]"
+            style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
         </div>
 
-        {/* Mouse glow */}
-        {isFocused && (
-          <motion.div className="fixed pointer-events-none z-[5]"
-            animate={{ x: mousePos.x - 200, y: mousePos.y - 200 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-            style={{ width: 400, height: 400, borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(139,92,246,0.05), rgba(217,70,239,0.025), transparent 70%)' }} />
-        )}
+        {/* Interactive mouse glow — premium feel */}
+        <motion.div className="fixed pointer-events-none z-[5]"
+          animate={{ x: mousePos.x - 250, y: mousePos.y - 250 }}
+          transition={{ type: 'spring', damping: 40, stiffness: 150, mass: 0.5 }}
+          style={{ width: 500, height: 500, borderRadius: '50%', opacity: isFocused ? 1 : 0.3,
+            background: 'radial-gradient(circle, rgba(139,92,246,0.04), rgba(217,70,239,0.02) 40%, transparent 70%)',
+            transition: 'opacity 0.5s ease' }} />
 
-        {/* Top bar */}
-        <div className="relative z-10 flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowSidebar(true)} aria-label="Открыть меню"
-              className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors">
+        {/* Top bar — premium glassmorphism */}
+        <div className="relative z-10 flex items-center justify-between px-5 py-3"
+          style={{ background: 'rgba(8,8,14,0.6)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+          <div className="flex items-center gap-1.5">
+            <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => setShowSidebar(true)} aria-label="Открыть меню"
+              className="p-2.5 rounded-xl hover:bg-white/[0.06] text-white/40 hover:text-white/80 transition-all duration-200">
               <Menu size={20} />
-            </button>
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={newChat}
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={newChat}
               aria-label="Новый чат"
-              className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors">
+              className="p-2.5 rounded-xl hover:bg-white/[0.06] text-white/40 hover:text-white/80 transition-all duration-200">
               <Plus size={20} />
             </motion.button>
           </div>
-          <span className="text-white/35 text-sm font-light tracking-wide select-none">Научный ИИ</span>
-          <button onClick={() => navigate('/settings')} aria-label="Настройки"
-            className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+              <Sparkles size={10} className="text-white" />
+            </div>
+            <span className="text-white/50 text-sm font-medium tracking-wide select-none">Science AI</span>
+          </div>
+          <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => navigate('/settings')} aria-label="Настройки"
+            className="p-2.5 rounded-xl hover:bg-white/[0.06] text-white/40 hover:text-white/80 transition-all duration-200">
             <Settings size={18} />
-          </button>
+          </motion.button>
         </div>
 
         {/* ═══ CONTENT ═══ */}
         <div className="flex-1 flex flex-col min-h-0 relative z-10">
 
           {!hasMessages ? (
-            /* ═══ WELCOME ═══ */
+            /* ═══ WELCOME — Premium 2026 Design ═══ */
             <div className="flex-1 flex flex-col items-center justify-center px-4 pb-8">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 className="text-center max-w-2xl w-full">
-                <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, type: 'spring', damping: 15 }}
-                  className="w-16 h-16 mx-auto mb-8 rounded-2xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.06] flex items-center justify-center">
-                  <Sparkles size={28} className="text-violet-400/80" />
+
+                {/* Animated logo with glow */}
+                <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, type: 'spring', damping: 12, stiffness: 200 }}
+                  className="relative w-20 h-20 mx-auto mb-8">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 opacity-20 blur-xl animate-pulse" />
+                  <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.08] flex items-center justify-center"
+                    style={{ boxShadow: '0 0 40px rgba(139,92,246,0.15), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                    <motion.div animate={{ rotate: [0, 5, -5, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}>
+                      <Sparkles size={32} className="text-violet-400/90" />
+                    </motion.div>
+                  </div>
                 </motion.div>
 
-                <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="text-3xl md:text-4xl font-semibold text-white/90 mb-3">
+                <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }}
+                  className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
                   Чем помочь сегодня?
                 </motion.h1>
 
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                  className="text-white/40 text-base mb-10">
-                  Напишите запрос или используйте <span className="font-mono text-violet-400/60">/команду</span>
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+                  className="text-white/35 text-base mb-10 font-light">
+                  Напишите запрос или используйте <span className="font-mono text-violet-400/70 px-1.5 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.05]">/команду</span>
                 </motion.p>
 
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                   className="mb-10">
                   {renderInputArea(true)}
                 </motion.div>
 
+                {/* Quick actions — glassmorphism pills */}
                 <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-                  className="flex flex-wrap justify-center gap-2.5">
+                  className="flex flex-wrap justify-center gap-2.5 mb-12">
                   {QUICK_ACTIONS.map((action, i) => (
-                    <motion.button key={i} whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 + i * 0.04 }}
+                    <motion.button key={i}
+                      whileHover={{ scale: 1.06, y: -3, boxShadow: '0 8px 30px rgba(139,92,246,0.12)' }}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.55 + i * 0.05, type: 'spring', damping: 20 }}
                       onClick={() => handleQuickAction(action.prompt)}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/[0.06] text-white/45 text-sm hover:text-white/80 hover:border-white/15 hover:bg-white/[0.03] transition-all">
-                      <action.icon size={14} className="text-violet-400/60" />
+                      className="group flex items-center gap-2.5 px-5 py-2.5 rounded-full text-sm text-white/50 hover:text-white/90 transition-all duration-300"
+                      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}>
+                      <action.icon size={14} className="text-violet-400/60 group-hover:text-violet-400 transition-colors" />
                       {action.label}
                     </motion.button>
                   ))}
                 </motion.div>
 
-                {/* ═══ Smart capabilities hint ═══ */}
+                {/* ═══ Capabilities — Premium glassmorphism cards ═══ */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
-                  className="mt-10 max-w-xl mx-auto">
-                  <p className="text-white/25 text-xs uppercase tracking-widest mb-4">✨ Умный ассистент — просто опишите задачу</p>
+                  className="max-w-xl mx-auto">
+                  <p className="text-white/20 text-[11px] uppercase tracking-[0.2em] mb-5 font-medium">Просто опишите задачу</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
-                      { icon: GraduationCap, title: 'Диссертации и работы', examples: ['«Напиши диссертацию на тему экономика»', '«Курсовая по психологии на 30 страниц»', '«Диплом про ИИ в медицине»'], iconBg: 'bg-violet-500/10', iconColor: 'text-violet-400/70' },
-                      { icon: Layers, title: 'Презентации', examples: ['«Создай презентацию про космос»', '«Слайды по маркетингу на 15 слайдов»'], iconBg: 'bg-fuchsia-500/10', iconColor: 'text-fuchsia-400/70' },
-                      { icon: MessageSquare, title: 'Вопросы и помощь', examples: ['«Объясни методологию исследования»', '«Найди источники по теме»', '«Расширь этот текст»'], iconBg: 'bg-indigo-500/10', iconColor: 'text-indigo-400/70' },
+                      { icon: GraduationCap, title: 'Диссертации', desc: 'Дипломы, курсовые, рефераты', color: 'violet', gradient: 'from-violet-500/20 to-violet-600/5', path: '/dissertation' },
+                      { icon: Layers, title: 'Презентации', desc: 'Слайды и визуализации', color: 'fuchsia', gradient: 'from-fuchsia-500/20 to-fuchsia-600/5', path: '/presentations' },
+                      { icon: MessageSquare, title: 'Вопросы', desc: 'Консультации и источники', color: 'indigo', gradient: 'from-indigo-500/20 to-indigo-600/5', path: '' },
                     ].map((cap, i) => (
-                      <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      <motion.div key={i}
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.75 + i * 0.08 }}
-                        className="text-left p-4 rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
-                        <div className={`w-8 h-8 rounded-lg ${cap.iconBg} flex items-center justify-center mb-3`}>
-                          <cap.icon size={16} className={cap.iconColor} />
-                        </div>
-                        <p className="text-white/60 text-sm font-medium mb-2">{cap.title}</p>
-                        <div className="space-y-1">
-                          {cap.examples.map((ex, j) => (
-                            <p key={j} className="text-white/25 text-xs leading-relaxed">{ex}</p>
-                          ))}
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        onClick={() => cap.path && navigate(cap.path)}
+                        className={`group relative p-5 rounded-2xl overflow-hidden ${cap.path ? 'cursor-pointer' : 'cursor-default'}`}
+                        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', backdropFilter: 'blur(16px)' }}>
+                        {/* Card glow on hover */}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${cap.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                        <div className="relative">
+                          <div className={`w-10 h-10 rounded-xl bg-${cap.color}-500/10 flex items-center justify-center mb-3 border border-${cap.color}-500/10`}
+                            style={{ boxShadow: `0 0 20px rgba(var(--accent-primary), 0.05)` }}>
+                            <cap.icon size={18} className={`text-${cap.color}-400/80`} />
+                          </div>
+                          <p className="text-white/70 text-sm font-semibold mb-1">{cap.title}</p>
+                          <p className="text-white/30 text-xs">{cap.desc}</p>
                         </div>
                       </motion.div>
                     ))}
                   </div>
-                  <p className="text-white/20 text-[11px] mt-4">💡 ИИ автоматически определит тип задачи и откроет нужное рабочее пространство</p>
+                  <p className="text-white/15 text-[11px] mt-5">ИИ автоматически определит задачу и откроет нужное пространство</p>
                 </motion.div>
               </motion.div>
             </div>
@@ -1165,12 +1213,16 @@ const ScienceAIChat = () => {
                     const isStreaming = isLoading && msg.id.startsWith('msg-') && msgIdx === messages.length - 1 && msg.role === 'assistant';
 
                     return (
-                      <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2 }} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                        {/* AI avatar */}
+                      <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                        {/* AI avatar — premium glow */}
                         {msg.role === 'assistant' && (
-                          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.06] flex items-center justify-center shrink-0 mt-1">
-                            <Sparkles size={13} className={`text-violet-400/80 ${isStreaming ? 'animate-pulse' : ''}`} />
+                          <div className="relative w-8 h-8 shrink-0 mt-1">
+                            {isStreaming && <div className="absolute inset-0 rounded-xl bg-violet-500/20 blur-md animate-pulse" />}
+                            <div className="relative w-full h-full rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.06] flex items-center justify-center"
+                              style={{ boxShadow: isStreaming ? '0 0 16px rgba(139,92,246,0.2)' : 'none' }}>
+                              <Sparkles size={14} className={`text-violet-400/80 ${isStreaming ? 'animate-pulse' : ''}`} />
+                            </div>
                           </div>
                         )}
 
@@ -1186,14 +1238,21 @@ const ScienceAIChat = () => {
                             </div>
                           )}
 
-                          {/* Message bubble */}
+                          {/* Message bubble — premium glassmorphism */}
                           <div className={`rounded-2xl text-sm leading-relaxed ${
                             msg.role === 'user'
-                              ? 'px-4 py-3 bg-violet-500/90 text-white rounded-br-md'
+                              ? 'px-4 py-3 text-white rounded-br-md'
                               : isError
-                                ? 'px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-300 rounded-bl-md'
-                                : 'px-4 py-3 bg-white/[0.03] border border-white/[0.06] text-white/80 rounded-bl-md'
-                          }`}>
+                                ? 'px-4 py-3 text-red-300 rounded-bl-md'
+                                : 'px-4 py-3 text-white/80 rounded-bl-md'
+                          }`}
+                          style={
+                            msg.role === 'user'
+                              ? { background: 'linear-gradient(135deg, rgba(139,92,246,0.9), rgba(168,85,247,0.85))', boxShadow: '0 4px 20px rgba(139,92,246,0.25)' }
+                              : isError
+                                ? { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }
+                                : { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)' }
+                          }>
                             {msg.role === 'assistant' && !isError ? (
                               <div className="prose-chat">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
@@ -1208,9 +1267,9 @@ const ScienceAIChat = () => {
                             )}
                           </div>
 
-                          {/* Message footer: timestamp + actions */}
+                          {/* Message footer */}
                           <div className={`flex items-center gap-1.5 mt-1 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                            <span className="text-[10px] text-white/20">{formatTime(msg.timestamp)}</span>
+                            <span className="text-[10px] text-white/15">{formatTime(msg.timestamp)}</span>
                             {msg.role === 'assistant' && !isStreaming && msg.content && (
                               <>
                                 <CopyButton text={msg.content} />
@@ -1230,9 +1289,9 @@ const ScienceAIChat = () => {
                           </div>
                         </div>
 
-                        {/* User avatar */}
+                        {/* User avatar — premium style */}
                         {msg.role === 'user' && (
-                          <div className="w-7 h-7 rounded-lg bg-white/[0.08] flex items-center justify-center shrink-0 mt-1 text-white/50 text-xs font-semibold">
+                          <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.04] flex items-center justify-center shrink-0 mt-1 text-white/50 text-xs font-semibold">
                             {userName.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -1240,17 +1299,21 @@ const ScienceAIChat = () => {
                     );
                   })}
 
-                  {/* Typing indicator — only when streaming hasn't started yet */}
+                  {/* Typing indicator — premium */}
                   {isLoading && messages.length > 0 && messages[messages.length - 1]?.content === '' && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.06] flex items-center justify-center shrink-0">
-                        <Sparkles size={13} className="text-violet-400 animate-pulse" />
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
+                      <div className="relative w-8 h-8 shrink-0">
+                        <div className="absolute inset-0 rounded-xl bg-violet-500/20 blur-md animate-pulse" />
+                        <div className="relative w-full h-full rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.06] flex items-center justify-center">
+                          <Sparkles size={14} className="text-violet-400 animate-pulse" />
+                        </div>
                       </div>
-                      <div className="px-4 py-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] rounded-bl-md">
+                      <div className="px-4 py-3.5 rounded-2xl rounded-bl-md"
+                        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)' }}>
                         <div className="flex gap-1.5">
                           {[0, 1, 2].map(i => (
-                            <motion.div key={i} animate={{ scale: [0.7, 1.2, 0.7], opacity: [0.3, 0.8, 0.3] }}
-                              transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                            <motion.div key={i} animate={{ scale: [0.7, 1.2, 0.7], opacity: [0.3, 0.9, 0.3] }}
+                              transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }}
                               className="w-1.5 h-1.5 rounded-full bg-violet-400" />
                           ))}
                         </div>
@@ -1262,13 +1325,14 @@ const ScienceAIChat = () => {
                 </div>
               </div>
 
-              {/* Scroll FAB */}
+              {/* Scroll FAB — premium */}
               <AnimatePresence>
                 {showScrollBtn && (
-                  <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                  <motion.button initial={{ opacity: 0, scale: 0.8, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.8, y: 10 }}
                     onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
                     aria-label="Прокрутить вниз"
-                    className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 p-2.5 rounded-full bg-white/[0.08] border border-white/[0.08] text-white/50 backdrop-blur-xl hover:bg-white/15 transition-colors shadow-lg">
+                    className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 p-2.5 rounded-full text-white/50 hover:text-white/80 transition-all"
+                    style={{ background: 'rgba(20,20,30,0.8)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
                     <ArrowDown size={16} />
                   </motion.button>
                 )}
@@ -1282,9 +1346,9 @@ const ScienceAIChat = () => {
         {/* ═══ COMMAND PALETTE ═══ */}
         <AnimatePresence>
           {showCommandPalette && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-              className="absolute bottom-32 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-lg rounded-2xl border border-white/[0.08] overflow-hidden"
-              style={{ background: 'rgba(12,12,16,0.96)', backdropFilter: 'blur(40px)' }}
+            <motion.div initial={{ opacity: 0, y: 10, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.97 }}
+              className="absolute bottom-32 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-lg rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(10,10,16,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02)' }}
               role="listbox" aria-label="Палитра команд">
               <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-2">
                 <Command size={14} className="text-violet-400" />
