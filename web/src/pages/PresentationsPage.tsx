@@ -4574,11 +4574,18 @@ Layout: ${slide.layout}`
   // ==================== CHAT INTERFACE (как Genspark) ====================
   
   const renderChatInterface = () => (
-    <div className="h-full flex bg-gradient-to-br from-background-primary via-background-secondary to-background-primary">
+    <div className="h-full flex relative overflow-hidden" style={{ background: '#050508' }}>
+      {/* Animated background orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <motion.div animate={{ x: [0, 30, 0], y: [0, -20, 0], scale: [1, 1.1, 1] }} transition={{ duration: 30, repeat: Infinity, ease: 'linear' }} className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.4), transparent 70%)' }} />
+        <motion.div animate={{ x: [0, -25, 0], y: [0, 25, 0], scale: [1, 1.15, 1] }} transition={{ duration: 35, repeat: Infinity, ease: 'linear' }} className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.4), transparent 70%)' }} />
+        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      </div>
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setShowMobileSidebar(true)}
-        className="fixed bottom-4 left-4 z-30 p-3 rounded-full bg-fuchsia-500 text-white shadow-lg md:hidden"
+        className="fixed bottom-4 left-4 z-30 p-3 rounded-full text-white shadow-lg md:hidden"
+        style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.9), rgba(139,92,246,0.9))', backdropFilter: 'blur(12px)', boxShadow: '0 0 25px rgba(236,72,153,0.3)' }}
       >
         <Menu size={20} />
       </button>
@@ -4587,20 +4594,21 @@ Layout: ${slide.layout}`
       {showMobileSidebar && (
         <div
           onClick={() => setShowMobileSidebar(false)}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
         />
       )}
 
       {/* Sidebar с историей презентаций */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform transition-transform duration-300 md:static md:translate-x-0 md:z-auto ${
         showMobileSidebar ? 'translate-x-0' : '-translate-x-full'
-      } border-r border-border-primary bg-background-secondary/95 md:bg-background-secondary/50 flex flex-col`}>
-        <div className="p-4 border-b border-border-primary">
-          <h3 className="font-semibold text-text-primary flex items-center gap-2">
-            <Layers size={18} className="text-accent-primary" />
+      } border-r flex flex-col`}
+        style={{ background: 'rgba(10,10,16,0.95)', backdropFilter: 'blur(24px)', borderColor: 'rgba(255,255,255,0.04)' }}>
+        <div className="p-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+          <h3 className="font-semibold text-white/90 flex items-center gap-2">
+            <Layers size={18} className="text-fuchsia-400" />
             Мои презентации
           </h3>
-          <p className="text-xs text-text-muted mt-1">{presentations.length} презентаций</p>
+          <p className="text-xs text-white/30 mt-1">{presentations.length} презентаций</p>
           
           {/* 💰 Статистика лимитов для всех планов */}
           {(() => {
@@ -4690,17 +4698,19 @@ Layout: ${slide.layout}`
           )}
         </div>
         
-        <div className="p-3 border-t border-border-primary space-y-2">
+        <div className="p-3 space-y-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
           <button
             onClick={() => setShowSmartTemplatesModal(true)}
-            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white hover:opacity-90 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+            className="w-full px-3 py-2 rounded-lg text-white hover:opacity-90 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+            style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.85), rgba(139,92,246,0.85))', boxShadow: '0 0 20px rgba(236,72,153,0.2)' }}
           >
             <Sparkles size={16} />
             AI Шаблоны
           </button>
           <button
             onClick={() => setShowTemplates(true)}
-            className="w-full px-3 py-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-background-tertiary transition-all flex items-center justify-center gap-2 text-sm"
+            className="w-full px-3 py-2 rounded-lg text-white/50 hover:text-white/70 transition-all flex items-center justify-center gap-2 text-sm"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
           >
             <FileText size={16} />
             Шаблоны
@@ -4722,9 +4732,13 @@ Layout: ${slide.layout}`
               >
                 <div className={`max-w-[80%] rounded-2xl px-5 py-3 ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white'
-                    : 'glass border border-border-primary text-text-primary'
-                }`}>
+                    ? 'text-white'
+                    : 'text-white/90'
+                }`}
+                  style={msg.role === 'user'
+                    ? { background: 'linear-gradient(135deg, rgba(236,72,153,0.9), rgba(139,92,246,0.85))', boxShadow: '0 4px 20px rgba(236,72,153,0.2)' }
+                    : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }
+                  }>
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">
                     {msg.content.split('\n').map((line, i) => (
                       <p key={i} className={line.startsWith('**') ? 'font-bold' : ''}>
@@ -4732,7 +4746,7 @@ Layout: ${slide.layout}`
                       </p>
                     ))}
                   </div>
-                  <p className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-white/60' : 'text-text-muted'}`}>
+                  <p className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-white/50' : 'text-white/25'}`}>
                     {msg.timestamp.toLocaleTimeString()}
                   </p>
                 </div>
@@ -4746,8 +4760,8 @@ Layout: ${slide.layout}`
       {chatMessages.length <= 1 && (
         <div className="px-6 pb-4">
           <div className="max-w-3xl mx-auto">
-            <p className="text-xs text-text-muted mb-3 flex items-center gap-2">
-              <Sparkles size={12} className="text-accent-primary" />
+            <p className="text-xs text-white/30 mb-3 flex items-center gap-2">
+              <Sparkles size={12} className="text-fuchsia-400" />
               Примеры запросов для вдохновения:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
@@ -4769,10 +4783,11 @@ Layout: ${slide.layout}`
                   whileHover={{ scale: 1.03, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setChatInput(example.full)}
-                  className="px-3 py-2.5 rounded-xl glass border border-border-primary text-left text-xs text-text-secondary hover:text-text-primary hover:border-accent-primary/50 hover:bg-accent-primary/5 transition-all group"
+                  className="px-3 py-2.5 rounded-xl text-left text-xs text-white/50 hover:text-white/80 transition-all group"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
                 >
                   <span className="mr-1.5">{example.emoji}</span>
-                  <span className="group-hover:text-accent-primary transition-colors">{example.text}</span>
+                  <span className="group-hover:text-fuchsia-400 transition-colors">{example.text}</span>
                 </motion.button>
               ))}
             </div>
@@ -4781,7 +4796,7 @@ Layout: ${slide.layout}`
       )}
       
       {/* Поле ввода */}
-      <div className="p-6 border-t border-border-primary bg-background-secondary/50 backdrop-blur-xl">
+      <div className="p-6 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10,10,16,0.92)', backdropFilter: 'blur(24px)' }}>
         <div className="max-w-3xl mx-auto">
           <div className="flex gap-3">
             <div className="flex-1 relative">
@@ -4795,7 +4810,10 @@ Layout: ${slide.layout}`
                   }
                 }}
                 placeholder="Опишите тему презентации... (Enter для отправки)"
-                className="w-full px-5 py-4 pr-14 rounded-2xl glass border border-border-primary text-text-primary placeholder-text-muted resize-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all"
+                className="w-full px-5 py-4 pr-14 rounded-2xl text-white/90 placeholder-white/25 resize-none transition-all"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', outline: 'none' }}
+                onFocus={(e) => { e.currentTarget.style.border = '1px solid rgba(139,92,246,0.3)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(139,92,246,0.08)'; }}
+                onBlur={(e) => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = 'none'; }}
                 rows={2}
                 disabled={isGenerating}
               />
@@ -4804,7 +4822,8 @@ Layout: ${slide.layout}`
                 whileTap={{ scale: 0.9 }}
                 onClick={handleChatSubmit}
                 disabled={!chatInput.trim() || isGenerating}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white flex items-center justify-center disabled:opacity-50"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl text-white flex items-center justify-center disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.9), rgba(139,92,246,0.9))', boxShadow: '0 0 20px rgba(236,72,153,0.25)' }}
               >
                 {isGenerating ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -4816,11 +4835,12 @@ Layout: ${slide.layout}`
           </div>
           
           {/* Быстрые настройки */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-text-muted flex-wrap">
+          <div className="flex items-center gap-4 mt-3 text-xs text-white/30 flex-wrap">
             <select
               value={slideCount}
               onChange={(e) => setSlideCount(Number(e.target.value))}
-              className="px-3 py-1.5 rounded-lg glass border border-border-primary bg-transparent text-text-secondary"
+              className="px-3 py-1.5 rounded-lg bg-transparent text-white/50"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <option value={5}>5 слайдов</option>
               <option value={8}>8 слайдов</option>
@@ -4832,7 +4852,8 @@ Layout: ${slide.layout}`
             <select
               value={selectedTheme.id}
               onChange={(e) => setSelectedTheme(THEMES.find(t => t.id === e.target.value) || THEMES[0])}
-              className="px-3 py-1.5 rounded-lg glass border border-border-primary bg-transparent text-text-secondary"
+              className="px-3 py-1.5 rounded-lg bg-transparent text-white/50"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               {THEMES.slice(0, 8).map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
@@ -4853,7 +4874,8 @@ Layout: ${slide.layout}`
               <select
                 value={imageSource}
                 onChange={(e) => setImageSource(e.target.value as 'dalle' | 'pexels')}
-                className="px-3 py-1.5 rounded-lg glass border border-border-primary bg-transparent text-text-secondary"
+                className="px-3 py-1.5 rounded-lg bg-transparent text-white/50"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
               >
                 <option value="dalle">🎨 AI генерация</option>
                 <option value="pexels">📷 Pexels (реальные фото)</option>
@@ -4864,7 +4886,8 @@ Layout: ${slide.layout}`
             
             <button
               onClick={() => setShowSmartTemplatesModal(true)}
-              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white hover:opacity-90 transition-colors flex items-center gap-2"
+              className="px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-colors flex items-center gap-2"
+              style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.85), rgba(139,92,246,0.85))', boxShadow: '0 0 15px rgba(236,72,153,0.2)' }}
             >
               <Sparkles size={14} />
               AI Шаблоны
@@ -4872,7 +4895,8 @@ Layout: ${slide.layout}`
             
             <button
               onClick={() => setShowTemplates(true)}
-              className="px-3 py-2 rounded-lg glass border border-accent-primary/30 bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20 transition-colors flex items-center gap-2"
+              className="px-3 py-2 rounded-lg text-white/50 hover:text-white/70 transition-colors flex items-center gap-2"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <Layout size={14} />
               Шаблоны
@@ -4883,13 +4907,13 @@ Layout: ${slide.layout}`
       
       {/* Список сохранённых презентаций */}
       {presentations.length > 0 && (
-        <div className="px-6 py-4 border-t border-border-primary bg-background-secondary/30">
+        <div className="px-6 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10,10,16,0.5)' }}>
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-text-secondary flex items-center gap-2">
-                <Layers size={14} className="text-accent-primary" />
+              <p className="text-sm font-medium text-white/60 flex items-center gap-2">
+                <Layers size={14} className="text-fuchsia-400" />
                 Мои презентации
-                <span className="px-2 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary text-xs">
+                <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: 'rgba(236,72,153,0.15)', color: 'rgba(236,72,153,0.8)' }}>
                   {presentations.length}
                 </span>
               </p>
@@ -4908,7 +4932,8 @@ Layout: ${slide.layout}`
                     setCurrentSlideIndex(0);
                     setViewMode('editor');
                   }}
-                  className="flex-shrink-0 w-52 rounded-xl glass border border-border-primary overflow-hidden text-left hover:border-accent-primary/50 transition-all group shadow-lg hover:shadow-xl hover:shadow-accent-primary/10"
+                  className="flex-shrink-0 w-52 rounded-xl overflow-hidden text-left transition-all group shadow-lg hover:shadow-xl"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
                 >
                   {/* Preview */}
                   <div 
@@ -4931,13 +4956,13 @@ Layout: ${slide.layout}`
                     </div>
                     
                     {/* Slide count badge */}
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/40 backdrop-blur-sm text-xs text-text-primary font-medium">
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs text-white/90 font-medium" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
                       {pres.slides.length} 📄
                     </div>
                   </div>
                   
                   {/* Footer */}
-                  <div className="px-3 py-2 bg-background-primary/50 flex items-center justify-between">
+                  <div className="px-3 py-2 flex items-center justify-between" style={{ background: 'rgba(5,5,10,0.5)' }}>
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-3 h-3 rounded-full"
@@ -4962,7 +4987,7 @@ Layout: ${slide.layout}`
               
               {/* More indicator */}
               {presentations.length > 6 && (
-                <div className="flex-shrink-0 w-24 h-full rounded-xl glass border border-border-primary flex flex-col items-center justify-center text-text-muted">
+                <div className="flex-shrink-0 w-24 h-full rounded-xl flex flex-col items-center justify-center text-white/30" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <span className="text-2xl mb-1">+{presentations.length - 6}</span>
                   <span className="text-[10px]">ещё</span>
                 </div>
@@ -4978,11 +5003,16 @@ Layout: ${slide.layout}`
   // ==================== WORKSPACE INTERFACE ====================
   
   const renderWorkspaceInterface = () => (
-    <div className="h-full flex bg-background-primary">
+    <div className="h-full flex relative overflow-hidden" style={{ background: '#050508' }}>
+      {/* Animated background */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.015) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      </div>
       {/* Mobile workspace toggle */}
       <button
         onClick={() => setShowMobileSidebar(true)}
-        className="fixed bottom-4 left-4 z-30 p-3 rounded-full bg-fuchsia-500 text-white shadow-lg md:hidden"
+        className="fixed bottom-4 left-4 z-30 p-3 rounded-full text-white shadow-lg md:hidden"
+        style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.9), rgba(139,92,246,0.9))', boxShadow: '0 0 25px rgba(236,72,153,0.3)' }}
       >
         <Menu size={20} />
       </button>
@@ -4991,21 +5021,22 @@ Layout: ${slide.layout}`
       {showMobileSidebar && (
         <div
           onClick={() => setShowMobileSidebar(false)}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
         />
       )}
 
       {/* Левая панель - шаги */}
       <div className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] transform transition-transform duration-300 md:static md:translate-x-0 md:z-auto ${
         showMobileSidebar ? 'translate-x-0' : '-translate-x-full'
-      } border-r border-border-primary bg-background-secondary/95 md:bg-background-secondary/50 p-6 overflow-y-auto`}>
+      } border-r p-6 overflow-y-auto`}
+        style={{ background: 'rgba(10,10,16,0.95)', backdropFilter: 'blur(24px)', borderColor: 'rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center">
-            <Brain className="text-text-primary" size={20} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.8), rgba(139,92,246,0.8))', boxShadow: '0 0 20px rgba(236,72,153,0.2)' }}>
+            <Brain className="text-white" size={20} />
           </div>
           <div>
-            <h2 className="font-bold text-text-primary">AI Workspace</h2>
-            <p className="text-xs text-text-muted">Создание презентации</p>
+            <h2 className="font-bold text-white/90">AI Workspace</h2>
+            <p className="text-xs text-white/30">Создание презентации</p>
           </div>
         </div>
         
@@ -5019,13 +5050,19 @@ Layout: ${slide.layout}`
               transition={{ delay: index * 0.1 }}
               className={`p-4 rounded-xl border transition-all ${
                 step.status === 'completed'
-                  ? 'bg-accent-success/10 border-accent-success/30'
+                  ? 'border-emerald-500/30'
                   : step.status === 'in-progress'
-                  ? 'bg-accent-primary/10 border-accent-primary/30 animate-pulse'
+                  ? 'border-violet-500/30 animate-pulse'
                   : step.status === 'error'
-                  ? 'bg-red-500/10 border-red-500/30'
-                  : 'glass border-border-primary opacity-50'
+                  ? 'border-red-500/30'
+                  : 'border-white/[0.04] opacity-50'
               }`}
+              style={{
+                background: step.status === 'completed' ? 'rgba(16,185,129,0.06)'
+                  : step.status === 'in-progress' ? 'rgba(139,92,246,0.06)'
+                  : step.status === 'error' ? 'rgba(239,68,68,0.06)'
+                  : 'rgba(255,255,255,0.02)'
+              }}
             >
               <div className="flex items-center gap-3">
                 <span className="text-xl">{step.icon}</span>
@@ -5038,10 +5075,10 @@ Layout: ${slide.layout}`
                   }`}>
                     {step.title}
                   </p>
-                  <p className="text-xs text-text-muted">{step.description}</p>
+                  <p className="text-xs text-white/30">{step.description}</p>
                 </div>
-                {step.status === 'completed' && <span className="text-accent-success">✓</span>}
-                {step.status === 'in-progress' && <Loader2 size={16} className="text-accent-primary animate-spin" />}
+                {step.status === 'completed' && <span className="text-emerald-400">✓</span>}
+                {step.status === 'in-progress' && <Loader2 size={16} className="text-violet-400 animate-spin" />}
                 {step.status === 'error' && <span className="text-red-500">✕</span>}
               </div>
               
@@ -5073,7 +5110,8 @@ Layout: ${slide.layout}`
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setViewMode('editor')}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-bold flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl text-white font-bold flex items-center justify-center gap-2"
+              style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.85), rgba(139,92,246,0.85))', boxShadow: '0 0 25px rgba(236,72,153,0.2)' }}
             >
               <Edit3 size={18} />
               Открыть редактор
@@ -5084,7 +5122,8 @@ Layout: ${slide.layout}`
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setViewMode('chat')}
-            className="w-full py-3 rounded-xl glass border border-border-primary text-text-secondary flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl text-white/50 flex items-center justify-center gap-2"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
           >
             <ArrowLeft size={18} />
             Назад к чату
@@ -5096,16 +5135,16 @@ Layout: ${slide.layout}`
       <div className="flex-1 p-4 md:p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
           {/* Запрос пользователя */}
-          <div className="glass rounded-2xl p-6 border border-border-primary mb-6">
-            <p className="text-xs text-text-muted mb-2">📝 Ваш запрос:</p>
-            <p className="text-text-primary font-medium">{generationPrompt}</p>
+          <div className="rounded-2xl p-6 mb-6" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-xs text-white/30 mb-2">📝 Ваш запрос:</p>
+            <p className="text-white/80 font-medium">{generationPrompt}</p>
           </div>
           
           {/* Превью слайдов (если есть) */}
           {currentPresentation && (
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
-                <Layers size={20} className="text-accent-primary" />
+              <h3 className="text-lg font-bold text-white/90 flex items-center gap-2">
+                <Layers size={20} className="text-fuchsia-400" />
                 Превью презентации
               </h3>
               
@@ -5124,7 +5163,7 @@ Layout: ${slide.layout}`
               </div>
               
               {currentPresentation.slides.length > 4 && (
-                <p className="text-center text-text-muted text-sm">
+                <p className="text-center text-white/40 text-sm">
                   +{currentPresentation.slides.length - 4} слайдов...
                 </p>
               )}
@@ -5137,7 +5176,7 @@ Layout: ${slide.layout}`
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                className="w-20 h-20 rounded-full border-4 border-accent-primary/20 border-t-accent-primary"
+                className="w-20 h-20 rounded-full border-4 border-violet-500/20 border-t-violet-500"
               />
               <p className="mt-6 text-text-primary font-medium">
                 {workspaceSteps[currentWorkspaceStep]?.description || 'Обработка...'}
@@ -5155,12 +5194,13 @@ Layout: ${slide.layout}`
   // ==================== ГЛАВНАЯ СТРАНИЦА ====================
   
   return (
-    <div className="min-h-screen h-screen flex flex-col bg-background-primary overflow-hidden">
+    <div className="min-h-screen h-screen flex flex-col overflow-hidden" style={{ background: '#050508' }}>
       {/* Шапка */}
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-b border-border-primary bg-background-secondary/50 backdrop-blur-sm relative z-50 overflow-visible"
+        className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4 relative z-50 overflow-visible"
+        style={{ background: 'rgba(8,8,14,0.7)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
       >
         <div className="flex items-center gap-4">
           <motion.button
@@ -5176,23 +5216,24 @@ Layout: ${slide.layout}`
                 navigate('/dashboard');
               }
             }}
-            className="w-10 h-10 rounded-xl glass flex items-center justify-center text-text-secondary hover:text-text-primary"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white/50 hover:text-white/70"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
           >
             <ArrowLeft size={20} />
           </motion.button>
           
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center hidden md:flex">
-              <Layers className="text-text-primary" size={22} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center hidden md:flex" style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.8), rgba(139,92,246,0.8))', boxShadow: '0 0 20px rgba(236,72,153,0.2)' }}>
+              <Layers className="text-white" size={22} />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm md:text-lg font-bold text-text-primary truncate">
+              <h1 className="text-sm md:text-lg font-bold text-white/90 truncate">
                 {viewMode === 'chat' ? '✨ AI Презентации' : 
                  viewMode === 'workspace' ? '🔬 AI Workspace' :
                  currentPresentation?.title || 'Редактор'}
               </h1>
               <div className="flex items-center gap-2">
-                <p className="text-xs text-text-muted">
+                <p className="text-xs text-white/30">
                   {viewMode === 'chat' ? 'Опишите тему и AI создаст презентацию' :
                    viewMode === 'workspace' ? 'Генерация презентации...' :
                    currentPresentation ? `${currentPresentation.slides.length} слайдов` : ''}
@@ -5223,7 +5264,7 @@ Layout: ${slide.layout}`
         {/* Навигация по режимам */}
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           {/* Вкладки режимов */}
-          <div className="flex rounded-xl glass border border-border-primary p-1">
+          <div className="flex rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
             {[
               { id: 'chat', label: '💬 Чат', icon: Brain },
               { id: 'editor', label: '✏️ Редактор', icon: Edit3 },
@@ -5234,9 +5275,10 @@ Layout: ${slide.layout}`
                 disabled={tab.id === 'editor' && !currentPresentation}
                 className={`px-2 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
                   viewMode === tab.id
-                    ? 'bg-accent-primary text-text-primary'
-                    : 'text-text-secondary hover:text-text-primary disabled:opacity-30'
+                    ? 'text-white'
+                    : 'text-white/40 hover:text-white/60 disabled:opacity-30'
                 }`}
+                style={viewMode === tab.id ? { background: 'linear-gradient(135deg, rgba(236,72,153,0.7), rgba(139,92,246,0.7))' } : {}}
               >
                 {tab.label}
               </button>
@@ -5248,37 +5290,38 @@ Layout: ${slide.layout}`
               {/* Keyboard Shortcuts Hint */}
               <div className="relative group">
                 <button
-                  className="w-10 h-10 rounded-xl glass border border-border-primary flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-accent-primary/10 transition-colors"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white/40 hover:text-white/60 transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                   title="Горячие клавиши"
                 >
                   <span className="text-sm">⌨️</span>
                 </button>
                 
                 <div className="absolute top-full right-0 mt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  <div className="glass rounded-xl border border-border-primary shadow-xl p-4">
-                    <h4 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
+                  <div className="rounded-xl shadow-xl p-4" style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <h4 className="text-sm font-bold text-white/90 mb-3 flex items-center gap-2">
                       ⌨️ Горячие клавиши
                     </h4>
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-text-muted">← →</span>
-                        <span className="text-text-secondary">Навигация по слайдам</span>
+                        <span className="text-white/30">← →</span>
+                        <span className="text-white/60">Навигация по слайдам</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-text-muted">F5 / F</span>
-                        <span className="text-text-secondary">Начать показ</span>
+                        <span className="text-white/30">F5 / F</span>
+                        <span className="text-white/60">Начать показ</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-text-muted">Ctrl + D</span>
-                        <span className="text-text-secondary">Дублировать слайд</span>
+                        <span className="text-white/30">Ctrl + D</span>
+                        <span className="text-white/60">Дублировать слайд</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-text-muted">Home / End</span>
-                        <span className="text-text-secondary">Первый / Последний</span>
+                        <span className="text-white/30">Home / End</span>
+                        <span className="text-white/60">Первый / Последний</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-text-muted">Escape</span>
-                        <span className="text-text-secondary">Выход из показа</span>
+                        <span className="text-white/30">Escape</span>
+                        <span className="text-white/60">Выход из показа</span>
                       </div>
                     </div>
                   </div>
@@ -5291,7 +5334,8 @@ Layout: ${slide.layout}`
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={enterPresentationMode}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white flex items-center gap-2 text-sm"
+                  className="px-4 py-2 rounded-xl text-white flex items-center gap-2 text-sm"
+                  style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.85), rgba(139,92,246,0.85))', boxShadow: '0 0 20px rgba(236,72,153,0.2)' }}
                 >
                   <Play size={16} />
                   Показ
@@ -5299,26 +5343,26 @@ Layout: ${slide.layout}`
                 </motion.button>
                 
                 <div className="absolute top-full right-0 mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100]">
-                  <div className="glass rounded-xl border border-border-primary shadow-xl overflow-hidden">
+                  <div className="rounded-xl shadow-xl overflow-hidden" style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <button
                       onClick={enterPresentationMode}
-                      className="w-full px-4 py-3 text-left text-sm text-text-primary hover:bg-accent-primary/10 flex items-center gap-3 transition-colors"
+                      className="w-full px-4 py-3 text-left text-sm text-white/80 hover:bg-white/[0.04] flex items-center gap-3 transition-colors"
                     >
                       <Play size={16} className="text-fuchsia-400" />
                       <div>
                         <p className="font-medium">Обычный показ</p>
-                        <p className="text-xs text-text-muted">Полноэкранный режим</p>
+                        <p className="text-xs text-white/30">Полноэкранный режим</p>
                       </div>
                     </button>
                     
                     <button
                       onClick={enterPresenterMode}
-                      className="w-full px-4 py-3 text-left text-sm text-text-primary hover:bg-accent-primary/10 flex items-center gap-3 transition-colors border-t border-border-primary"
+                      className="w-full px-4 py-3 text-left text-sm text-white/80 hover:bg-white/[0.04] flex items-center gap-3 transition-colors" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
                     >
                       <Users size={16} className="text-blue-400" />
                       <div>
                         <p className="font-medium">Режим докладчика</p>
-                        <p className="text-xs text-text-muted">С заметками и таймером</p>
+                        <p className="text-xs text-white/30">С заметками и таймером</p>
                       </div>
                     </button>
                   </div>
@@ -6540,19 +6584,20 @@ Layout: ${slide.layout}`
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
             onClick={() => setShowThemeSelector(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-4xl max-h-[80vh] glass rounded-2xl overflow-hidden"
+              className="w-full max-w-4xl max-h-[80vh] rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 0 80px rgba(139,92,246,0.08)' }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary">
-                <h3 className="text-lg font-bold text-text-primary">Выберите тему</h3>
-                <button onClick={() => setShowThemeSelector(false)} className="text-text-muted hover:text-text-primary">
+              <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <h3 className="text-lg font-bold text-white/90">Выберите тему</h3>
+                <button onClick={() => setShowThemeSelector(false)} className="text-white/30 hover:text-white/60">
                   <X size={20} />
                 </button>
               </div>
@@ -6602,19 +6647,20 @@ Layout: ${slide.layout}`
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
             onClick={() => setShowLayoutSelector(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-3xl glass rounded-2xl overflow-hidden"
+              className="w-full max-w-3xl rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 0 80px rgba(139,92,246,0.08)' }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary">
-                <h3 className="text-lg font-bold text-text-primary">Добавить слайд</h3>
-                <button onClick={() => setShowLayoutSelector(false)} className="text-text-muted hover:text-text-primary">
+              <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <h3 className="text-lg font-bold text-white/90">Добавить слайд</h3>
+                <button onClick={() => setShowLayoutSelector(false)} className="text-white/30 hover:text-white/60">
                   <X size={20} />
                 </button>
               </div>
@@ -6630,13 +6676,14 @@ Layout: ${slide.layout}`
                         addSlide(layout.id);
                         setShowLayoutSelector(false);
                       }}
-                      className="p-4 rounded-xl glass hover:border-accent-primary/50 transition-all text-center"
+                      className="p-4 rounded-xl transition-all text-center"
+                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
-                      <layout.icon size={24} className="mx-auto mb-2 text-accent-primary" />
-                      <span className="text-sm font-medium text-text-primary block">
+                      <layout.icon size={24} className="mx-auto mb-2 text-fuchsia-400" />
+                      <span className="text-sm font-medium text-white/80 block">
                         {language === 'en' ? layout.nameEn : layout.name}
                       </span>
-                      <span className="text-xs text-text-muted">{layout.description}</span>
+                      <span className="text-xs text-white/30">{layout.description}</span>
                     </motion.button>
                   ))}
                 </div>
@@ -6661,23 +6708,24 @@ Layout: ${slide.layout}`
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-5xl max-h-[85vh] glass rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
+              className="w-full max-w-5xl max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl"
+              style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 0 80px rgba(139,92,246,0.08)' }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Заголовок */}
-              <div className="flex items-center justify-between px-8 py-5 border-b border-border-primary bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10">
+              <div className="flex items-center justify-between px-8 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'linear-gradient(90deg, rgba(139,92,246,0.04), rgba(236,72,153,0.04))' }}>
                 <div>
-                  <h3 className="text-xl font-bold text-text-primary flex items-center gap-3">
+                  <h3 className="text-xl font-bold text-white/90 flex items-center gap-3">
                     <span className="text-2xl">📋</span>
                     Готовые шаблоны презентаций
                   </h3>
-                  <p className="text-sm text-text-muted mt-1">
+                  <p className="text-sm text-white/40 mt-1">
                     Выберите шаблон и начните создавать за секунды
                   </p>
                 </div>
                 <button 
                   onClick={() => setShowTemplates(false)} 
-                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors flex items-center justify-center"
+                  className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/60 transition-colors flex items-center justify-center"
                 >
                   <X size={20} />
                 </button>

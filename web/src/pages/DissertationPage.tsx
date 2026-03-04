@@ -3278,15 +3278,27 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
   const progressPercentage = Math.round((wordCount / dissertation.targetWordCount) * 100);
 
   return (
-    <div className="h-screen bg-bg-primary flex overflow-hidden">
+    <div className="h-screen flex overflow-hidden" style={{ background: '#050508' }}>
+      {/* Subtle animated background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <motion.div animate={{ x: [0, 20, -15, 0], y: [0, -15, 20, 0] }} transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-[-15%] left-[-10%] w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.04), transparent 70%)', filter: 'blur(40px)' }} />
+        <motion.div animate={{ x: [0, -20, 10, 0], y: [0, 20, -10, 0] }} transition={{ duration: 35, repeat: Infinity, ease: 'easeInOut', delay: 8 }}
+          className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(217,70,239,0.03), transparent 70%)', filter: 'blur(40px)' }} />
+        <div className="absolute inset-0 opacity-[0.012]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+      </div>
+
       {/* Mobile sidebar toggle */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setShowSidebarMobile(prev => !prev)}
-        className="md:hidden fixed top-3 left-3 z-40 p-2.5 rounded-xl bg-bg-secondary border border-border-primary shadow-lg text-text-primary hover:bg-bg-tertiary transition-all"
+        className="md:hidden fixed top-3 left-3 z-40 p-2.5 rounded-xl text-white/70 hover:text-white transition-all"
+        style={{ background: 'rgba(15,15,22,0.9)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
         aria-label="Toggle sidebar"
       >
         <Menu size={20} />
-      </button>
+      </motion.button>
 
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
@@ -3296,7 +3308,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowSidebarMobile(false)}
-            className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-md z-40"
           />
         )}
       </AnimatePresence>
@@ -3305,24 +3317,26 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-[280px] max-w-[85vw]
         md:static md:w-80 md:max-w-none md:z-auto
-        border-r border-border-primary flex flex-col bg-bg-secondary
+        flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${showSidebarMobile ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-        <div className="p-4 border-b border-border-primary">
+      `}
+      style={{ background: 'rgba(10,10,16,0.95)', backdropFilter: 'blur(24px)', borderRight: '1px solid rgba(255,255,255,0.04)' }}>
+        <div className="p-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
           <div className="flex items-center justify-between mb-4">
-            <button
+            <motion.button
+              whileHover={{ x: -2 }}
               onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors"
+              className="flex items-center gap-2 text-white/40 hover:text-white/80 transition-colors text-sm"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={16} />
               Назад
-            </button>
+            </motion.button>
             <button
               onClick={() => setShowSidebarMobile(false)}
-              className="md:hidden p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-all"
+              className="md:hidden p-2 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/[0.04] transition-all"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
           
@@ -3330,7 +3344,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             type="text"
             value={dissertation.title}
             onChange={(e) => setDissertation(prev => ({ ...prev, title: e.target.value, updatedAt: new Date() }))}
-            className="w-full text-lg font-bold bg-transparent border-none focus:outline-none text-text-primary mb-2"
+            className="w-full text-lg font-bold bg-transparent border-none focus:outline-none text-white/90 mb-2 placeholder-white/20"
             placeholder="Название диссертации"
           />
           
@@ -3340,18 +3354,19 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               <span>{wordCount.toLocaleString()} слов</span>
               <span>Цель: {dissertation.targetWordCount.toLocaleString()}</span>
             </div>
-            <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(progressPercentage, 100)}%` }}
                 className={`h-full rounded-full ${
                   progressPercentage >= 100 ? 'bg-green-500' : 
                   progressPercentage >= 75 ? 'bg-blue-500' : 
-                  progressPercentage >= 50 ? 'bg-yellow-500' : 'bg-purple-500'
+                  progressPercentage >= 50 ? 'bg-yellow-500' : 'bg-violet-500'
                 }`}
+                style={{ boxShadow: progressPercentage > 0 ? '0 0 12px rgba(139,92,246,0.3)' : 'none' }}
               />
             </div>
-            <div className="flex justify-between text-xs text-text-muted mt-1">
+            <div className="flex justify-between text-xs text-white/35 mt-1">
               <span>{progressPercentage}% выполнено</span>
               {dissertation.uniquenessScore && (
                 <span className={`flex items-center gap-1 ${
@@ -3632,13 +3647,17 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowPlagiarismPanel(!showPlagiarismPanel)}
-            className={`px-3 md:px-4 py-2 rounded-xl font-medium flex items-center gap-2 text-sm ${
+            className={`px-3 md:px-4 py-2 rounded-xl font-medium flex items-center gap-2 text-sm transition-all ${
               showPlagiarismPanel 
-                ? 'bg-cyan-500 text-white' 
-                : 'bg-bg-tertiary text-text-secondary hover:text-text-primary border border-border-primary'
+                ? 'text-white' 
+                : 'text-white/50 hover:text-white/80'
             }`}
+            style={showPlagiarismPanel 
+              ? { background: 'rgba(6,182,212,0.2)', border: '1px solid rgba(6,182,212,0.3)', boxShadow: '0 0 16px rgba(6,182,212,0.15)' }
+              : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }
+            }
           >
-            <Search size={18} />
+            <Search size={16} />
             <span className="hidden sm:inline">Антиплагиат</span>
           </motion.button>
 
@@ -3646,19 +3665,23 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowAIPanel(!showAIPanel)}
-            className={`px-3 md:px-4 py-2 rounded-xl font-medium flex items-center gap-2 text-sm ${
+            className={`px-3 md:px-4 py-2 rounded-xl font-medium flex items-center gap-2 text-sm text-white transition-all ${
               showAIPanel 
-                ? 'bg-purple-500 text-white' 
-                : 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
+                ? '' 
+                : ''
             }`}
+            style={showAIPanel
+              ? { background: 'rgba(139,92,246,0.25)', border: '1px solid rgba(139,92,246,0.3)', boxShadow: '0 0 16px rgba(139,92,246,0.15)' }
+              : { background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(236,72,153,0.25))', border: '1px solid rgba(139,92,246,0.2)', boxShadow: '0 0 20px rgba(139,92,246,0.12)' }
+            }
           >
-            <Brain size={18} />
+            <Brain size={16} />
             <span className="hidden sm:inline">AI Помощник</span>
           </motion.button>
           
           <button 
             onClick={handleExportToPDF}
-            className="p-2 hover:bg-bg-tertiary rounded-xl transition-colors text-text-muted hover:text-text-primary"
+            className="p-2 hover:bg-white/[0.04] rounded-xl transition-colors text-white/30 hover:text-white/70"
             title="Экспорт в PDF"
           >
             <FileDown size={18} />
@@ -3666,7 +3689,8 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
         </div>
         
         {/* Toolbar */}
-        <div className="px-4 py-2 border-b border-border-primary bg-bg-primary/50 flex items-center gap-1 flex-wrap">
+        <div className="px-4 py-2 flex items-center gap-1 flex-wrap relative z-10"
+          style={{ background: 'rgba(5,5,10,0.5)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
           {toolbarButtons.map((btn, index) => 
             btn.divider ? (
               <div key={index} className="w-px h-6 bg-border-primary mx-1" />
@@ -3675,7 +3699,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 key={index}
                 onClick={btn.action}
                 title={btn.title}
-                className="p-2 hover:bg-bg-tertiary rounded-lg transition-colors text-text-muted hover:text-text-primary"
+                className="p-2 hover:bg-white/[0.04] rounded-lg transition-colors text-white/30 hover:text-white/70"
               >
                 <btn.icon size={16} />
               </button>
@@ -4050,16 +4074,17 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   
                   {/* Progress */}
                   {isGenerating && (
-                    <div className="px-4 py-3 bg-purple-500/10 border-b border-border-primary flex-shrink-0">
+                    <div className="px-4 py-3 flex-shrink-0" style={{ background: 'rgba(139,92,246,0.06)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                       <div className="flex items-center gap-2 mb-2">
-                        <RefreshCw size={14} className="animate-spin text-purple-400" />
-                        <span className="text-sm text-purple-400">Генерация текста...</span>
+                        <RefreshCw size={14} className="animate-spin text-violet-400" />
+                        <span className="text-sm text-violet-400">Генерация текста...</span>
                       </div>
-                      <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${generationProgress}%` }}
-                          className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                          className="h-full rounded-full"
+                          style={{ background: 'linear-gradient(90deg, rgba(139,92,246,0.8), rgba(236,72,153,0.7))', boxShadow: '0 0 12px rgba(139,92,246,0.3)' }}
                         />
                       </div>
                     </div>
@@ -4072,11 +4097,14 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   >
                     {aiMessages.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center mb-4">
-                          <Brain size={32} className="text-purple-400" />
+                        <div className="relative w-16 h-16 mb-4">
+                          <div className="absolute inset-0 rounded-2xl bg-violet-500/10 blur-lg" />
+                          <div className="relative w-full h-full rounded-2xl flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.1)' }}>
+                            <Brain size={28} className="text-violet-400/80" />
+                          </div>
                         </div>
-                        <p className="text-text-muted">AI готов помочь с диссертацией</p>
-                        <p className="text-xs text-text-muted mt-1">Просто напишите запрос или используйте быстрые действия</p>
+                        <p className="text-white/40 text-sm">AI готов помочь с диссертацией</p>
+                        <p className="text-xs text-white/20 mt-1">Просто напишите запрос или используйте быстрые действия</p>
                       </div>
                     ) : (
                       aiMessages.map((msg, index) => (
@@ -4097,17 +4125,18 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                                   else next.add(msg.id);
                                   return next;
                                 })}
-                                className="w-full flex items-center gap-2 p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 hover:border-purple-500/40 transition-all group"
+                                className="w-full flex items-center gap-2 p-3 rounded-xl border border-violet-500/20 hover:border-violet-500/40 transition-all group"
+                                style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.06), rgba(236,72,153,0.04))' }}
                               >
                                 {msg.thinkingActive ? (
                                   <Loader2 size={16} className="text-purple-400 animate-spin shrink-0" />
                                 ) : (
                                   <CheckCircle size={16} className="text-green-400 shrink-0" />
                                 )}
-                                <span className="text-xs text-text-secondary flex-1 text-left truncate">
+                                <span className="text-xs text-white/60 flex-1 text-left truncate">
                                   {msg.thinkingActive ? 'Думаю...' : 'Процесс завершён'}
                                   {msg.thinkingSteps && msg.thinkingSteps.length > 0 && (
-                                    <span className="text-text-muted ml-2">
+                                    <span className="text-white/30 ml-2">
                                       {(() => {
                                         const lastStep = msg.thinkingSteps[msg.thinkingSteps.length - 1];
                                         return `${lastStep.percentComplete}% · ${lastStep.wordsGenerated.toLocaleString()} слов`;
@@ -4174,15 +4203,19 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                           <div
                             className={`max-w-[85%] p-4 rounded-2xl ${
                               msg.role === 'user'
-                                ? 'bg-purple-600 text-white rounded-br-none'
-                                : 'bg-bg-tertiary border border-border-primary rounded-bl-none'
+                                ? 'text-white rounded-br-none'
+                                : 'rounded-bl-none'
                             }`}
+                            style={msg.role === 'user'
+                              ? { background: 'linear-gradient(135deg, rgba(139,92,246,0.9), rgba(168,85,247,0.8))', boxShadow: '0 4px 20px rgba(139,92,246,0.25)' }
+                              : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }
+                            }
                           >
                             {msg.role === 'assistant' && !msg.content.startsWith('❌') && !msg.content.startsWith('⚠️') && !msg.content.startsWith('✅') && (
                               <div className="flex justify-end gap-1 mb-2">
                                 <button
                                   onClick={() => copyToClipboard(msg.content, msg.id)}
-                                  className="p-1 hover:bg-bg-primary rounded transition-colors"
+                                  className="p-1 hover:bg-white/[0.06] rounded transition-colors"
                                   title="Копировать"
                                 >
                                   {copiedId === msg.id ? (
@@ -4193,7 +4226,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                                 </button>
                                 <button
                                   onClick={() => insertToContent(msg.content)}
-                                  className="p-1 hover:bg-bg-primary rounded transition-colors"
+                                  className="p-1 hover:bg-white/[0.06] rounded transition-colors"
                                   title="Вставить в документ"
                                 >
                                   <Plus size={12} className="text-text-muted" />
@@ -4213,8 +4246,8 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     <div ref={messagesEndRef} className="h-1" />
                   </div>
                   
-                  {/* Input — всегда внизу, как в настоящих чатах */}
-                  <div className="p-4 border-t border-border-primary bg-bg-secondary/95 backdrop-blur-xl flex-shrink-0">
+                  {/* Input — premium glass style */}
+                  <div className="p-4 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10,10,16,0.92)', backdropFilter: 'blur(24px)' }}>
                     {/* Attached files preview */}
                     {attachedFiles.length > 0 && (
                       <div className="mb-2 space-y-1">
@@ -4263,13 +4296,16 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                         placeholder={attachedFiles.length > 0 ? "Комментарий к файлам..." : "Напишите запрос..."}
                         rows={1}
                         disabled={isGenerating}
-                        className="w-full resize-y min-h-[52px] max-h-[160px] p-4 pl-12 pr-14 bg-bg-tertiary border border-border-primary rounded-2xl focus:outline-none focus:border-purple-500 text-sm leading-relaxed"
+                        className="w-full resize-y min-h-[52px] max-h-[160px] p-4 pl-12 pr-14 rounded-2xl text-sm leading-relaxed text-white/90 placeholder-white/25 focus:outline-none"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', transition: 'border-color 0.2s' }}
+                        onFocus={(e) => (e.target.style.borderColor = 'rgba(139,92,246,0.3)')}
+                        onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.06)')}
                       />
                       {/* Paperclip button */}
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isGenerating || isParsingFile}
-                        className="absolute bottom-3 left-3 p-2 rounded-lg hover:bg-bg-primary text-text-muted hover:text-purple-400 transition-colors disabled:opacity-50"
+                        className="absolute bottom-3 left-3 p-2 rounded-lg hover:bg-white/[0.04] text-white/30 hover:text-violet-400 transition-colors disabled:opacity-50"
                         title="Прикрепить файл (PDF, DOCX, TXT и др.)"
                       >
                         {isParsingFile ? (
@@ -4280,11 +4316,12 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                       </button>
                       {/* Send button */}
                       <motion.button
-                        whileHover={{ scale: 1.1 }}
+                        whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}
                         whileTap={{ scale: 0.9 }}
                         onClick={handleAIGenerate}
                         disabled={(!aiPrompt.trim() && attachedFiles.length === 0) || isGenerating}
-                        className="absolute bottom-3 right-3 p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white disabled:opacity-50"
+                        className="absolute bottom-3 right-3 p-2 rounded-lg text-white disabled:opacity-30 transition-all"
+                        style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.85), rgba(236,72,153,0.75))', boxShadow: '0 0 16px rgba(139,92,246,0.2)' }}
                       >
                         {isGenerating ? (
                           <RefreshCw size={16} className="animate-spin" />
@@ -4293,7 +4330,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                         )}
                       </motion.button>
                     </div>
-                    <p className="text-xs text-text-muted mt-2 text-center">
+                    <p className="text-xs text-white/25 mt-2 text-center">
                       📎 PDF, DOCX, TXT и др. · 💡 AI пишет в академическом стиле
                     </p>
                   </div>
@@ -4311,14 +4348,15 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"
               onClick={() => setShowDocTypeSelector(false)}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-bg-secondary rounded-2xl border border-border-primary p-6 w-full max-w-2xl max-h-[80vh] overflow-auto"
+                className="rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-auto"
+                style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
@@ -4376,19 +4414,20 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"
               onClick={() => setShowCitationManager(false)}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-bg-secondary rounded-2xl border border-border-primary p-6 w-full max-w-3xl max-h-[80vh] overflow-auto"
+                className="rounded-2xl p-6 w-full max-w-3xl max-h-[80vh] overflow-auto"
+                style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 0 80px rgba(139,92,246,0.08)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
-                    <BookOpen size={24} />
+                  <h2 className="text-xl font-bold text-white/90 flex items-center gap-2">
+                    <BookOpen size={24} className="text-violet-400" />
                     Управление источниками
                   </h2>
                   <div className="flex gap-2">
@@ -4414,7 +4453,8 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     {dissertation.citations.map((citation, index) => (
                       <div
                         key={index}
-                        className="p-3 rounded-lg bg-bg-tertiary border border-border-primary flex items-start gap-3"
+                        className="p-3 rounded-lg flex items-start gap-3"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                       >
                         <span className="text-text-muted text-sm font-mono">[{index + 1}]</span>
                         <div className="flex-1">
@@ -4443,8 +4483,8 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-text-muted">
-                    <BookOpen size={48} className="mx-auto mb-2 opacity-50" />
+                  <div className="text-center py-8 text-white/40">
+                    <BookOpen size={48} className="mx-auto mb-2 opacity-30" />
                     <p>Источники не добавлены</p>
                     <p className="text-xs">Нажмите "Добавить" для добавления нового источника</p>
                   </div>
@@ -4461,28 +4501,29 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"
               onClick={() => setShowAddCitation(false)}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-bg-secondary rounded-2xl border border-border-primary p-6 w-full max-w-lg"
+                className="rounded-2xl p-6 w-full max-w-lg"
+                style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 0 80px rgba(139,92,246,0.08)' }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-                  <Plus size={20} />
+                <h2 className="text-lg font-bold text-white/90 mb-4 flex items-center gap-2">
+                  <Plus size={20} className="text-violet-400" />
                   Добавить источник
                 </h2>
                 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-text-muted mb-1 block">Тип источника</label>
+                    <label className="text-xs text-white/40 mb-1 block">Тип источника</label>
                     <select
                       value={newCitation.type}
                       onChange={(e) => setNewCitation(prev => ({ ...prev, type: e.target.value as 'book' | 'article' | 'website' | 'dissertation' | 'conference' }))}
-                      className="w-full p-2 rounded-lg bg-bg-tertiary border border-border-primary text-sm"
+                      className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                     >
                       <option value="book">📚 Книга</option>
                       <option value="article">📄 Статья</option>
@@ -4493,81 +4534,81 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   </div>
                   
                   <div>
-                    <label className="text-xs text-text-muted mb-1 block">Авторы (через запятую)</label>
+                    <label className="text-xs text-white/40 mb-1 block">Авторы (через запятую)</label>
                     <input
                       type="text"
                       value={newCitation.authors.join(', ')}
                       onChange={(e) => setNewCitation(prev => ({ ...prev, authors: e.target.value.split(',').map(a => a.trim()) }))}
                       placeholder="Иванов И.И., Петров П.П."
-                      className="w-full p-2 rounded-lg bg-bg-tertiary border border-border-primary text-sm"
+                      className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                     />
                   </div>
                   
                   <div>
-                    <label className="text-xs text-text-muted mb-1 block">Название</label>
+                    <label className="text-xs text-white/40 mb-1 block">Название</label>
                     <input
                       type="text"
                       value={newCitation.title}
                       onChange={(e) => setNewCitation(prev => ({ ...prev, title: e.target.value }))}
                       placeholder="Название работы"
-                      className="w-full p-2 rounded-lg bg-bg-tertiary border border-border-primary text-sm"
+                      className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-text-muted mb-1 block">Издание/Журнал</label>
+                      <label className="text-xs text-white/40 mb-1 block">Издание/Журнал</label>
                       <input
                         type="text"
                         value={newCitation.source}
                         onChange={(e) => setNewCitation(prev => ({ ...prev, source: e.target.value }))}
                         placeholder="Название издания"
-                        className="w-full p-2 rounded-lg bg-bg-tertiary border border-border-primary text-sm"
+                        className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-text-muted mb-1 block">Год</label>
+                      <label className="text-xs text-white/40 mb-1 block">Год</label>
                       <input
                         type="number"
                         value={newCitation.year}
                         onChange={(e) => setNewCitation(prev => ({ ...prev, year: parseInt(e.target.value) }))}
                         placeholder="2024"
-                        className="w-full p-2 rounded-lg bg-bg-tertiary border border-border-primary text-sm"
+                        className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-text-muted mb-1 block">Страницы</label>
+                      <label className="text-xs text-white/40 mb-1 block">Страницы</label>
                       <input
                         type="text"
                         value={newCitation.pages || ''}
                         onChange={(e) => setNewCitation(prev => ({ ...prev, pages: e.target.value }))}
                         placeholder="12-24"
-                        className="w-full p-2 rounded-lg bg-bg-tertiary border border-border-primary text-sm"
+                        className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-text-muted mb-1 block">DOI (опционально)</label>
+                      <label className="text-xs text-white/40 mb-1 block">DOI (опционально)</label>
                       <input
                         type="text"
                         value={newCitation.doi || ''}
                         onChange={(e) => setNewCitation(prev => ({ ...prev, doi: e.target.value }))}
                         placeholder="10.1000/xyz123"
-                        className="w-full p-2 rounded-lg bg-bg-tertiary border border-border-primary text-sm"
+                        className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label className="text-xs text-text-muted mb-1 block">URL (опционально)</label>
+                    <label className="text-xs text-white/40 mb-1 block">URL (опционально)</label>
                     <input
                       type="text"
                       value={newCitation.url || ''}
                       onChange={(e) => setNewCitation(prev => ({ ...prev, url: e.target.value }))}
                       placeholder="https://..."
-                      className="w-full p-2 rounded-lg bg-bg-tertiary border border-border-primary text-sm"
+                      className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                     />
                   </div>
                 </div>
@@ -4575,14 +4616,16 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 <div className="flex gap-2 mt-4">
                   <button
                     onClick={() => setShowAddCitation(false)}
-                    className="flex-1 py-2 rounded-lg bg-bg-tertiary border border-border-primary text-text-secondary text-sm"
+                    className="flex-1 py-2 rounded-lg text-white/50 text-sm transition-colors hover:text-white/70"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                   >
                     Отмена
                   </button>
                   <button
                     onClick={addCitationToList}
                     disabled={!newCitation.title || newCitation.authors.length === 0}
-                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm disabled:opacity-50"
+                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-sm disabled:opacity-50"
+                    style={{ boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}
                   >
                     Добавить
                   </button>
@@ -4599,21 +4642,22 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"
               onClick={() => setShowLimitModal(false)}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-bg-secondary rounded-2xl border border-border-primary p-6 w-full max-w-md text-center"
+                className="rounded-2xl p-6 w-full max-w-md text-center"
+                style={{ background: 'rgba(12,12,20,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 0 80px rgba(139,92,246,0.08)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center mx-auto mb-4">
                   <Lock size={32} className="text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-text-primary mb-2">Лимит исчерпан</h2>
-                <p className="text-text-muted mb-4">
+                <h2 className="text-xl font-bold text-white/90 mb-2">Лимит исчерпан</h2>
+                <p className="text-white/50 mb-4">
                   {(() => {
                     const limits = PLAN_LIMITS[subscription.currentPlan] || PLAN_LIMITS.starter;
                     const remaining = subscription.getRemainingLimits();
@@ -4630,9 +4674,9 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     return 'Ресурсы текущего плана исчерпаны.';
                   })()}
                 </p>
-                <div className="bg-bg-tertiary rounded-xl p-4 mb-4">
-                  <h3 className="font-semibold text-text-primary mb-2">🎓 План Pro</h3>
-                  <ul className="text-sm text-text-secondary text-left space-y-1">
+                <div className="rounded-xl p-4 mb-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <h3 className="font-semibold text-white/90 mb-2">🎓 План Pro</h3>
+                  <ul className="text-sm text-white/60 text-left space-y-1">
                     <li>✓ 90 эссе + 35 рефератов + 15 курсовых/мес</li>
                     <li>✓ 20 генераций глав (25+ стр)</li>
                     <li>✓ Генерация полной диссертации</li>
@@ -4644,13 +4688,15 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowLimitModal(false)}
-                    className="flex-1 py-2 rounded-lg bg-bg-tertiary border border-border-primary text-text-secondary"
+                    className="flex-1 py-2 rounded-lg text-white/50 transition-colors hover:text-white/70"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                   >
                     Позже
                   </button>
                   <button
                     onClick={() => navigate('/settings')}
-                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium"
+                    className="flex-1 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-medium"
+                    style={{ boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}
                   >
                     Оформить
                   </button>
