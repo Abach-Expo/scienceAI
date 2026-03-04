@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import OnboardingTour from '../components/OnboardingTour';
 import { API_URL } from '../config';
@@ -71,6 +71,7 @@ const DissertationPage = () => {
   useDocumentTitle('Диссертации');
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const contentRef = useRef<HTMLDivElement>(null);
   const { confirm, ConfirmDialog } = useConfirm();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -312,6 +313,41 @@ const DissertationPage = () => {
       }
     };
   }, [dissertation, saveStatus, saveDissertation]);
+
+  // ── Auto-task from ScienceAIChat redirect ──
+  const autoTaskProcessedRef = useRef(false);
+  const [pendingAutoGenerate, setPendingAutoGenerate] = useState(false);
+
+  useEffect(() => {
+    const autoTask = (location.state as { autoTask?: { topic?: string; pageCount?: number; documentType?: string } } | null)?.autoTask;
+    if (!autoTask || autoTaskProcessedRef.current) return;
+    autoTaskProcessedRef.current = true;
+
+    // Clear navigation state so refresh won't re-trigger
+    window.history.replaceState({}, document.title);
+
+    // Populate dissertation fields from autoTask
+    setDissertation(prev => ({
+      ...prev,
+      title: autoTask.topic || prev.title,
+      topic: autoTask.topic || prev.topic,
+      documentType: (autoTask.documentType || prev.documentType) as DocumentType,
+      targetWordCount: autoTask.pageCount ? autoTask.pageCount * 280 : prev.targetWordCount,
+    }));
+
+    // Open AI panel and show notification
+    setShowAIPanel(true);
+    setAiMessages(prev => [...prev, {
+      id: `auto-${Date.now()}`,
+      role: 'assistant',
+      content: `🚀 **Автоматическое создание**\n\n📌 Тема: «${autoTask.topic || 'не указана'}»\n📄 Тип: ${DOCUMENT_TYPES[(autoTask.documentType || 'dissertation') as DocumentType]?.nameRu || 'Диссертация'}${autoTask.pageCount ? `\n📑 Страниц: ~${autoTask.pageCount}` : ''}\n\n⏳ Генерация начнётся автоматически...`,
+      timestamp: new Date(),
+    }]);
+
+    // Trigger full generation after state settles
+    setTimeout(() => setPendingAutoGenerate(true), 1500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleChapter = (chapterId: string) => {
     setExpandedChapters(prev => 
@@ -1264,6 +1300,15 @@ ${fullContent.slice(-4000)}
       setLargeGenerationProgress({ current: 0, total: 0, section: '' });
     }
   };
+
+  // ── Trigger auto-generate when redirected from chat ──
+  useEffect(() => {
+    if (pendingAutoGenerate) {
+      setPendingAutoGenerate(false);
+      generateFullDissertation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAutoGenerate]);
 
   // ================== УМНОЕ ОПРЕДЕЛЕНИЕ НАМЕРЕНИЯ (GPT) ==================
   

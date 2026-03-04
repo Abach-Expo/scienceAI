@@ -93,6 +93,117 @@ const COMMANDS = [
   { icon: Search, label: 'Найти источники', description: 'Поиск научных статей', prompt: 'Найди научные статьи и источники по теме:' },
 ] as const;
 
+// ═══════════════════════════════════════════
+// Smart intent detection — redirect to workspace
+// ═══════════════════════════════════════════
+interface DetectedIntent {
+  type: 'dissertation' | 'presentation' | 'academic';
+  topic: string;
+  pageCount?: number;
+  slideCount?: number;
+  academicType?: string; // coursework | diploma | article | report | essay
+  documentType?: string; // for DissertationPage: dissertation | diploma | coursework etc.
+}
+
+/**
+ * Analyzes user message to detect intent to create a dissertation, presentation, or academic work.
+ * Returns null if the message is a regular chat question.
+ */
+const detectWorkspaceIntent = (text: string): DetectedIntent | null => {
+  const lower = text.toLowerCase().trim();
+
+  // Extract page/slide count patterns
+  const pageMatch = lower.match(/(\d+)\s*(?:страниц|стр|листов|лист|pages?|pg)/);
+  const slideMatch = lower.match(/(\d+)\s*(?:слайд|slide)/);
+  const pageCount = pageMatch ? parseInt(pageMatch[1], 10) : undefined;
+  const slideCount = slideMatch ? parseInt(slideMatch[1], 10) : undefined;
+
+  // Helper: extract topic from text by removing command words
+  const extractTopic = (input: string): string => {
+    return input
+      .replace(/^(напиши|создай|сгенерируй|сделай|подготовь|написать|генерация|генерировать|make|create|write|generate)\s*/i, '')
+      .replace(/(диссертацию|диссертация|диссер|дисер|dissert\w*)/gi, '')
+      .replace(/(презентацию|презентация|презу|слайды|presentation|slides?)/gi, '')
+      .replace(/(курсовую|курсовая|курсов\w*|coursework)/gi, '')
+      .replace(/(дипломную|дипломная|диплом\w*|diploma)/gi, '')
+      .replace(/(реферат\w*|доклад\w*|статью|статья|эссе|essay|article|report)/gi, '')
+      .replace(/(академическ\w+\s*работ\w*)/gi, '')
+      .replace(/(научн\w+\s*работ\w*|научн\w+\s*стать\w*)/gi, '')
+      .replace(/на\s*тему\s*/gi, '')
+      .replace(/по\s*теме\s*/gi, '')
+      .replace(/про\s*/gi, '')
+      .replace(/на\s*\d+\s*(страниц|стр|листов|pages?|слайд|slide)\w*/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  };
+
+  // ── Presentation detection ──
+  if (/(презентаци|презу|слайд|presentation|slides?\b)/i.test(lower)) {
+    return {
+      type: 'presentation',
+      topic: extractTopic(text),
+      slideCount: slideCount || pageCount,
+    };
+  }
+
+  // ── Dissertation detection ──
+  if (/(диссертаци|диссер\b|дисер\b|dissert)/i.test(lower)) {
+    return {
+      type: 'dissertation',
+      topic: extractTopic(text),
+      pageCount,
+      documentType: 'dissertation',
+    };
+  }
+
+  // ── Diploma ──
+  if (/(дипломн|диплом\b|diploma)/i.test(lower)) {
+    return {
+      type: 'dissertation',
+      topic: extractTopic(text),
+      pageCount,
+      documentType: 'diploma',
+    };
+  }
+
+  // ── Coursework ──
+  if (/(курсов\w+|coursework)/i.test(lower)) {
+    return {
+      type: 'dissertation',
+      topic: extractTopic(text),
+      pageCount,
+      documentType: 'coursework',
+    };
+  }
+
+  // ── Essay / referat / report / article ──
+  if (/(реферат|доклад|статью|статья|эссе|essay\b|article\b|report\b)/i.test(lower)) {
+    const docType = /реферат/i.test(lower) ? 'abstract'
+      : /доклад/i.test(lower) ? 'report'
+      : /стать/i.test(lower) || /article/i.test(lower) ? 'article'
+      : /эссе|essay/i.test(lower) ? 'article'
+      : 'report';
+    return {
+      type: 'dissertation',
+      topic: extractTopic(text),
+      pageCount,
+      documentType: docType,
+    };
+  }
+
+  // ── Generic academic work pattern: "напиши ... на тему ..." ──
+  if (/(напиши|создай|сгенерируй|сделай|подготовь)\s+.*(работ|текст|документ)/i.test(lower) && /на\s*тему/i.test(lower)) {
+    return {
+      type: 'dissertation',
+      topic: extractTopic(text),
+      pageCount,
+      documentType: 'coursework',
+    };
+  }
+
+  return null;
+};
+
 const SYSTEM_PROMPT = `Ты — интеллектуальный научный ассистент Science AI.
 Ты помогаешь студентам и учёным с написанием диссертаций, дипломных работ, курсовых и научных статей.
 
@@ -514,6 +625,22 @@ const ScienceAIChat = () => {
     const text = (messageText || input).trim();
     if ((!text && attachedFiles.length === 0) || isLoading) return;
 
+    // ── Smart intent detection: redirect to workspace ──
+    if (text && attachedFiles.length === 0) {
+      const intent = detectWorkspaceIntent(text);
+      if (intent) {
+        if (intent.type === 'presentation') {
+          navigate('/presentations', { state: { autoTask: { topic: intent.topic, slideCount: intent.slideCount } } });
+          return;
+        }
+        if (intent.type === 'dissertation') {
+          const newId = `diss-${Date.now()}`;
+          navigate(`/dissertation/${newId}`, { state: { autoTask: { topic: intent.topic, pageCount: intent.pageCount, documentType: intent.documentType } } });
+          return;
+        }
+      }
+    }
+
     const remaining = subscription.getRemainingLimits();
     if (remaining.chatMessages <= 0) {
       setToast({ message: 'Достигнут лимит сообщений. Обновите подписку для продолжения.', type: 'warning' });
@@ -572,7 +699,7 @@ const ScienceAIChat = () => {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [input, isLoading, messages, currentChatId, subscription, generateResponse, saveChat, attachedFiles]);
+  }, [input, isLoading, messages, currentChatId, subscription, generateResponse, saveChat, attachedFiles, navigate]);
 
   // ── Retry last message ──
   const handleRetry = useCallback(() => {

@@ -1,6 +1,6 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useLanguageStore } from '../store/languageStore';
 import { createServerOpenAI } from '../services/aiServer';
@@ -79,6 +79,7 @@ import {
 export function PresentationsPage() {
   useDocumentTitle('Презентации');
   const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguageStore();
   
   // ====== НОВЫЙ ИНТЕРФЕЙС: ЧАТ + WORKSPACE ======
@@ -168,9 +169,48 @@ export function PresentationsPage() {
   
   const fullscreenRef = useRef<HTMLDivElement>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoTaskProcessedRef = useRef(false);
+  const [pendingAutoTask, setPendingAutoTask] = useState<string | null>(null);
   
   // ==================== ЭФФЕКТЫ ====================
   
+  // ── Auto-task from ScienceAIChat redirect ──
+  useEffect(() => {
+    const autoTask = (location.state as { autoTask?: { topic?: string; slideCount?: number } } | null)?.autoTask;
+    if (!autoTask || autoTaskProcessedRef.current) return;
+    autoTaskProcessedRef.current = true;
+
+    // Clear navigation state so refresh won't re-trigger
+    window.history.replaceState({}, document.title);
+
+    // Set slide count if provided
+    if (autoTask.slideCount) {
+      setSlideCount(autoTask.slideCount);
+    }
+
+    // Add user message to chat and trigger generation after a short delay
+    const topic = autoTask.topic || '';
+    if (topic) {
+      setChatMessages(prev => [...prev, {
+        id: `auto-user-${Date.now()}`,
+        role: 'user',
+        content: topic,
+        timestamp: new Date(),
+      }, {
+        id: `auto-ai-${Date.now()}`,
+        role: 'assistant',
+        content: `🚀 **Автоматическое создание презентации**\n\n📌 Тема: «${topic}»${autoTask.slideCount ? `\n📊 Слайдов: ${autoTask.slideCount}` : ''}\n\n⏳ Генерация начнётся автоматически...`,
+        timestamp: new Date(),
+      }]);
+
+      // Set chatInput and trigger submit after state settles
+      setTimeout(() => {
+        setPendingAutoTask(topic);
+      }, 1500);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Загрузка из localStorage
   useEffect(() => {
     const saved = localStorage.getItem('science-ai-presentations');
@@ -448,7 +488,34 @@ export function PresentationsPage() {
     // Запускаем генерацию с анимацией шагов
     await runWorkspaceGeneration(prompt, steps);
   };
-  
+
+  // ── Trigger auto-generation when redirected from chat ──
+  useEffect(() => {
+    if (pendingAutoTask && !isGenerating) {
+      const topic = pendingAutoTask;
+      setPendingAutoTask(null);
+
+      // Transition to workspace and start generation directly
+      setViewMode('workspace');
+      setGenerationPrompt(topic);
+
+      const steps: WorkspaceStep[] = [
+        { id: '1', title: '🔍 Анализ запроса', description: 'Понимаю тему и требования...', status: 'pending', icon: '🔍' },
+        { id: '2', title: '📚 Исследование темы', description: 'Собираю информацию по теме...', status: 'pending', icon: '📚' },
+        { id: '3', title: '📋 Структурирование', description: 'Создаю план презентации...', status: 'pending', icon: '📋' },
+        { id: '4', title: '✍️ Генерация контента', description: 'Пишу тексты для слайдов...', status: 'pending', icon: '✍️' },
+        { id: '5', title: '🖼️ Подбор изображений', description: 'Ищу подходящие фотографии...', status: 'pending', icon: '🖼️' },
+        { id: '6', title: '🎨 Оформление', description: 'Применяю дизайн и стили...', status: 'pending', icon: '🎨' },
+        { id: '7', title: '✅ Финализация', description: 'Проверяю и завершаю...', status: 'pending', icon: '✅' },
+      ];
+      setWorkspaceSteps(steps);
+      setCurrentWorkspaceStep(0);
+
+      runWorkspaceGeneration(topic, steps);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAutoTask]);
+
   const runWorkspaceGeneration = async (prompt: string, steps: WorkspaceStep[]) => {
     setIsGenerating(true);
     
