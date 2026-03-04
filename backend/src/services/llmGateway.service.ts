@@ -14,6 +14,7 @@ import {
   type ProviderName,
   type TaskPromptConfig,
 } from './llmGateway.prompts';
+import { getLLMCache } from './llmCache.service';
 
 // Динамический импорт Anthropic (может не быть установлен)
 let Anthropic: any = null;
@@ -127,6 +128,29 @@ export class LLMGateway {
     const taskType = request.taskType || 'chat';
     const config = TASK_CONFIGS[taskType] || TASK_CONFIGS.chat;
 
+    // ===== CACHE CHECK =====
+    const cache = getLLMCache();
+    const cacheParams = {
+      taskType,
+      userPrompt: request.userPrompt,
+      systemPrompt: request.systemPrompt,
+      temperature: request.options?.temperature ?? config.temperature,
+      language: request.options?.language,
+      conversationHistory: request.conversationHistory as any,
+    };
+
+    const cached = cache.get(cacheParams);
+    if (cached) {
+      return {
+        content: cached.content,
+        model: 'Science AI',
+        _provider: cached.provider + ' (cached)',
+        _model: cached.model,
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }, // Нет расхода токенов
+        latencyMs: Date.now() - startTime,
+      };
+    }
+
     // 1. Собираем полный системный промпт
     const fullSystemPrompt = composeSystemPrompt(
       taskType,
@@ -168,6 +192,14 @@ export class LLMGateway {
       const latencyMs = Date.now() - startTime;
 
       logger.info(`[LLM Gateway] ✅ ${provider}/${result.model}: ${result.content.length} chars, ${latencyMs}ms`);
+
+      // ===== CACHE SAVE =====
+      cache.set(cacheParams, {
+        content: result.content,
+        provider,
+        model: result.model,
+        usage: result.usage,
+      });
 
       return {
         content: result.content,

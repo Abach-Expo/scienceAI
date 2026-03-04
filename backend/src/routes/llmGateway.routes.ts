@@ -9,6 +9,7 @@ import { logger } from '../utils/logger';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { checkUsageLimits, recordUsage } from '../middleware/usage.middleware';
 import { getLLMGateway } from '../services/llmGateway.service';
+import { getLLMCache } from '../services/llmCache.service';
 import type { LLMRequest } from '../services/llmGateway.service';
 import type { ProviderName } from '../services/llmGateway.prompts';
 
@@ -324,6 +325,46 @@ router.get('/models', async (_req: Request, res: Response): Promise<void> => {
     ],
     providers: status.totalProviders,
   });
+});
+
+// ==================== GET /api/llm/cache/stats ====================
+// Статистика кэша: hit rate, tokens saved, entries
+
+router.get('/cache/stats', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const cache = getLLMCache();
+    const stats = cache.getStats();
+
+    res.json({
+      success: true,
+      cache: {
+        ...stats,
+        hitRateFormatted: `${stats.hitRate}%`,
+        sizeMB: (stats.sizeBytes / 1024 / 1024).toFixed(2),
+        estimatedSavingsUSD: (stats.tokensSaved / 1000 * 0.003).toFixed(4), // ~$0.003 per 1K tokens avg
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Cache stats unavailable' });
+  }
+});
+
+// ==================== POST /api/llm/cache/clear ====================
+// Очистка кэша (admin action)
+
+router.post('/cache/clear', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const cache = getLLMCache();
+    const statsBefore = cache.getStats();
+    cache.clear();
+
+    res.json({
+      success: true,
+      message: `Cache cleared. Was: ${statsBefore.entries} entries, ${statsBefore.tokensSaved} tokens saved.`,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Cache clear failed' });
+  }
 });
 
 export default router;
