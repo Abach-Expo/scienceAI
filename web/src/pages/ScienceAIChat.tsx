@@ -9,6 +9,7 @@ import { useSubscriptionStore } from '../store/subscriptionStore';
 import { useTranslation } from '../store/languageStore';
 import { API_URL } from '../config';
 import { fetchWithAuth } from '../services/apiClient';
+import { parseFile, type ParsedFile } from '../utils/fileParser';
 import {
   Send,
   Sparkles,
@@ -402,6 +403,7 @@ const ScienceAIChat = () => {
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const rawFilesRef = useRef<globalThis.File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -503,6 +505,9 @@ const ScienceAIChat = () => {
     if (newFiles.length > 0) {
       setAttachedFiles(prev => [...prev, ...newFiles]);
     }
+
+    // Keep raw File objects for potential workspace redirect
+    rawFilesRef.current = [...rawFilesRef.current, ...fileList.filter(f => f.size <= MAX_FILE_SIZE)];
   }, []);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -514,6 +519,7 @@ const ScienceAIChat = () => {
 
   const removeFile = useCallback((index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+    rawFilesRef.current = rawFilesRef.current.filter((_, i) => i !== index);
   }, []);
 
   // ── Drag & Drop ──
@@ -626,18 +632,41 @@ const ScienceAIChat = () => {
     if ((!text && attachedFiles.length === 0) || isLoading) return;
 
     // ── Smart intent detection: redirect to workspace ──
-    if (text && attachedFiles.length === 0) {
-      const intent = detectWorkspaceIntent(text);
-      if (intent) {
-        if (intent.type === 'presentation') {
-          navigate('/presentations', { state: { autoTask: { topic: intent.topic, slideCount: intent.slideCount } } });
-          return;
+    const intent = text ? detectWorkspaceIntent(text) : null;
+    if (intent) {
+      if (intent.type === 'presentation') {
+        // Parse attached files if any, then redirect with file content
+        let fileContent: string | undefined;
+        if (rawFilesRef.current.length > 0) {
+          try {
+            const parsed: ParsedFile[] = [];
+            for (const f of rawFilesRef.current) {
+              parsed.push(await parseFile(f));
+            }
+            fileContent = parsed.map(p => `--- ${p.name} ---\n${p.content}`).join('\n\n');
+          } catch { /* file parse failed — redirect without content */ }
         }
-        if (intent.type === 'dissertation') {
-          const newId = `diss-${Date.now()}`;
-          navigate(`/dissertation/${newId}`, { state: { autoTask: { topic: intent.topic, pageCount: intent.pageCount, documentType: intent.documentType } } });
-          return;
+        rawFilesRef.current = [];
+        setAttachedFiles([]);
+        navigate('/presentations', { state: { autoTask: { topic: intent.topic, slideCount: intent.slideCount, fileContent } } });
+        return;
+      }
+      if (intent.type === 'dissertation') {
+        let fileContent: string | undefined;
+        if (rawFilesRef.current.length > 0) {
+          try {
+            const parsed: ParsedFile[] = [];
+            for (const f of rawFilesRef.current) {
+              parsed.push(await parseFile(f));
+            }
+            fileContent = parsed.map(p => `--- ${p.name} ---\n${p.content}`).join('\n\n');
+          } catch { /* ignore */ }
         }
+        rawFilesRef.current = [];
+        setAttachedFiles([]);
+        const newId = `diss-${Date.now()}`;
+        navigate(`/dissertation/${newId}`, { state: { autoTask: { topic: intent.topic, pageCount: intent.pageCount, documentType: intent.documentType, fileContent } } });
+        return;
       }
     }
 
@@ -669,6 +698,7 @@ const ScienceAIChat = () => {
     setMessages([...newMessages, { id: streamId, role: 'assistant', content: '', timestamp: new Date() }]);
     setInput('');
     setAttachedFiles([]);
+    rawFilesRef.current = [];
     setIsLoading(true);
     subscription.incrementChatMessages();
 
@@ -761,7 +791,7 @@ const ScienceAIChat = () => {
     setShowSidebar(false);
   };
 
-  const newChat = () => { setCurrentChatId(null); setMessages([]); setInput(''); setAttachedFiles([]); setShowSidebar(false); };
+  const newChat = () => { setCurrentChatId(null); setMessages([]); setInput(''); setAttachedFiles([]); rawFilesRef.current = []; setShowSidebar(false); };
 
   const deleteChat = (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation();

@@ -195,7 +195,7 @@ export function PresentationsPage() {
   
   // ── Auto-task from ScienceAIChat redirect ──
   useEffect(() => {
-    const autoTask = (location.state as { autoTask?: { topic?: string; slideCount?: number } } | null)?.autoTask;
+    const autoTask = (location.state as { autoTask?: { topic?: string; slideCount?: number; fileContent?: string } } | null)?.autoTask;
     if (!autoTask || autoTaskProcessedRef.current) return;
     autoTaskProcessedRef.current = true;
 
@@ -207,24 +207,29 @@ export function PresentationsPage() {
       setSlideCount(autoTask.slideCount);
     }
 
-    // Add user message to chat and trigger generation after a short delay
-    const topic = autoTask.topic || '';
-    if (topic) {
+    // Build full prompt: topic + file content if provided
+    const topicPart = autoTask.topic || '';
+    const fullPrompt = autoTask.fileContent
+      ? `${topicPart || 'Создай презентацию на основе содержимого файла'}\n\n--- СОДЕРЖИМОЕ ФАЙЛОВ ---\n${autoTask.fileContent}`
+      : topicPart;
+    const displayTopic = topicPart || 'Создание из файла';
+
+    if (fullPrompt) {
       setChatMessages(prev => [...prev, {
         id: `auto-user-${Date.now()}`,
         role: 'user',
-        content: topic,
+        content: autoTask.fileContent ? `${displayTopic}\n📎 Файл прикреплён` : displayTopic,
         timestamp: new Date(),
       }, {
         id: `auto-ai-${Date.now()}`,
         role: 'assistant',
-        content: `🚀 **Автоматическое создание презентации**\n\n📌 Тема: «${topic}»${autoTask.slideCount ? `\n📊 Слайдов: ${autoTask.slideCount}` : ''}\n\n⏳ Генерация начнётся автоматически...`,
+        content: `🚀 **Автоматическое создание презентации**\n\n📌 Тема: «${displayTopic}»${autoTask.slideCount ? `\n📊 Слайдов: ${autoTask.slideCount}` : ''}${autoTask.fileContent ? '\n📎 Используется содержимое загруженного файла' : ''}\n\n⏳ Генерация начнётся автоматически...`,
         timestamp: new Date(),
       }]);
 
       // Set chatInput and trigger submit after state settles
       setTimeout(() => {
-        setPendingAutoTask(topic);
+        setPendingAutoTask(fullPrompt);
       }, 1500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
