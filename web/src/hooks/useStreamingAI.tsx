@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 
 interface StreamingOptions {
   systemPrompt: string;
@@ -64,9 +64,8 @@ export function useStreamingAI() {
     });
 
     try {
-      const response = await fetch(`${API_URL}/llm/stream`, {
+      const response = await fetchWithAuth(`${API_URL}/llm/stream`, {
         method: 'POST',
-        headers: getAuthorizationHeaders(),
         body: JSON.stringify({
           systemPrompt,
           userPrompt,

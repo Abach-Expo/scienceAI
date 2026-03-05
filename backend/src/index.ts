@@ -87,7 +87,7 @@ app.use(hpp());
 // 🛡️ Rate Limiting - Prevent brute force attacks
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per IP per 15 min
+  max: 500, // 500 requests per IP per 15 min
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -105,7 +105,7 @@ const authLimiter = rateLimit({
 // Limit for AI endpoints (expensive operations)
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 20, // 20 AI requests per minute
+  max: 60, // 60 AI requests per minute
   message: { error: 'AI rate limit exceeded. Please wait a moment.' },
   standardHeaders: true,
   legacyHeaders: false,

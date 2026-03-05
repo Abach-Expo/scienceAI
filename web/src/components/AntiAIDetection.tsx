@@ -59,7 +59,7 @@ export const AntiAIDetection: React.FC<AntiAIDetectionProps> = ({
         originalLength: number;
         humanizedLength: number;
         mode: string;
-      }>('/api/ai/humanize', {
+      }>('/ai/humanize', {
         text,
         mode: humanizationMode,
       });

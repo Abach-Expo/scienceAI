@@ -1279,7 +1279,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         
         syncDebounceTimer = setTimeout(async () => {
           try {
-            await apiClient.post('/api/usage/sync', {
+            await apiClient.post('/usage/sync', {
               presentationsCreated: usage.presentationsCreated,
               academicWorksCreated: usage.academicWorksCreated,
               academicGenerationsToday: usage.academicGenerationsToday,
@@ -1315,7 +1315,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               lastResetDate: string;
               lastMonthlyReset: string;
             };
-          }>('/api/usage/sync');
+          }>('/usage/sync');
           
           if (response.success && response.data) {
             const backendData = response.data;
