@@ -358,7 +358,7 @@ const HomePage = () => {
             </motion.div>
 
             {/* Title */}
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 leading-[1.05] tracking-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black mb-6 md:mb-8 leading-[1.05] tracking-tight">
               <motion.span
                 initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -390,7 +390,7 @@ const HomePage = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-12 leading-relaxed"
+              className="text-base md:text-xl text-text-secondary max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed px-4 md:px-0"
             >
               {t('home.heroSubtitle')}
               <span className="text-purple-400 font-semibold"> {t('home.heroHighlight')}</span>{t('home.heroHighlightSuffix')}
@@ -407,7 +407,7 @@ const HomePage = () => {
                 whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => navigate('/new-project')}
-                className="w-full sm:w-auto px-10 py-4.5 rounded-2xl bg-gradient-to-r from-purple-500 via-purple-600 to-pink-600 text-white font-bold text-lg flex items-center justify-center gap-3 shadow-xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow duration-300 btn-ripple"
+                className="w-full sm:w-auto px-8 md:px-10 py-4 md:py-4.5 rounded-2xl bg-gradient-to-r from-purple-500 via-purple-600 to-pink-600 text-white font-bold text-base md:text-lg flex items-center justify-center gap-3 shadow-xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow duration-300 btn-ripple"
               >
                 <Sparkles size={20} />
                 {t('home.tryNow')}
@@ -416,7 +416,7 @@ const HomePage = () => {
                 whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={scrollToDemo}
-                className="w-full sm:w-auto px-10 py-4.5 rounded-2xl frosted-panel text-text-primary font-bold text-lg flex items-center justify-center gap-3 hover:border-purple-500/30 transition-all duration-300"
+                className="w-full sm:w-auto px-8 md:px-10 py-4 md:py-4.5 rounded-2xl frosted-panel text-text-primary font-bold text-base md:text-lg flex items-center justify-center gap-3 hover:border-purple-500/30 transition-all duration-300"
               >
                 <Play size={20} />
                 {t('home.watchDemo')}
@@ -428,7 +428,7 @@ const HomePage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.0 }}
-              className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x divide-border-primary/50"
+              className="mt-12 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-0 md:divide-x divide-border-primary/50"
             >
               {stats.map((stat, index) => (
                 <AnimatedStat key={index} value={stat.value} label={stat.label} delay={index * 150} />
@@ -907,12 +907,13 @@ const HomePage = () => {
             <p className="text-sm text-text-muted">
               {t('home.footerCopyright')}
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap justify-center">
               <span className="text-xs text-text-muted">{t('home.footerSecurePayments')}</span>
               <div className="flex items-center gap-1.5">
-                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] text-xs text-text-secondary font-medium">Visa</div>
-                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] text-xs text-text-secondary font-medium">Mastercard</div>
-                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] text-xs text-text-secondary font-medium">Apple Pay</div>
+                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] border border-white/[0.08] text-xs text-text-secondary font-medium">Visa</div>
+                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] border border-white/[0.08] text-xs text-text-secondary font-medium">Mastercard</div>
+                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] border border-white/[0.08] text-xs text-text-secondary font-medium">Apple Pay</div>
+                <div className="px-2.5 py-1 rounded-md bg-white/[0.06] border border-white/[0.08] text-xs text-text-secondary font-medium">Google Pay</div>
               </div>
             </div>
           </div>

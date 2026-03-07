@@ -434,6 +434,38 @@ const ChatPage = () => {
       return;
     }
 
+    // ── Smart intent detection: redirect to workspace for presentations/dissertations ──
+    const trimmed = input.trim();
+    const lower = trimmed.toLowerCase();
+    const slideMatch = lower.match(/(\d+)\s*(?:слайд|slide)/);
+    const slideCount = slideMatch ? parseInt(slideMatch[1], 10) : undefined;
+    const pageMatch = lower.match(/(\d+)\s*(?:страниц|стр|листов|лист|pages?|pg)/);
+    const pageCount = pageMatch ? parseInt(pageMatch[1], 10) : undefined;
+
+    // Presentation intent (including common misspellings)
+    if (/(през[еиэ]нтаци|пр[еи]з[еи]нтаци|презу|през[еи]нт|слайд|presentation|slides?\b)/i.test(lower)) {
+      const topic = trimmed
+        .replace(/^(напиши|создай|сгенерируй|сделай|подготовь|написать|make|create|write|generate)\s*/i, '')
+        .replace(/(през[еиэ]нтаци\S*|пр[еи]з[еи]нтаци\S*|презу|слайды|presentation|slides?)/gi, '')
+        .replace(/на\s*тему\s*/gi, '').replace(/по\s*теме\s*/gi, '').replace(/про\s*/gi, '')
+        .replace(/на\s*\d+\s*(слайд|slide)\w*/gi, '')
+        .replace(/\s{2,}/g, ' ').trim();
+      navigate('/presentations', { state: { autoTask: { topic, slideCount: slideCount || pageCount } } });
+      return;
+    }
+    // Dissertation intent
+    if (/(диссертаци|диссер\b|дисер\b|dissert)/i.test(lower)) {
+      const topic = trimmed
+        .replace(/^(напиши|создай|сгенерируй|сделай|подготовь|написать|make|create|write|generate)\s*/i, '')
+        .replace(/(диссертацию|диссертация|диссер|дисер|dissert\w*)/gi, '')
+        .replace(/на\s*тему\s*/gi, '').replace(/по\s*теме\s*/gi, '').replace(/про\s*/gi, '')
+        .replace(/на\s*\d+\s*(страниц|стр|листов|pages?)\w*/gi, '')
+        .replace(/\s{2,}/g, ' ').trim();
+      const newId = `diss-${Date.now()}`;
+      navigate(`/dissertation/${newId}`, { state: { autoTask: { topic, pageCount } } });
+      return;
+    }
+
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
       role: 'user',
@@ -1312,7 +1344,7 @@ const ChatPage = () => {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: 'spring', damping: 15 }}
-                  className="relative w-28 h-28 mx-auto rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center mb-8 shadow-xl shadow-purple-500/25"
+                  className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center mb-8 shadow-xl shadow-purple-500/25"
                 >
                   <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 animate-pulse-slow opacity-50 blur-xl" />
                   <Sparkles size={52} className="text-white relative z-10 drop-shadow-lg" />
@@ -1321,7 +1353,7 @@ const ChatPage = () => {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.1, type: 'spring', damping: 20 }}
-                  className="text-3xl md:text-4xl font-bold text-text-primary mb-3 relative"
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary mb-3 relative"
                 >
                   {t('chat.greeting')}
               </motion.h2>
@@ -1338,7 +1370,7 @@ const ChatPage = () => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3, type: 'spring', damping: 20 }}
-                className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-3xl mx-auto relative"
+                className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 md:gap-4 max-w-3xl mx-auto relative"
               >
                 {quickPrompts.map((prompt, index) => (
                   <motion.button
@@ -1349,14 +1381,14 @@ const ChatPage = () => {
                     whileHover={{ scale: 1.03, y: -4 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => handleQuickPrompt(prompt.text)}
-                    className="p-4 md:p-5 rounded-2xl bg-bg-secondary/80 backdrop-blur-sm border border-border-primary hover:border-purple-500/40 transition-all text-left group relative overflow-hidden"
+                    className="p-3 md:p-5 rounded-2xl bg-bg-secondary/80 backdrop-blur-sm border border-border-primary hover:border-purple-500/40 transition-all text-left group relative overflow-hidden"
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${prompt.color} opacity-0 group-hover:opacity-[0.08] transition-opacity duration-300`} />
-                    <div className={`w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${prompt.color} flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
-                      <prompt.icon size={22} className="text-white" />
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${prompt.color} flex items-center justify-center mb-2 md:mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
+                      <prompt.icon size={20} className="text-white" />
                     </div>
-                    <p className="text-sm font-medium text-text-primary mb-1 line-clamp-2">{prompt.text}</p>
-                    <p className="text-xs text-text-muted">{prompt.category}</p>
+                    <p className="text-xs sm:text-sm font-medium text-text-primary mb-1 line-clamp-2">{prompt.text}</p>
+                    <p className="text-[10px] sm:text-xs text-text-muted">{prompt.category}</p>
                   </motion.button>
                 ))}
               </motion.div>
@@ -1396,12 +1428,12 @@ const ChatPage = () => {
                   className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
                 >
                   {message.role === 'assistant' && (
-                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-purple-500/20 mt-1 ${message.content.includes('▍') ? 'animate-pulse-slow' : ''}`}>
-                      <Bot size={18} className="text-white" />
+                    <div className={`w-8 h-8 md:w-9 md:h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-purple-500/20 mt-1 ${message.content.includes('▍') ? 'animate-pulse' : ''}`} aria-hidden="true">
+                      <Bot size={16} className="text-white" />
                     </div>
                   )}
                   
-                  <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
+                  <div className={`max-w-[85%] md:max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
                     <div className={`rounded-2xl px-5 py-3.5 ${
                       message.role === 'user' 
                         ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/20 rounded-br-md' 
@@ -1529,8 +1561,8 @@ const ChatPage = () => {
                   </div>
                   
                   {message.role === 'user' && (
-                    <div className="w-9 h-9 rounded-xl bg-bg-secondary border border-border-primary flex items-center justify-center flex-shrink-0 mt-1">
-                      <User size={18} className="text-text-muted" />
+                    <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-bg-secondary border border-border-primary flex items-center justify-center flex-shrink-0 mt-1" aria-hidden="true">
+                      <User size={16} className="text-text-muted" />
                     </div>
                   )}
                 </motion.div>
@@ -1595,7 +1627,7 @@ const ChatPage = () => {
         </AnimatePresence>
 
         {/* Input */}
-        <div className="flex-shrink-0 px-4 py-3 md:py-4 border-t border-border-primary bg-bg-primary/95 backdrop-blur-xl">
+        <div className="flex-shrink-0 px-3 md:px-4 py-2.5 md:py-4 border-t border-border-primary bg-bg-primary/95 backdrop-blur-xl safe-area-bottom">
           <div className="max-w-4xl mx-auto">
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
@@ -1662,22 +1694,22 @@ const ChatPage = () => {
               </div>
             </motion.div>
             
-            <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-              <p className="text-[11px] text-text-muted/40">
+            <div className="flex items-center justify-center gap-1.5 md:gap-2 mt-2 flex-wrap px-2">
+              <p className="text-[10px] md:text-[11px] text-text-muted/40">
                 {t('chat.aiDisclaimer')}
               </p>
-              <span className="text-text-muted/20">•</span>
-              <p className="text-[11px] text-text-muted/40">
+              <span className="text-text-muted/20 hidden sm:inline">•</span>
+              <p className="text-[10px] md:text-[11px] text-text-muted/40 hidden sm:block">
                 {t('chat.newLineHint')}
               </p>
               <span className="text-text-muted/20">•</span>
-              <p className="text-[11px] text-text-muted/40">
+              <p className="text-[10px] md:text-[11px] text-text-muted/40 tabular-nums">
                 {subscription.getRemainingLimits().chatMessages}/{subscription.getLimits().chatMessagesPerDay} {t('chat.messagesToday')}
               </p>
-              <span className="text-text-muted/20">•</span>
+              <span className="text-text-muted/20 hidden md:inline">•</span>
               <button
                 onClick={() => setShowShortcutsPanel(prev => !prev)}
-                className="text-[11px] text-text-muted/40 hover:text-purple-400 transition-colors flex items-center gap-1"
+                className="text-[10px] md:text-[11px] text-text-muted/40 hover:text-purple-400 transition-colors items-center gap-1 hidden md:flex"
               >
                 <Keyboard size={10} />
                 <span>Ctrl + /</span>

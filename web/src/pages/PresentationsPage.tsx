@@ -3518,36 +3518,36 @@ Layout: ${slide.layout}`
           if (variant === 3) return 'flex flex-col items-end justify-end text-right px-20 py-16';
           return 'flex flex-col items-center justify-center text-center relative overflow-hidden';
         case 'content':
-          if (variant === 2) return 'flex flex-col p-16 items-center';
-          if (variant === 3) return 'grid grid-cols-3 gap-8 p-16';
-          return 'flex flex-col p-16';
+          if (variant === 2) return 'flex flex-col p-6 sm:p-10 md:p-16 items-center';
+          if (variant === 3) return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 p-6 sm:p-10 md:p-16';
+          return 'flex flex-col p-6 sm:p-10 md:p-16';
         case 'content-image':
-          if (variant === 2) return 'grid grid-cols-5 gap-10 p-14';
-          if (variant === 3) return 'flex flex-col p-14';
-          return 'grid grid-cols-2 gap-10 p-14 items-center';
+          if (variant === 2) return 'grid grid-cols-1 sm:grid-cols-5 gap-4 sm:gap-10 p-6 sm:p-10 md:p-14';
+          if (variant === 3) return 'flex flex-col p-6 sm:p-10 md:p-14';
+          return 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 p-6 sm:p-10 md:p-14 items-center';
         case 'image-content':
-          if (variant === 2) return 'grid grid-cols-5 gap-10 p-14';
-          if (variant === 3) return 'flex flex-col-reverse p-14';
-          return 'grid grid-cols-2 gap-10 p-14 items-center';
+          if (variant === 2) return 'grid grid-cols-1 sm:grid-cols-5 gap-4 sm:gap-10 p-6 sm:p-10 md:p-14';
+          if (variant === 3) return 'flex flex-col-reverse p-6 sm:p-10 md:p-14';
+          return 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 p-6 sm:p-10 md:p-14 items-center';
         case 'two-column':
-          return 'grid grid-cols-2 gap-10 p-14';
+          return 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 p-6 sm:p-10 md:p-14';
         case 'three-column':
-          return 'grid grid-cols-3 gap-8 p-14';
+          return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 p-6 sm:p-10 md:p-14';
         case 'full-image':
           return 'relative';
         case 'quote':
-          if (variant === 2) return 'flex items-start justify-start p-20';
-          if (variant === 3) return 'flex items-end justify-end p-20';
-          return 'flex items-center justify-center p-20 relative overflow-hidden';
+          if (variant === 2) return 'flex items-start justify-start p-8 sm:p-14 md:p-20';
+          if (variant === 3) return 'flex items-end justify-end p-8 sm:p-14 md:p-20';
+          return 'flex items-center justify-center p-8 sm:p-14 md:p-20 relative overflow-hidden';
         case 'stats':
-          if (variant === 2) return 'grid grid-cols-2 gap-10 p-14 items-center';
-          if (variant === 3) return 'grid grid-cols-4 gap-8 p-14 items-center';
-          return 'grid grid-cols-3 gap-10 p-14 items-center';
+          if (variant === 2) return 'grid grid-cols-2 gap-4 sm:gap-10 p-6 sm:p-10 md:p-14 items-center';
+          if (variant === 3) return 'grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 p-6 sm:p-10 md:p-14 items-center';
+          return 'grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-10 p-6 sm:p-10 md:p-14 items-center';
         case 'thank-you':
-          if (variant === 2) return 'flex flex-col items-start justify-center text-left p-20';
+          if (variant === 2) return 'flex flex-col items-start justify-center text-left p-8 sm:p-14 md:p-20';
           return 'flex flex-col items-center justify-center text-center relative overflow-hidden';
         default:
-          return 'flex flex-col p-14';
+          return 'flex flex-col p-6 sm:p-10 md:p-14';
       }
     };
     
@@ -3586,7 +3586,7 @@ Layout: ${slide.layout}`
                 initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className={`text-5xl md:text-7xl font-bold mb-8 relative leading-tight ${variant !== 1 ? titleAlignClass : ''}`}
+                className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-8 relative leading-tight ${variant !== 1 ? titleAlignClass : ''}`}
                 style={{ 
                   color: theme.primaryColor,
                   textShadow: `0 4px 30px ${theme.primaryColor}30`,
@@ -4087,7 +4087,7 @@ Layout: ${slide.layout}`
                 initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 transition={{ delay: 0.2, duration: 0.8 }}
-                className="text-3xl md:text-4xl font-light relative z-10 leading-relaxed"
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light relative z-10 leading-relaxed"
                 style={{ color: theme.textColor }}
               >
                 <span className="italic">{slide.quote || slide.content || slide.title}</span>
@@ -4146,7 +4146,7 @@ Layout: ${slide.layout}`
                 initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 transition={{ delay: 0.2, duration: 0.8 }}
-                className={`text-5xl md:text-7xl font-bold mb-8 relative ${titleAlignClass}`}
+                className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-8 relative ${titleAlignClass}`}
                 style={{ 
                   color: theme.primaryColor,
                   textShadow: `0 4px 30px ${theme.primaryColor}30`,
@@ -4446,9 +4446,9 @@ Layout: ${slide.layout}`
           </div>
           
           {/* Правая панель - информация */}
-          <div className="w-full md:w-[420px] bg-bg-tertiary p-4 md:p-6 flex flex-col overflow-y-auto">
+          <div className="w-full md:w-[380px] lg:w-[420px] bg-bg-tertiary p-3 sm:p-4 md:p-6 flex flex-col overflow-y-auto">
             {/* Таймеры */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4 md:mb-6">
               <div className="text-center p-3 bg-bg-tertiary/50 rounded-xl">
                 <div className="text-3xl font-mono font-bold text-text-primary">
                   {formatTime(presentationTimer)}
@@ -4689,7 +4689,7 @@ Layout: ${slide.layout}`
       )}
 
       {/* Sidebar с историей презентаций */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform transition-transform duration-300 md:static md:translate-x-0 md:z-auto ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-72 max-w-[85vw] transform transition-transform duration-300 md:static md:translate-x-0 md:z-auto ${
         showMobileSidebar ? 'translate-x-0' : '-translate-x-full'
       } border-r flex flex-col`}
         style={{ background: 'rgba(10,10,16,0.95)', backdropFilter: 'blur(24px)', borderColor: 'rgba(255,255,255,0.04)' }}>
@@ -4886,7 +4886,7 @@ Layout: ${slide.layout}`
       )}
       
       {/* Поле ввода */}
-      <div className="p-6 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10,10,16,0.92)', backdropFilter: 'blur(24px)' }}>
+      <div className="p-3 sm:p-4 md:p-6 flex-shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))] md:pb-[calc(1.5rem+env(safe-area-inset-bottom))]" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10,10,16,0.92)', backdropFilter: 'blur(24px)' }}>
         <div className="max-w-3xl mx-auto">
           {/* Attached files preview */}
           {attachedFiles.length > 0 && (
@@ -4936,7 +4936,7 @@ Layout: ${slide.layout}`
                   }
                 }}
                 placeholder={attachedFiles.length > 0 ? "Комментарий к файлам (или Enter для генерации)..." : "Опишите тему презентации... (Enter для отправки)"}
-                className="w-full px-5 py-4 pl-12 pr-14 rounded-2xl text-white/90 placeholder-white/25 resize-none transition-all"
+                className="w-full px-3 sm:px-5 py-3 sm:py-4 pl-10 sm:pl-12 pr-12 sm:pr-14 rounded-2xl text-sm sm:text-base text-white/90 placeholder-white/25 resize-none transition-all"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', outline: 'none', height: chatTextareaHeight, maxHeight: 200, lineHeight: '1.6' }}
                 onFocus={(e) => { e.currentTarget.style.border = '1px solid rgba(139,92,246,0.3)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(139,92,246,0.08)'; }}
                 onBlur={(e) => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = 'none'; }}

@@ -288,7 +288,7 @@ const PricingPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="flex justify-center gap-12 md:gap-24 mb-16"
+          className="flex justify-center gap-6 sm:gap-12 md:gap-24 mb-16 flex-wrap"
         >
           {stats.map((stat, index) => (
             <motion.div
@@ -590,7 +590,7 @@ const PricingPage = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="frosted-panel inline-flex items-center justify-center gap-8 flex-wrap px-8 py-5"
+            className="frosted-panel inline-flex items-center justify-center gap-4 sm:gap-8 flex-wrap px-4 sm:px-8 py-5"
           >
             {[
               { icon: <Shield size={20} />, text: t('pricing.trustSSL') },

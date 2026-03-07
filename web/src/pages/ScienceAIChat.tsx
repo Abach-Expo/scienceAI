@@ -124,7 +124,7 @@ const detectWorkspaceIntent = (text: string): DetectedIntent | null => {
     return input
       .replace(/^(напиши|создай|сгенерируй|сделай|подготовь|написать|генерация|генерировать|make|create|write|generate)\s*/i, '')
       .replace(/(диссертацию|диссертация|диссер|дисер|dissert\w*)/gi, '')
-      .replace(/(презентацию|презентация|презу|слайды|presentation|slides?)/gi, '')
+      .replace(/(през[еиэ]нтаци\S*|пр[еи]з[еи]нтаци\S*|презу|слайды|presentation|slides?)/gi, '')
       .replace(/(курсовую|курсовая|курсов\w*|coursework)/gi, '')
       .replace(/(дипломную|дипломная|диплом\w*|diploma)/gi, '')
       .replace(/(реферат\w*|доклад\w*|статью|статья|эссе|essay|article|report)/gi, '')
@@ -138,8 +138,8 @@ const detectWorkspaceIntent = (text: string): DetectedIntent | null => {
       .trim();
   };
 
-  // ── Presentation detection ──
-  if (/(презентаци|презу|слайд|presentation|slides?\b)/i.test(lower)) {
+  // ── Presentation detection (includes common misspellings: презинтация, призентация, презнитация) ──
+  if (/(през[еиэ]нтаци|пр[еи]з[еи]нтаци|презу|през[еи]нт|слайд|presentation|slides?\b)/i.test(lower)) {
     return {
       type: 'presentation',
       topic: extractTopic(text),
@@ -813,7 +813,7 @@ const ScienceAIChat = () => {
   // SHARED INPUT AREA (render function — avoids remount)
   // ═══════════════════════════════════════════
   const renderInputArea = (isWelcome = false) => (
-    <div className={isWelcome ? 'relative' : 'relative z-20 border-t border-white/[0.03] p-4'}
+    <div className={isWelcome ? 'relative' : 'relative z-20 border-t border-white/[0.03] p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))]'}
       style={isWelcome ? undefined : { background: 'rgba(5,5,8,0.92)', backdropFilter: 'blur(32px)' }}>
       <div className={isWelcome ? '' : 'max-w-3xl mx-auto'}>
 
@@ -965,7 +965,7 @@ const ScienceAIChat = () => {
         </motion.div>
 
         {isWelcome && (
-          <div className="flex items-center justify-center gap-5 mt-3 text-white/30 text-xs">
+          <div className="hidden sm:flex items-center justify-center gap-5 mt-3 text-white/30 text-xs">
             <span className="flex items-center gap-1"><Command size={10} />Enter — отправить</span>
             <span className="flex items-center gap-1"><Paperclip size={10} />Файлы</span>
             <span className="flex items-center gap-1"><Hash size={10} />/ — команды</span>
@@ -1117,7 +1117,7 @@ const ScienceAIChat = () => {
             transition: 'opacity 0.5s ease' }} />
 
         {/* Top bar — premium glassmorphism */}
-        <div className="relative z-10 flex items-center justify-between px-5 py-3"
+        <div className="relative z-10 flex items-center justify-between px-3 sm:px-5 py-3"
           style={{ background: 'rgba(8,8,14,0.6)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
           <div className="flex items-center gap-1.5">
             <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => setShowSidebar(true)} aria-label="Открыть меню"
@@ -1154,7 +1154,7 @@ const ScienceAIChat = () => {
                 {/* Animated logo with glow */}
                 <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.1, type: 'spring', damping: 12, stiffness: 200 }}
-                  className="relative w-20 h-20 mx-auto mb-8">
+                  className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-6 sm:mb-8">
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 opacity-20 blur-xl animate-pulse" />
                   <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.08] flex items-center justify-center"
                     style={{ boxShadow: '0 0 40px rgba(139,92,246,0.15), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
@@ -1165,12 +1165,12 @@ const ScienceAIChat = () => {
                 </motion.div>
 
                 <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }}
-                  className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
                   Чем помочь сегодня?
                 </motion.h1>
 
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-                  className="text-white/35 text-base mb-10 font-light">
+                  className="text-white/35 text-sm sm:text-base mb-8 sm:mb-10 font-light px-2 sm:px-0">
                   Напишите запрос или используйте <span className="font-mono text-violet-400/70 px-1.5 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.05]">/команду</span>
                 </motion.p>
 
@@ -1181,7 +1181,7 @@ const ScienceAIChat = () => {
 
                 {/* Quick actions — glassmorphism pills */}
                 <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-                  className="flex flex-wrap justify-center gap-2.5 mb-12">
+                  className="flex flex-wrap justify-center gap-2 sm:gap-2.5 mb-8 sm:mb-12 px-2 sm:px-0">
                   {QUICK_ACTIONS.map((action, i) => (
                     <motion.button key={i}
                       whileHover={{ scale: 1.06, y: -3, boxShadow: '0 8px 30px rgba(139,92,246,0.12)' }}
@@ -1189,7 +1189,7 @@ const ScienceAIChat = () => {
                       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.55 + i * 0.05, type: 'spring', damping: 20 }}
                       onClick={() => handleQuickAction(action.prompt)}
-                      className="group flex items-center gap-2.5 px-5 py-2.5 rounded-full text-sm text-white/50 hover:text-white/90 transition-all duration-300"
+                      className="group flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm text-white/50 hover:text-white/90 transition-all duration-300"
                       style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}>
                       <action.icon size={14} className="text-violet-400/60 group-hover:text-violet-400 transition-colors" />
                       {action.label}
@@ -1256,7 +1256,7 @@ const ScienceAIChat = () => {
                           </div>
                         )}
 
-                        <div className={`max-w-[80%] ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}>
+                        <div className={`max-w-[85%] sm:max-w-[80%] ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}>
                           {/* Image attachments */}
                           {msg.attachments && msg.attachments.some(a => a.preview) && (
                             <div className="flex flex-wrap gap-2 mb-2 justify-end">

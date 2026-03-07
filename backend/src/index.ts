@@ -56,8 +56,30 @@ if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
   logger.warn('JWT_SECRET is too short. Use at least 32 characters!');
 }
 
-// Initialize Prisma Client
-export const prisma = new PrismaClient();
+// Initialize Prisma Client with connection pooling for high concurrency
+export const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === 'development' 
+    ? ['query', 'warn', 'error'] 
+    : ['warn', 'error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_POOL_URL || process.env.DATABASE_URL,
+    },
+  },
+});
+
+// Enable query metrics in production
+if (process.env.NODE_ENV === 'production') {
+  prisma.$use(async (params, next) => {
+    const before = Date.now();
+    const result = await next(params);
+    const after = Date.now();
+    if (after - before > 1000) {
+      logger.warn(`Slow query: ${params.model}.${params.action} took ${after - before}ms`);
+    }
+    return result;
+  });
+}
 
 // Create Express app
 const app: Application = express();
@@ -84,31 +106,37 @@ app.use(helmet({
 // 🛡️ HPP - Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// 🛡️ Rate Limiting - Prevent brute force attacks
+// 🛡️ Rate Limiting - Scaled for 30K+ concurrent users
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // 500 requests per IP per 15 min
+  max: 1500, // 1500 requests per IP per 15 min (scaled for real usage)
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/health' || req.path === '/api/health', // Don't count health checks
 });
 
 // Stricter limit for auth endpoints (prevent brute force)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Only 10 login attempts per 15 min
+  max: 15, // 15 login attempts per 15 min (slightly more forgiving)
   message: { error: 'Too many login attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Limit for AI endpoints (expensive operations)
+// Limit for AI endpoints (expensive operations) — scaled for production
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 60, // 60 AI requests per minute
+  max: 120, // 120 AI requests per minute per IP (multiple users behind NAT)
   message: { error: 'AI rate limit exceeded. Please wait a moment.' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use user ID for authenticated requests (more accurate than IP)
+    return (req as any).userId || req.ip?.replace(/^::ffff:/, '') || 'anonymous';
+  },
+  validate: false,
 });
 
 // Apply general rate limit to all routes
@@ -165,7 +193,19 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Health check endpoint
+// Response compression for large AI-generated content
+import compression from 'compression';
+app.use(compression({
+  level: 6,
+  threshold: 1024, // Only compress responses > 1KB
+  filter: (req, res) => {
+    // Don't compress SSE streams
+    if (req.headers.accept === 'text/event-stream') return false;
+    return compression.filter(req, res);
+  },
+}));
+
+// Health check endpoint (fast, no DB query)
 app.get('/health', async (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -266,7 +306,7 @@ const startServer = async () => {
       logger.info(`📚 Scientific AI Assistant API ready`);
     });
 
-    // Clean up expired refresh tokens every 6 hours
+    // Clean up expired refresh tokens every 2 hours (more frequent for 30K+ users)
     setInterval(async () => {
       try {
         const count = await cleanupExpiredTokens();
@@ -274,7 +314,17 @@ const startServer = async () => {
       } catch (e) {
         logger.error('Token cleanup error:', e);
       }
-    }, 6 * 60 * 60 * 1000);
+    }, 2 * 60 * 60 * 1000);
+
+    // Log memory usage every 5 minutes for monitoring
+    setInterval(() => {
+      const { heapUsed, heapTotal, rss } = process.memoryUsage();
+      logger.info('Memory usage:', {
+        heapUsed: `${Math.round(heapUsed / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(heapTotal / 1024 / 1024)}MB`,
+        rss: `${Math.round(rss / 1024 / 1024)}MB`,
+      });
+    }, 5 * 60 * 1000);
   } catch (error) {
     logger.error('Failed to start server:', error);
     if (!process.env.VERCEL) {

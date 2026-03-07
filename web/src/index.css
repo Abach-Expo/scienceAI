@@ -831,3 +831,192 @@ body {
   transition: opacity 0s;
 }
 
+/* ==================== PRODUCTION QUALITY ENHANCEMENTS ==================== */
+
+/* Smooth page loading skeleton */
+.skeleton-text {
+  background: linear-gradient(90deg, 
+    rgb(var(--bg-tertiary)) 25%, 
+    color-mix(in srgb, rgb(var(--bg-tertiary)) 80%, rgb(var(--accent-primary))) 50%, 
+    rgb(var(--bg-tertiary)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* Better empty state styling */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: rgb(var(--text-muted));
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+  color: rgb(var(--accent-primary));
+}
+
+/* Notification badge pulse */
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(var(--accent-secondary));
+  box-shadow: 0 0 0 2px rgb(var(--bg-primary));
+}
+
+.notification-badge.active {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgb(var(--bg-primary)), 0 0 0 4px transparent; }
+  50% { box-shadow: 0 0 0 2px rgb(var(--bg-primary)), 0 0 0 6px color-mix(in srgb, rgb(var(--accent-secondary)) 30%, transparent); }
+}
+
+/* Better tooltips for production */
+.tooltip-modern {
+  position: absolute;
+  z-index: 9999;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: rgb(var(--text-primary));
+  background: rgb(var(--bg-tertiary));
+  border: 1px solid rgb(var(--border-secondary));
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Smooth content transitions */
+.content-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Better scrollbar for light theme */
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)));
+  opacity: 0.7;
+}
+
+/* Loading bar at top */
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)));
+  z-index: 99999;
+  transition: width 0.3s ease;
+}
+
+/* Status indicator (online/offline) */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.status-dot.offline {
+  background: #ef4444;
+}
+
+.status-dot.busy {
+  background: #f59e0b;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Improved text selection */
+[data-theme='light'] ::selection {
+  background: color-mix(in srgb, rgb(var(--accent-primary)) 20%, transparent);
+}
+
+/* Better focus ring for all themes */  
+*:focus-visible {
+  outline: 2px solid rgb(var(--accent-primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Keyboard navigation indicator */
+.keyboard-focused {
+  box-shadow: 0 0 0 2px rgb(var(--bg-primary)), 0 0 0 4px rgb(var(--accent-primary)) !important;
+}
+
+/* Animate accordion content */
+.transition-grid-rows {
+  display: grid;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Progressive image loading */
+.img-loading {
+  background: rgb(var(--bg-tertiary));
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Container query support for responsive components */
+.container-responsive {
+  container-type: inline-size;
+}
+
+/* Better disabled state */
+button:disabled,
+input:disabled,
+textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+}
+
+/* Smooth entrance animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Premium gradient for pricing/CTA */
+.gradient-premium {
+  background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 40%, #F59E0B 100%);
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .gradient-text {
+    -webkit-text-fill-color: currentColor;
+  }
+  .card-premium, .frosted-panel {
+    border: 2px solid currentColor;
+  }
+}
+

@@ -3640,7 +3640,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-border-primary bg-bg-secondary/50 flex items-center gap-2 md:gap-4 pl-14 md:pl-4">
+        <div className="px-2 sm:px-4 py-2 sm:py-3 border-b border-border-primary bg-bg-secondary/50 flex items-center gap-1 sm:gap-2 md:gap-4 pl-12 sm:pl-14 md:pl-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center hidden md:flex">
               <GraduationCap className="text-white" size={22} />
@@ -3741,7 +3741,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
 • Основные методы
 • Ключевые результаты
 • Практическая значимость"
-                  className="w-full min-h-[400px] bg-bg-tertiary border border-border-primary rounded-xl p-4 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed"
+                  className="w-full min-h-[250px] sm:min-h-[350px] md:min-h-[400px] bg-bg-tertiary border border-border-primary rounded-xl p-3 sm:p-4 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed"
                 />
               </div>
             ) : selectedChapter ? (
@@ -3770,7 +3770,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                       updatedAt: new Date()
                     }));
                   }}
-                  className="w-full text-2xl font-bold bg-transparent border-none focus:outline-none text-text-primary mb-6"
+                  className="w-full text-xl sm:text-2xl font-bold bg-transparent border-none focus:outline-none text-text-primary mb-4 sm:mb-6"
                 />
                 <textarea
                   ref={textareaRef}
@@ -3789,7 +3789,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
 • *курсив* — выделите текст и нажмите I в toolbar  
 • # Заголовок — для заголовков разных уровней
 • > Цитата — для блочных цитат"
-                  className="w-full min-h-[600px] bg-bg-tertiary border border-border-primary rounded-xl p-6 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed text-base font-mono"
+                  className="w-full min-h-[350px] sm:min-h-[450px] md:min-h-[600px] bg-bg-tertiary border border-border-primary rounded-xl p-3 sm:p-4 md:p-6 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed text-sm sm:text-base font-mono"
                 />
                 <div className="mt-2 text-xs text-text-muted text-right">
                   {getSelectedContent().content.split(/\s+/).filter(w => w).length} слов в этом разделе
@@ -3798,8 +3798,8 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             ) : (
               <div className="flex items-center justify-center h-full text-center">
                 <div>
-                  <GraduationCap size={64} className="mx-auto mb-4 text-purple-400/50" />
-                  <h2 className="text-xl font-semibold text-text-primary mb-2">Выберите раздел</h2>
+                  <GraduationCap size={48} className="mx-auto mb-4 text-purple-400/50 sm:w-16 sm:h-16" />
+                  <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-2">Выберите раздел</h2>
                   <p className="text-text-muted mb-4">Выберите главу или подраздел в боковой панели для редактирования</p>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -3962,6 +3962,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 className="fixed inset-y-0 right-0 z-50 w-[90vw] max-w-[400px] md:relative md:z-auto md:w-auto md:max-w-none border-l border-border-primary bg-bg-secondary/95 md:bg-bg-secondary/50 overflow-hidden flex flex-col"
               >
                 <div className="w-full md:w-[400px] flex flex-col h-full overflow-hidden">
+
                   {/* Header */}
                   <div className="p-4 border-b border-border-primary flex-shrink-0">
                     <h3 className="font-semibold text-text-primary flex items-center gap-2">

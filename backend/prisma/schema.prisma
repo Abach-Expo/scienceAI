@@ -75,6 +75,12 @@ model User {
   refreshTokens RefreshToken[]
   savedDissertations SavedDissertation[]
   savedPresentations SavedPresentation[]
+
+  @@index([subscriptionPlan, subscriptionStatus])
+  @@index([email])
+  @@index([googleId])
+  @@index([lemonSqueezyCustomerId])
+  @@index([usageLastResetDate])
 }
 
 // Refresh tokens for secure JWT rotation
@@ -131,6 +137,7 @@ model Chat {
   updatedAt     DateTime  @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt])
 }
 model ChatMessage {
   id            String    @id @default(uuid())
@@ -142,9 +149,10 @@ model ChatMessage {
   createdAt     DateTime  @default(now())
 
   @@index([chatId])
+  @@index([chatId, createdAt])
 }
 
-// Project model - represents a dissertation/thesis project
+// represents a dissertation/thesis project
 model Project {
   id            String    @id @default(uuid())
   title         String
@@ -277,6 +285,7 @@ model SavedDissertation {
   updatedAt       DateTime  @updatedAt
   
   @@index([userId])
+  @@index([userId, createdAt])
 }
 
 // Saved presentations
