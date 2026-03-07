@@ -4,7 +4,7 @@
  */
 
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from './apiClient';
+import { fetchWithAuth } from './apiClient';
 
 // ================== ТИПЫ ==================
 
@@ -87,9 +87,8 @@ export async function analyzeImageUrl(
 ): Promise<VisionAnalysisResult> {
   const prompt = VISION_PROMPTS[promptType];
 
-  const response = await fetch(`${API_URL}/ai/analyze-image`, {
+  const response = await fetchWithAuth(`${API_URL}/ai/analyze-image`, {
     method: 'POST',
-    headers: getAuthorizationHeaders(),
     body: JSON.stringify({
       imageUrl,
       prompt,
@@ -136,9 +135,8 @@ export async function analyzeImageBase64(
 ): Promise<VisionAnalysisResult> {
   const prompt = VISION_PROMPTS[promptType];
 
-  const response = await fetch(`${API_URL}/ai/analyze-image`, {
+  const response = await fetchWithAuth(`${API_URL}/ai/analyze-image`, {
     method: 'POST',
-    headers: getAuthorizationHeaders(),
     body: JSON.stringify({
       imageBase64: base64,
       imageUrl: '', // Required field

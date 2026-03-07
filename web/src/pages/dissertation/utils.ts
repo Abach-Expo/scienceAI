@@ -1,6 +1,6 @@
 import { Citation } from './types';
 import { API_URL } from '../../config';
-import { getAuthorizationHeaders } from '../../services/apiClient';
+import { fetchWithAuth } from '../../services/apiClient';
 
 // ================== ФОРМАТИРОВАНИЕ ЦИТАТ ПО ГОСТ ==================
 export const formatCitationGOST = (citation: Citation): string => {
@@ -25,9 +25,8 @@ export const formatCitationGOST = (citation: Citation): string => {
 export const checkUniqueness = async (text: string): Promise<{ uniqueness: number; matches: { text: string; source: string; similarity: number }[] }> => {
   
   try {
-    const response = await fetch(`${API_URL}/ai/check-plagiarism`, {
+    const response = await fetchWithAuth(`${API_URL}/ai/check-plagiarism`, {
       method: 'POST',
-      headers: getAuthorizationHeaders(),
       body: JSON.stringify({
         text: text.slice(0, 10000),
         language: 'ru',

@@ -2,7 +2,7 @@
 
 import { PlanType } from '../store/subscriptionStore';
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from './apiClient';
+import { fetchWithAuth } from './apiClient';
 
 // ================== TYPES ==================
 
@@ -33,8 +33,6 @@ export interface SubscriptionStatus {
 
 // ================== HELPERS ==================
 
-const getAuthHeaders = (): Record<string, string> => getAuthorizationHeaders();
-
 // ================== CREATE CHECKOUT ==================
 
 export const createCheckout = async (
@@ -43,9 +41,8 @@ export const createCheckout = async (
   billingPeriod: BillingPeriod = 'monthly',
 ): Promise<CheckoutResult> => {
   try {
-    const response = await fetch(`${API_URL}/payments/create-checkout`, {
+    const response = await fetchWithAuth(`${API_URL}/payments/create-checkout`, {
       method: 'POST',
-      headers: getAuthHeaders(),
       body: JSON.stringify({ planId, billingPeriod, email }),
     });
 
@@ -87,9 +84,7 @@ export const redirectToCheckout = async (
 
 export const getSubscriptionStatus = async (): Promise<SubscriptionStatus | null> => {
   try {
-    const response = await fetch(`${API_URL}/payments/status`, {
-      headers: getAuthHeaders(),
-    });
+    const response = await fetchWithAuth(`${API_URL}/payments/status`);
 
     if (!response.ok) return null;
 
@@ -106,9 +101,8 @@ export const verifySubscription = async (
   subscriptionId: string,
 ): Promise<{ active: boolean; status?: string; planId?: string }> => {
   try {
-    const response = await fetch(`${API_URL}/payments/verify`, {
+    const response = await fetchWithAuth(`${API_URL}/payments/verify`, {
       method: 'POST',
-      headers: getAuthHeaders(),
       body: JSON.stringify({ subscriptionId }),
     });
 
@@ -125,9 +119,8 @@ export const cancelSubscription = async (
   subscriptionId: string,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const response = await fetch(`${API_URL}/payments/cancel`, {
+    const response = await fetchWithAuth(`${API_URL}/payments/cancel`, {
       method: 'POST',
-      headers: getAuthHeaders(),
       body: JSON.stringify({ subscriptionId }),
     });
 
@@ -144,9 +137,8 @@ export const resumeSubscription = async (
   subscriptionId: string,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const response = await fetch(`${API_URL}/payments/resume`, {
+    const response = await fetchWithAuth(`${API_URL}/payments/resume`, {
       method: 'POST',
-      headers: getAuthHeaders(),
       body: JSON.stringify({ subscriptionId }),
     });
 
@@ -165,9 +157,8 @@ export const changePlan = async (
   newPeriod: BillingPeriod = 'monthly',
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const response = await fetch(`${API_URL}/payments/change-plan`, {
+    const response = await fetchWithAuth(`${API_URL}/payments/change-plan`, {
       method: 'POST',
-      headers: getAuthHeaders(),
       body: JSON.stringify({ subscriptionId, newPlanId, newPeriod }),
     });
 

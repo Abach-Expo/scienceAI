@@ -1,5 +1,5 @@
 import { API_URL } from '../../config';
-import { getAuthorizationHeaders } from '../../services/apiClient';
+import { fetchWithAuth } from '../../services/apiClient';
 
 // Fallback photos when image APIs are unavailable
 export const FALLBACK_PHOTOS: Record<string, string[]> = {
@@ -38,9 +38,8 @@ export const FALLBACK_PHOTOS: Record<string, string[]> = {
 // Search photos via backend proxy (Pexels + Unsplash)
 export const searchImageViaProxy = async (query: string): Promise<string | null> => {
   try {
-    const response = await fetch(
-      `${API_URL}/images/search?q=${encodeURIComponent(query)}`,
-      { headers: getAuthorizationHeaders() }
+    const response = await fetchWithAuth(
+      `${API_URL}/images/search?q=${encodeURIComponent(query)}`
     );
     if (!response.ok) return null;
     const data = await response.json();

@@ -14,7 +14,7 @@
  */
 
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from './apiClient';
+import { fetchWithAuth } from './apiClient';
 
 // ================== ТИПЫ ==================
 
@@ -679,9 +679,8 @@ ${stylePrompt}
       try {
         onProgress?.(20 + attempt * 10, `Генерация (${tryModel}, попытка ${attempt + 1})...`);
         
-        const response = await fetch(`${API_URL}/llm/generate`, {
+        const response = await fetchWithAuth(`${API_URL}/llm/generate`, {
           method: 'POST',
-          headers: getAuthorizationHeaders(),
           body: JSON.stringify({
             taskType: options.taskType || (options.documentType ? DOCUMENT_TASK_MAP[options.documentType] : undefined) || 'text_generation',
             systemPrompt: enhancedSystemPrompt,

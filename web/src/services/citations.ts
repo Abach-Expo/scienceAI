@@ -3,7 +3,7 @@
 // Поддержка: CrossRef, Semantic Scholar, OpenAlex
 
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from './apiClient';
+import { fetchWithAuth } from './apiClient';
 
 export interface Source {
   id: string;
@@ -242,9 +242,8 @@ interface OpenAlexWork {
 // Поиск через CrossRef API (через backend proxy)
 export const searchCrossRef = async (query: string, limit = 10): Promise<Source[]> => {
   try {
-    const response = await fetch(
-      `${API_URL}/citations/crossref?q=${encodeURIComponent(query)}&limit=${limit}`,
-      { headers: getAuthorizationHeaders() }
+    const response = await fetchWithAuth(
+      `${API_URL}/citations/crossref?q=${encodeURIComponent(query)}&limit=${limit}`
     );
     
     if (!response.ok) throw new Error('CrossRef API error');
@@ -287,9 +286,8 @@ const mapCrossRefType = (type: string): Source['type'] => {
 // Поиск через Semantic Scholar API (через backend proxy)
 export const searchSemanticScholar = async (query: string, limit = 10): Promise<Source[]> => {
   try {
-    const response = await fetch(
-      `${API_URL}/citations/semantic-scholar?q=${encodeURIComponent(query)}&limit=${limit}`,
-      { headers: getAuthorizationHeaders() }
+    const response = await fetchWithAuth(
+      `${API_URL}/citations/semantic-scholar?q=${encodeURIComponent(query)}&limit=${limit}`
     );
     
     if (!response.ok) throw new Error('Semantic Scholar API error');
@@ -317,9 +315,8 @@ export const searchSemanticScholar = async (query: string, limit = 10): Promise<
 // Поиск через OpenAlex API (через backend proxy)
 export const searchOpenAlex = async (query: string, limit = 10): Promise<Source[]> => {
   try {
-    const response = await fetch(
-      `${API_URL}/citations/openalex?q=${encodeURIComponent(query)}&limit=${limit}`,
-      { headers: getAuthorizationHeaders() }
+    const response = await fetchWithAuth(
+      `${API_URL}/citations/openalex?q=${encodeURIComponent(query)}&limit=${limit}`
     );
     
     if (!response.ok) throw new Error('OpenAlex API error');

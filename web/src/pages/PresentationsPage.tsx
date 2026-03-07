@@ -7,7 +7,7 @@ import { createServerOpenAI } from '../services/aiServer';
 import { useSubscriptionStore, TOKEN_COSTS, formatTokens, SUBSCRIPTION_PLANS, PLAN_LIMITS } from '../store/subscriptionStore';
 import { LimitWarning } from '../components/SubscriptionModal';
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 import type { 
   Slide, SlideLayout, SlideBackground, 
   SlideTransition, ParsedSlideData, ParsedPresentation, PresentationTheme, 
@@ -6386,9 +6386,8 @@ Layout: ${slide.layout}`
                         setIsGeneratingImages(true);
                         try {
                           // Call image generation API
-                          const response = await fetch('/api/ai/generate-image', {
+                          const response = await fetchWithAuth(`${API_URL}/ai/generate-image`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ prompt, style: 'professional' }),
                           });
                           const data = await response.json();

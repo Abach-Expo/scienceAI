@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 // (moved from inline definition)
 
 // ================== ТИПЫ ==================
@@ -77,9 +77,8 @@ interface PlagiarismResult {
 // ================== API ==================
 
 export async function checkPlagiarism(text: string, language: 'ru' | 'en' = 'ru'): Promise<PlagiarismResult> {
-  const response = await fetch(`${API_URL}/ai/check-plagiarism`, {
+  const response = await fetchWithAuth(`${API_URL}/ai/check-plagiarism`, {
     method: 'POST',
-    headers: getAuthorizationHeaders(),
     body: JSON.stringify({ text, language }),
   });
 

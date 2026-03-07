@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { API_URL } from '../config';
 import { useAuthStore } from '../store/authStore';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 import {
   ArrowLeft,
   Check,
@@ -163,9 +163,8 @@ const PricingPage = () => {
         
         const userEmail = authUser?.email || '';
         
-        const response = await fetch(`${API_URL}/payments/create-checkout`, {
+        const response = await fetchWithAuth(`${API_URL}/payments/create-checkout`, {
           method: 'POST',
-          headers: getAuthorizationHeaders(),
           body: JSON.stringify({
             planId: subscribeModal.planId,
             billingPeriod: billingPeriod === 'yearly' ? 'annual' : 'monthly',

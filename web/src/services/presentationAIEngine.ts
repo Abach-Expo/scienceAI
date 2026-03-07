@@ -5,7 +5,7 @@
 // =================================================================================
 
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from './apiClient';
+import { fetchWithAuth } from './apiClient';
 
 // ==================== ТИПЫ ====================
 
@@ -584,12 +584,8 @@ Return JSON:
   // Приватный метод для вызова AI
   private async callAI(systemPrompt: string, userPrompt: string): Promise<any> {
     try {
-      const response = await fetch(`${this.apiUrl}/ai/chat`, {
+      const response = await fetchWithAuth(`${this.apiUrl}/ai/chat`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthorizationHeaders(),
-        },
         body: JSON.stringify({
           messages: [
             { role: 'system', content: systemPrompt },

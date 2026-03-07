@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 import {
   FileText,
   BookOpen,
@@ -1151,9 +1151,8 @@ AI любит сенсационные эпитеты — настоящий у�
         setGenerationProgress(30);
         setGenerationPhase(t('academicWorks.phaseGenerating'));
         
-        const response = await fetch(`${API_URL}/llm/generate`, {
+        const response = await fetchWithAuth(`${API_URL}/llm/generate`, {
           method: 'POST',
-          headers: getAuthorizationHeaders(),
           body: JSON.stringify({
             taskType: selectedType.id === 'essay' ? 'essay' 
                    : selectedType.id === 'coursework' ? 'coursework' 

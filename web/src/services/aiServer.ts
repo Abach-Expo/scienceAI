@@ -5,7 +5,7 @@
  */
 
 import { API_URL } from '../config';
-import { getAuthorizationHeaders } from './apiClient';
+import { fetchWithAuth } from './apiClient';
 
 interface GenerateResponse {
   success: boolean;
@@ -41,9 +41,8 @@ export async function generateAI(
   }
 ): Promise<{ content: string; error?: string; model?: string; provider?: string }> {
   try {
-    const response = await fetch(`${API_URL}/llm/generate`, {
+    const response = await fetchWithAuth(`${API_URL}/llm/generate`, {
       method: 'POST',
-      headers: getAuthorizationHeaders(),
       body: JSON.stringify({
         systemPrompt,
         userPrompt,
@@ -98,9 +97,8 @@ export async function generateAI(
  */
 export async function checkAIServerStatus(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_URL}/llm/status`, {
+    const response = await fetchWithAuth(`${API_URL}/llm/status`, {
       method: 'GET',
-      headers: getAuthorizationHeaders(),
     });
     return response.ok;
   } catch {
@@ -123,9 +121,8 @@ export async function chatAI(
   }
 ): Promise<{ content: string; error?: string; model?: string }> {
   try {
-    const response = await fetch(`${API_URL}/llm/chat`, {
+    const response = await fetchWithAuth(`${API_URL}/llm/chat`, {
       method: 'POST',
-      headers: getAuthorizationHeaders(),
       body: JSON.stringify({
         message,
         taskType: options?.taskType || 'chat',
@@ -168,9 +165,8 @@ export async function chatAI(
  */
 export async function getAvailableModels(): Promise<Array<{ id: string; name: string; description: string }>> {
   try {
-    const response = await fetch(`${API_URL}/llm/models`, {
+    const response = await fetchWithAuth(`${API_URL}/llm/models`, {
       method: 'GET',
-      headers: getAuthorizationHeaders(),
     });
 
     if (!response.ok) return [];

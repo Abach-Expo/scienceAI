@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { createServerOpenAI } from '../../services/aiServer';
 import { API_URL } from '../../config';
-import { getAuthorizationHeaders } from '../../services/apiClient';
+import { fetchWithAuth } from '../../services/apiClient';
 
 interface ImportContentProps {
   isOpen: boolean;
@@ -130,9 +130,7 @@ export default function ImportContent({
       } else if (activeTab === 'url' && url.trim()) {
         // Fetch URL content
         try {
-          const response = await fetch(`${API_URL}/proxy/fetch-url?url=${encodeURIComponent(url)}`, {
-            headers: getAuthorizationHeaders(),
-          });
+          const response = await fetchWithAuth(`${API_URL}/proxy/fetch-url?url=${encodeURIComponent(url)}`);
           const data = await response.json();
           
           // Extract text from HTML

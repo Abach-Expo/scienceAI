@@ -44,7 +44,7 @@ import ConfirmModal, { AlertModal } from '../components/ConfirmModal';
 import PaymentModal from '../components/PaymentModal';
 import { API_URL } from '../config';
 import { useAuthStore } from '../store/authStore';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 import ReferralProgram from '../components/ReferralProgram';
 
 const SettingsPage = () => {
@@ -105,9 +105,8 @@ const SettingsPage = () => {
     try {
       const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
       
-      await fetch(`${API_URL}/auth/profile`, {
+      await fetchWithAuth(`${API_URL}/auth/profile`, {
         method: 'PUT',
-        headers: getAuthorizationHeaders(),
         body: JSON.stringify({
           name: fullName,
           organization: profileForm.organization,
@@ -458,9 +457,8 @@ const SettingsPage = () => {
                 }
                 setPasswordSaving(true);
                 try {
-                  const res = await fetch(`${API_URL}/auth/change-password`, {
+                  const res = await fetchWithAuth(`${API_URL}/auth/change-password`, {
                     method: 'POST',
-                    headers: getAuthorizationHeaders(),
                     body: JSON.stringify({
                       currentPassword: passwordForm.current,
                       newPassword: passwordForm.newPass,

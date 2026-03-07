@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { API_URL } from '../config';
 import { useAuthStore } from '../store/authStore';
-import { getAuthorizationHeaders } from '../services/apiClient';
+import { fetchWithAuth } from '../services/apiClient';
 
 const ProfileSetupPage = () => {
   useDocumentTitle('Профиль');
@@ -57,9 +57,8 @@ const ProfileSetupPage = () => {
     
     try {
       // Обновляем профиль на сервере
-      const response = await fetch(`${API_URL}/auth/profile`, {
+      const response = await fetchWithAuth(`${API_URL}/auth/profile`, {
         method: 'PUT',
-        headers: getAuthorizationHeaders(),
         body: JSON.stringify({
           name: `${formData.firstName} ${formData.lastName}`.trim(),
           organization: formData.organization,
