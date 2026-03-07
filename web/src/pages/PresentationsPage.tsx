@@ -828,10 +828,21 @@ LAYOUTS: title(слайд 1), content, content-image, image-content, full-image,
         i === currentWorkspaceStep ? { ...s, status: 'error' } : s
       ));
       
+      const err = error instanceof Error ? error : new Error('Unknown error');
+      let chatError = '❌ Произошла ошибка при генерации.';
+      
+      if (err.message?.includes('AUTH_ERROR') || err.message?.includes('Сессия истекла') || err.message?.includes('401')) {
+        chatError = '🔐 Сессия истекла. Перезагрузите страницу (Ctrl+Shift+R) или войдите заново.';
+      } else if (err.message?.includes('RATE_LIMIT') || err.message?.includes('429')) {
+        chatError = '⏳ Превышен лимит запросов. Подождите 1-2 минуты и попробуйте снова.';
+      } else {
+        chatError += ' Проверьте подключение к интернету и попробуйте снова.';
+      }
+      
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '❌ Произошла ошибка при генерации. Проверьте настройки API и попробуйте снова.',
+        content: chatError,
         timestamp: new Date(),
       }]);
       
@@ -1499,7 +1510,14 @@ quoteAuthor: "Стив Джобс, основатель Apple"
       // Улучшенное сообщение об ошибке
       let errorMessage = '❌ **Ошибка генерации презентации**\n\n';
       
-      if (err.message?.includes('API')) {
+      if (err.message?.includes('AUTH_ERROR') || err.message?.includes('Сессия истекла') || err.message?.includes('401')) {
+        errorMessage += '🔐 Сессия истекла. Пожалуйста, войдите заново.\n';
+        errorMessage += '\n**Что делать:**\n';
+        errorMessage += '• Перезагрузите страницу (Ctrl+Shift+R)\n';
+        errorMessage += '• Если не помогло — выйдите и войдите снова';
+      } else if (err.message?.includes('RATE_LIMIT') || err.message?.includes('429')) {
+        errorMessage += '⏳ Превышен лимит запросов. Подождите 1-2 минуты.\n';
+      } else if (err.message?.includes('API')) {
         errorMessage += '🔑 Проверьте настройки API ключа.\n';
       } else if (err.message?.includes('валидн') || err.message?.includes('JSON')) {
         errorMessage += '🔄 AI вернул некорректный ответ. Попробуйте ещё раз.\n';
@@ -1507,12 +1525,11 @@ quoteAuthor: "Стив Джобс, основатель Apple"
         errorMessage += '📝 Попробуйте переформулировать тему более конкретно.\n';
       } else {
         errorMessage += `💡 ${err.message || 'Попробуйте ещё раз.'}\n`;
+        errorMessage += '\n**Советы:**\n';
+        errorMessage += '• Опишите тему подробнее (5+ слов)\n';
+        errorMessage += '• Укажите целевую аудиторию\n';
+        errorMessage += '• Попробуйте через минуту';
       }
-      
-      errorMessage += '\n**Советы:**\n';
-      errorMessage += '• Опишите тему подробнее (5+ слов)\n';
-      errorMessage += '• Укажите целевую аудиторию\n';
-      errorMessage += '• Попробуйте через минуту';
       
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),

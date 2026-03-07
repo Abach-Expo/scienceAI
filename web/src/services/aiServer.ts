@@ -72,6 +72,18 @@ export async function generateAI(
     }
 
     if (!response.ok || !data.success) {
+      if (response.status === 401) {
+        return {
+          content: '',
+          error: 'AUTH_ERROR: Сессия истекла. Пожалуйста, войдите снова.',
+        };
+      }
+      if (response.status === 429) {
+        return {
+          content: '',
+          error: 'RATE_LIMIT: Превышен лимит запросов. Подождите немного.',
+        };
+      }
       return {
         content: '',
         error: data.error || `Ошибка сервера (${response.status})`,
@@ -147,6 +159,12 @@ export async function chatAI(
     }
 
     if (!response.ok || !data.success) {
+      if (response.status === 401) {
+        return { content: '', error: 'AUTH_ERROR: Сессия истекла. Пожалуйста, войдите снова.' };
+      }
+      if (response.status === 429) {
+        return { content: '', error: 'RATE_LIMIT: Превышен лимит запросов. Подождите немного.' };
+      }
       return { content: '', error: data.error || `Ошибка сервера (${response.status})` };
     }
 

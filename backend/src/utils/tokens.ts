@@ -1,6 +1,6 @@
 /**
  * JWT Token utilities
- * Handles access token (15min) + refresh token (7 days) issuance and validation
+ * Handles access token (1h) + refresh token (7 days) issuance and validation
  */
 
 import jwt from 'jsonwebtoken';
@@ -8,7 +8,7 @@ import crypto from 'crypto';
 import { prisma } from '../index';
 import { logger } from './logger';
 
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY = '1h';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 interface TokenPair {
