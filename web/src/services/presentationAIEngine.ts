@@ -581,28 +581,27 @@ Return JSON:
     return suggestions;
   }
 
-  // Приватный метод для вызова AI
+  // Приватный метод для вызова AI через LLM Gateway
   private async callAI(systemPrompt: string, userPrompt: string): Promise<any> {
     try {
-      const response = await fetchWithAuth(`${this.apiUrl}/ai/chat`, {
+      const response = await fetchWithAuth(`${this.apiUrl}/llm/generate`, {
         method: 'POST',
         body: JSON.stringify({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt + '\n\nReturn valid JSON only, no markdown code blocks.' },
-          ],
-          model: this.model,
+          systemPrompt,
+          userPrompt: userPrompt + '\n\nReturn valid JSON only, no markdown code blocks.',
+          taskType: 'presentation',
           temperature: 0.7,
-          response_format: { type: 'json_object' },
+          maxTokens: 4000,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('AI request failed');
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `AI request failed (${response.status})`);
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || data.content || '{}';
+      const content = data.content || '{}';
       
       // Parse JSON from response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
