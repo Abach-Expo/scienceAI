@@ -4828,8 +4828,8 @@ Layout: ${slide.layout}`
       {/* Основной чат */}
       <div className="flex-1 flex flex-col">
         {/* Чат */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+          <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
             {chatMessages.map((msg) => (
               <motion.div
                 key={msg.id}
@@ -4837,7 +4837,7 @@ Layout: ${slide.layout}`
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`max-w-[80%] rounded-2xl px-5 py-3 ${
+                <div className={`max-w-[92%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-5 sm:py-3 ${
                   msg.role === 'user'
                     ? 'text-white'
                     : 'text-white/90'
@@ -4865,13 +4865,13 @@ Layout: ${slide.layout}`
       
         {/* Примеры запросов */}
       {chatMessages.length <= 1 && (
-        <div className="px-6 pb-4">
+        <div className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4">
           <div className="max-w-3xl mx-auto">
             <p className="text-xs text-white/30 mb-3 flex items-center gap-2">
               <Sparkles size={12} className="text-fuchsia-400" />
               Примеры запросов для вдохновения:
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2">
               {[
                 { emoji: '🧬', text: 'ДНК и генетика', full: 'Презентация о ДНК и генетике на 8 слайдов с научными иллюстрациями' },
                 { emoji: '🚀', text: 'Стартап питч', full: 'Питч для инвесторов EdTech стартапа с данными о рынке' },
@@ -4990,11 +4990,11 @@ Layout: ${slide.layout}`
           </div>
           
           {/* Быстрые настройки */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-white/30 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-4 mt-2 sm:mt-3 text-xs text-white/30 flex-wrap">
             <select
               value={slideCount}
               onChange={(e) => setSlideCount(Number(e.target.value))}
-              className="px-3 py-1.5 rounded-lg text-white/50 cursor-pointer"
+              className="px-2 sm:px-3 py-1.5 rounded-lg text-white/50 cursor-pointer text-xs"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}
             >
               <option value={5} style={{ background: '#1a1a2e', color: '#e0e0e0' }}>5 слайдов</option>
@@ -5007,7 +5007,7 @@ Layout: ${slide.layout}`
             <select
               value={selectedTheme.id}
               onChange={(e) => setSelectedTheme(THEMES.find(t => t.id === e.target.value) || THEMES[0])}
-              className="px-3 py-1.5 rounded-lg text-white/50 cursor-pointer"
+              className="px-2 sm:px-3 py-1.5 rounded-lg text-white/50 cursor-pointer text-xs"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}
             >
               {THEMES.slice(0, 8).map(t => (
@@ -5015,14 +5015,15 @@ Layout: ${slide.layout}`
               ))}
             </select>
             
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeImages}
                 onChange={(e) => setIncludeImages(e.target.checked)}
-                className="w-4 h-4 rounded accent-accent-primary"
+                className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded accent-accent-primary"
               />
-              <span>🖼️ С изображениями</span>
+              <span className="hidden sm:inline">🖼️ С изображениями</span>
+              <span className="sm:hidden">🖼️</span>
             </label>
             
             {includeImages && (
@@ -5037,120 +5038,31 @@ Layout: ${slide.layout}`
               </select>
             )}
             
-            <div className="flex-1" />
+            <div className="flex-1 min-w-0" />
             
             <button
               onClick={() => setShowSmartTemplatesModal(true)}
-              className="px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-colors flex items-center gap-2"
+              className="px-2 sm:px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-colors flex items-center gap-1 sm:gap-2 text-xs"
               style={{ background: 'linear-gradient(135deg, rgba(236,72,153,0.85), rgba(139,92,246,0.85))', boxShadow: '0 0 15px rgba(236,72,153,0.2)' }}
             >
               <Sparkles size={14} />
-              AI Шаблоны
+              <span className="hidden sm:inline">AI Шаблоны</span>
+              <span className="sm:hidden">AI</span>
             </button>
             
             <button
               onClick={() => setShowTemplates(true)}
-              className="px-3 py-2 rounded-lg text-white/50 hover:text-white/70 transition-colors flex items-center gap-2"
+              className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-white/50 hover:text-white/70 transition-colors flex items-center gap-1 sm:gap-2 text-xs"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <Layout size={14} />
-              Шаблоны
+              <span className="hidden sm:inline">Шаблоны</span>
             </button>
           </div>
         </div>
       </div>
       
-      {/* Список сохранённых презентаций */}
-      {presentations.length > 0 && (
-        <div className="px-6 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10,10,16,0.5)' }}>
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-white/60 flex items-center gap-2">
-                <Layers size={14} className="text-fuchsia-400" />
-                Мои презентации
-                <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: 'rgba(236,72,153,0.15)', color: 'rgba(236,72,153,0.8)' }}>
-                  {presentations.length}
-                </span>
-              </p>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {presentations.slice(0, 6).map((pres, i) => (
-                <motion.button
-                  key={pres.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  whileHover={{ scale: 1.02, y: -4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setCurrentPresentation(pres);
-                    setCurrentSlideIndex(0);
-                    setViewMode('editor');
-                  }}
-                  className="flex-shrink-0 w-52 rounded-xl overflow-hidden text-left transition-all group shadow-lg hover:shadow-xl"
-                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  {/* Preview */}
-                  <div 
-                    className="h-28 relative overflow-hidden"
-                    style={{ backgroundColor: pres.theme.backgroundColor }}
-                  >
-                    {/* Mini slide preview */}
-                    <div className="absolute inset-0 scale-[0.15] origin-top-left w-[667%] h-[714%] pointer-events-none">
-                      {pres.slides[0] && renderSlide(pres.slides[0], pres.theme, false)}
-                    </div>
-                    
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    
-                    {/* Title overlay */}
-                    <div className="absolute bottom-2 left-3 right-3">
-                      <h4 className="text-sm font-bold text-text-primary line-clamp-2 drop-shadow-lg">
-                        {pres.title}
-                      </h4>
-                    </div>
-                    
-                    {/* Slide count badge */}
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs text-white/90 font-medium" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
-                      {pres.slides.length} 📄
-                    </div>
-                  </div>
-                  
-                  {/* Footer */}
-                  <div className="px-3 py-2 flex items-center justify-between" style={{ background: 'rgba(5,5,10,0.5)' }}>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full"
-                        style={{ background: `linear-gradient(135deg, ${pres.theme.primaryColor}, ${pres.theme.secondaryColor})` }}
-                      />
-                      <span className="text-[10px] text-text-muted">{pres.theme.name}</span>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deletePresentation(pres.id);
-                      }}
-                      className="w-6 h-6 rounded-lg bg-red-500/80 text-text-primary flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 size={12} />
-                    </motion.button>
-                  </div>
-                </motion.button>
-              ))}
-              
-              {/* More indicator */}
-              {presentations.length > 6 && (
-                <div className="flex-shrink-0 w-24 h-full rounded-xl flex flex-col items-center justify-center text-white/30" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <span className="text-2xl mb-1">+{presentations.length - 6}</span>
-                  <span className="text-[10px]">ещё</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Мои презентации — доступны в сайдбаре слева */}
       </div>
     </div>
   );

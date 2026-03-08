@@ -1331,7 +1331,7 @@ const ChatPage = () => {
 
         {/* Messages */}
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain" id="chat-messages-container">
-          <div className="max-w-4xl mx-auto p-4 md:p-6 min-h-full flex flex-col justify-end">
+          <div className="max-w-4xl mx-auto p-3 sm:p-4 md:p-6 min-h-full flex flex-col justify-end">
             {chat.messages.length === 0 ? (
               <div className="py-12 text-center relative">
                 {/* Decorative background blurs */}
@@ -1627,7 +1627,7 @@ const ChatPage = () => {
         </AnimatePresence>
 
         {/* Input */}
-        <div className="flex-shrink-0 px-3 md:px-4 py-2.5 md:py-4 border-t border-border-primary bg-bg-primary/95 backdrop-blur-xl safe-area-bottom">
+        <div className="flex-shrink-0 px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-4 border-t border-border-primary bg-bg-primary/95 backdrop-blur-xl safe-area-bottom">
           <div className="max-w-4xl mx-auto">
             <motion.div 
               initial={{ y: 20, opacity: 0 }}

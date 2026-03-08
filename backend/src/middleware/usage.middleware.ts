@@ -17,8 +17,8 @@ type SubscriptionPlan = 'free' | 'starter' | 'pro' | 'premium';
 export const SUBSCRIPTION_LIMITS = {
   free: {
     name: 'Free',
-    aiGenerations: 10,
-    tokensLimit: 5000,
+    aiGenerations: 50,
+    tokensLimit: 25000,
     gpt4oTokensLimit: 0,
     maxTokensPerRequest: 4000,
     models: ['gpt-4o-mini'] as const,
@@ -27,9 +27,9 @@ export const SUBSCRIPTION_LIMITS = {
   },
   starter: {
     name: 'Starter',
-    aiGenerations: 100,
-    tokensLimit: 50000,
-    gpt4oTokensLimit: 10000,
+    aiGenerations: 300,
+    tokensLimit: 150000,
+    gpt4oTokensLimit: 30000,
     maxTokensPerRequest: 8000,
     models: ['gpt-4o-mini', 'gpt-4o'] as const,
     features: ['basic', 'export'],

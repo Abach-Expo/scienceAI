@@ -1201,7 +1201,7 @@ const ScienceAIChat = () => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
                   className="max-w-xl mx-auto">
                   <p className="text-white/20 text-[11px] uppercase tracking-[0.2em] mb-5 font-medium">Просто опишите задачу</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {[
                       { icon: GraduationCap, title: 'Диссертации', desc: 'Дипломы, курсовые, рефераты', color: 'violet', gradient: 'from-violet-500/20 to-violet-600/5', path: '/dissertation' },
                       { icon: Layers, title: 'Презентации', desc: 'Слайды и визуализации', color: 'fuchsia', gradient: 'from-fuchsia-500/20 to-fuchsia-600/5', path: '/presentations' },
@@ -1212,7 +1212,7 @@ const ScienceAIChat = () => {
                         transition={{ delay: 0.75 + i * 0.08 }}
                         whileHover={{ y: -4, scale: 1.02 }}
                         onClick={() => cap.path && navigate(cap.path)}
-                        className={`group relative p-5 rounded-2xl overflow-hidden ${cap.path ? 'cursor-pointer' : 'cursor-default'}`}
+                        className={`group relative p-3 sm:p-5 rounded-2xl overflow-hidden ${cap.path ? 'cursor-pointer' : 'cursor-default'}`}
                         style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', backdropFilter: 'blur(16px)' }}>
                         {/* Card glow on hover */}
                         <div className={`absolute inset-0 bg-gradient-to-br ${cap.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
@@ -1235,7 +1235,7 @@ const ScienceAIChat = () => {
             /* ═══ CHAT ═══ */
             <>
               <div ref={messagesContainerRef} onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                className="flex-1 overflow-y-auto px-2.5 sm:px-4 py-4 sm:py-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
                 role="log" aria-label="Сообщения чата">
                 <div className="max-w-3xl mx-auto space-y-6">
                   {messages.map((msg, msgIdx) => {
