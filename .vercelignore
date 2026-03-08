@@ -7,3 +7,5 @@ docker-compose.yml
 Dockerfile
 nginx.conf
 playwright.config.ts
+web/.env
+web/.env.local
