@@ -149,7 +149,9 @@ export async function checkUsageLimits(req: AuthRequestWithUsage, res: Response,
     }
 
     // Проверяем лимит генераций
-    const generationsLimit = user.aiGenerationsLimit || planLimits.aiGenerations;
+    // Всегда используем лимиты из плана (SUBSCRIPTION_LIMITS), а не из БД,
+    // чтобы обновления лимитов применялись ко всем пользователям мгновенно
+    const generationsLimit = planLimits.aiGenerations;
     const generationsUsed = user.aiGenerationsUsed || 0;
     
     if (generationsUsed >= generationsLimit) {
@@ -169,7 +171,7 @@ export async function checkUsageLimits(req: AuthRequestWithUsage, res: Response,
     }
 
     // Проверяем лимит токенов
-    const tokensLimit = user.tokensLimit || planLimits.tokensLimit;
+    const tokensLimit = planLimits.tokensLimit;
     const tokensUsed = user.tokensUsed || 0;
     
     if (tokensUsed >= tokensLimit) {
@@ -190,7 +192,7 @@ export async function checkUsageLimits(req: AuthRequestWithUsage, res: Response,
 
     // Проверяем лимит GPT-4o токенов
     const gpt4oTokensUsed = user.gpt4oTokensUsed || 0;
-    const gpt4oTokensLimit = user.gpt4oTokensLimit || planLimits.gpt4oTokensLimit;
+    const gpt4oTokensLimit = planLimits.gpt4oTokensLimit;
     
     // Получаем модель из запроса (если есть)
     // Бэкенд сам выбирает оптимальную модель через AIService routing,
@@ -350,9 +352,9 @@ export async function getUsageInfo(userId: string): Promise<UsageInfo> {
   const planInfo = SUBSCRIPTION_LIMITS[plan] || SUBSCRIPTION_LIMITS.free;
   
   const generationsUsed = user.aiGenerationsUsed || 0;
-  const generationsLimit = user.aiGenerationsLimit || planInfo.aiGenerations;
+  const generationsLimit = planInfo.aiGenerations;
   const tokensUsed = user.tokensUsed || 0;
-  const tokensLimit = user.tokensLimit || planInfo.tokensLimit;
+  const tokensLimit = planInfo.tokensLimit;
 
   return {
     plan,

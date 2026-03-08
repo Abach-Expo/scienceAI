@@ -40,9 +40,9 @@ model User {
   
   // 📊 Usage tracking - Per billing period
   aiGenerationsUsed   Int       @default(0)  // AI generations this period
-  aiGenerationsLimit  Int       @default(10) // Limit based on plan — must match SUBSCRIPTION_LIMITS.free
+  aiGenerationsLimit  Int       @default(50) // Limit based on plan — must match SUBSCRIPTION_LIMITS.free
   tokensUsed          Int       @default(0)  // Total tokens used this period
-  tokensLimit         Int       @default(5000) // Token limit based on plan — must match SUBSCRIPTION_LIMITS.free
+  tokensLimit         Int       @default(25000) // Token limit based on plan — must match SUBSCRIPTION_LIMITS.free
   gpt4oTokensUsed     Int       @default(0)  // GPT-4o tokens used separately
   gpt4oTokensLimit    Int       @default(0)  // GPT-4o limit (0 for free/starter)
   currentPeriodStart  DateTime  @default(now())
