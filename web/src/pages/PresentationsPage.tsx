@@ -6402,14 +6402,9 @@ Layout: ${slide.layout}`
                       onGenerateImage={async (prompt) => {
                         setIsGeneratingImages(true);
                         try {
-                          // Call image generation API
-                          const response = await fetchWithAuth(`${API_URL}/ai/generate-image`, {
-                            method: 'POST',
-                            body: JSON.stringify({ prompt, style: 'professional' }),
-                          });
-                          const data = await response.json();
-                          if (data.imageUrl) {
-                            updateSlide(currentSlideIndex, { imageUrl: data.imageUrl });
+                          const imageUrl = await searchUnsplashPhoto(prompt);
+                          if (imageUrl) {
+                            updateSlide(currentSlideIndex, { imageUrl });
                           }
                         } catch (error) {
                           console.error('Image generation error:', error);
