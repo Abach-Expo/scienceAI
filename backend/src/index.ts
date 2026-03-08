@@ -123,6 +123,7 @@ const authLimiter = rateLimit({
   message: { error: 'Too many login attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/refresh', // Don't rate-limit token refresh (called automatically)
 });
 
 // Limit for AI endpoints (expensive operations) — scaled for production

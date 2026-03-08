@@ -595,6 +595,8 @@ const ScienceAIChat = () => {
       const errText = await response.text();
       let errMsg = `Ошибка сервера (${response.status})`;
       try { const e = JSON.parse(errText); errMsg = e.error || e.message || errMsg; } catch {}
+      if (response.status === 401) errMsg = 'Сессия истекла. Пожалуйста, войдите заново.';
+      if (response.status === 429) errMsg = 'Лимит запросов исчерпан. Подождите или обновите план.';
       throw new Error(errMsg);
     }
 

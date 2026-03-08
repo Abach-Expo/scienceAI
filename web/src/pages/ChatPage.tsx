@@ -359,6 +359,11 @@ const ChatPage = () => {
             ? 'Сессия истекла. Пожалуйста, войдите заново.'
             : 'Session expired. Please log in again.';
         }
+        if (response.status === 429) {
+          errMsg = language === 'ru'
+            ? 'Лимит запросов исчерпан. Подождите или обновите план.'
+            : 'Rate limit exceeded. Please wait or upgrade your plan.';
+        }
         return { content: `⚠️ ${errMsg}`, taskType: 'chat' };
       }
 

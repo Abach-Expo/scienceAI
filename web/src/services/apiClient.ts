@@ -32,23 +32,33 @@ async function refreshAccessToken(): Promise<boolean> {
   refreshPromise = (async () => {
     try {
       const refreshToken = useAuthStore.getState().getRefreshToken();
-      if (!refreshToken) return false;
+      if (!refreshToken) {
+        console.warn('[Auth] No refresh token available');
+        return false;
+      }
 
+      console.log('[Auth] Refreshing access token...');
       const response = await fetch(`${API_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
       });
 
-      if (!response.ok) return false;
+      if (!response.ok) {
+        console.warn(`[Auth] Refresh failed: ${response.status}`);
+        return false;
+      }
 
       const data = await response.json();
       if (data.success && data.data?.token && data.data?.refreshToken) {
         useAuthStore.getState().setTokens(data.data.token, data.data.refreshToken);
+        console.log('[Auth] Token refreshed successfully');
         return true;
       }
+      console.warn('[Auth] Refresh response missing tokens');
       return false;
-    } catch {
+    } catch (e) {
+      console.warn('[Auth] Refresh error:', e);
       return false;
     } finally {
       refreshPromise = null;
@@ -81,11 +91,13 @@ async function request<T = any>(
   if (!response.ok) {
     // Auto-refresh on 401 (token expired) — retry once
     if (response.status === 401 && !options._isRetry && useAuthStore.getState().isAuthenticated) {
+      console.log(`[Auth] Got 401 on ${endpoint}, attempting refresh...`);
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return request<T>(endpoint, { ...options, _isRetry: true });
       }
       // Refresh failed — log the user out
+      console.warn(`[Auth] Refresh failed, logging out`);
       useAuthStore.getState().logout();
     }
 
@@ -176,12 +188,14 @@ export async function fetchWithAuth(
   let response = await doFetch();
 
   if (response.status === 401 && useAuthStore.getState().isAuthenticated) {
+    console.log(`[Auth] Got 401 on fetchWithAuth ${url}, attempting refresh...`);
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       // Retry with the fresh token
       response = await doFetch();
     } else {
       // Refresh failed — log out
+      console.warn(`[Auth] Refresh failed on fetchWithAuth, logging out`);
       useAuthStore.getState().logout();
     }
   }
