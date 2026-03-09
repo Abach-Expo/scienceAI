@@ -5,6 +5,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useLanguageStore } from '../store/languageStore';
 import { createServerOpenAI } from '../services/aiServer';
 import { useSubscriptionStore, TOKEN_COSTS, formatTokens, SUBSCRIPTION_PLANS, PLAN_LIMITS } from '../store/subscriptionStore';
+import { useAuthStore } from '../store/authStore';
 import { LimitWarning } from '../components/SubscriptionModal';
 import { API_URL } from '../config';
 import { fetchWithAuth } from '../services/apiClient';
@@ -607,6 +608,19 @@ export function PresentationsPage() {
   }, [pendingAutoTask]);
 
   const runWorkspaceGeneration = async (prompt: string, steps: WorkspaceStep[]) => {
+    // Check auth state before starting the heavy AI flow
+    const authState = useAuthStore.getState();
+    if (!authState.isAuthenticated || !authState.token) {
+      setChatMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: '🔐 Вы не авторизованы. Пожалуйста, войдите в систему (Ctrl+Shift+R или кнопка «Войти»).',
+        timestamp: new Date(),
+      }]);
+      setViewMode('chat');
+      return;
+    }
+
     setIsGenerating(true);
     
     const updateStep = (index: number, status: WorkspaceStep['status'], details?: string[]) => {

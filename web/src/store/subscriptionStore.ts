@@ -1,6 +1,7 @@
 ﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiClient } from '../services/apiClient';
+import { API_URL } from '../config';
+import { useAuthStore } from './authStore';
 
 // Debounce timer for sync
 let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1279,19 +1280,24 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         
         syncDebounceTimer = setTimeout(async () => {
           try {
-            await apiClient.post('/usage/sync', {
-              presentationsCreated: usage.presentationsCreated,
-              academicWorksCreated: usage.academicWorksCreated,
-              academicGenerationsToday: usage.academicGenerationsToday,
-              chatMessagesToday: usage.chatMessagesToday,
-              dalleImagesUsed: usage.dalleImagesUsed,
-              plagiarismChecksUsed: usage.plagiarismChecksUsed,
-              dissertationGenerationsUsed: usage.dissertationGenerationsUsed,
-              largeChapterGenerationsUsed: usage.largeChapterGenerationsUsed,
-              lastResetDate: usage.lastResetDate,
-              lastMonthlyReset: usage.lastMonthlyReset,
+            const token = useAuthStore.getState().token;
+            if (!token) return; // Not logged in — skip sync
+            await fetch(`${API_URL}/usage/sync`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                presentationsCreated: usage.presentationsCreated,
+                academicWorksCreated: usage.academicWorksCreated,
+                academicGenerationsToday: usage.academicGenerationsToday,
+                chatMessagesToday: usage.chatMessagesToday,
+                dalleImagesUsed: usage.dalleImagesUsed,
+                plagiarismChecksUsed: usage.plagiarismChecksUsed,
+                dissertationGenerationsUsed: usage.dissertationGenerationsUsed,
+                largeChapterGenerationsUsed: usage.largeChapterGenerationsUsed,
+                lastResetDate: usage.lastResetDate,
+                lastMonthlyReset: usage.lastMonthlyReset,
+              }),
             });
-            
           } catch (_error) {
             // Silently fail — sync will retry on next action
           }
@@ -1300,8 +1306,13 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       fetchFromBackend: async () => {
         try {
-          
-          const response = await apiClient.get<{
+          const token = useAuthStore.getState().token;
+          if (!token) return; // Not logged in — skip fetch
+          const res = await fetch(`${API_URL}/usage/sync`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) return; // Silently ignore errors
+          const response = await res.json() as {
             success: boolean;
             data: {
               presentationsCreated: number;
@@ -1315,7 +1326,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               lastResetDate: string;
               lastMonthlyReset: string;
             };
-          }>('/usage/sync');
+          };
           
           if (response.success && response.data) {
             const backendData = response.data;
