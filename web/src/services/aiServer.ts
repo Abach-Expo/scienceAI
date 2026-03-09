@@ -41,12 +41,15 @@ export async function generateAI(
   }
 ): Promise<{ content: string; error?: string; model?: string; provider?: string }> {
   try {
+    const effectiveTaskType = options?.taskType || 'chat';
+    console.log(`[AI] generateAI: taskType=${effectiveTaskType}, maxTokens=${options?.maxTokens ?? 4000}`);
+    
     const response = await fetchWithAuth(`${API_URL}/llm/generate`, {
       method: 'POST',
       body: JSON.stringify({
         systemPrompt,
         userPrompt,
-        taskType: options?.taskType || 'chat',
+        taskType: effectiveTaskType,
         temperature: options?.temperature ?? 0.85,
         maxTokens: options?.maxTokens ?? 4000,
       }),
@@ -215,17 +218,23 @@ export function createServerOpenAI(taskType?: string) {
           const systemMsg = params.messages.find(m => m.role === 'system');
           const userMsg = params.messages.find(m => m.role === 'user');
           
+          // Auto-detect taskType from context if not explicitly provided
+          const effectiveTaskType = taskType || 'presentation';
+          
+          console.log(`[AI] createServerOpenAI: taskType=${effectiveTaskType}, maxTokens=${params.max_tokens}`);
+          
           const result = await generateAI(
             systemMsg?.content || '',
             userMsg?.content || '',
             {
               temperature: params.temperature,
               maxTokens: params.max_tokens,
-              taskType: taskType,
+              taskType: effectiveTaskType,
             }
           );
 
           if (result.error) {
+            console.error(`[AI] createServerOpenAI error: ${result.error}`);
             throw new Error(result.error);
           }
 

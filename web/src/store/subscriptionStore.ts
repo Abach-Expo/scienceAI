@@ -48,27 +48,27 @@ export const API_COSTS = {
 // ================== ЛИМИТЫ ПО ПОДПИСКАМ ==================
 export const PLAN_LIMITS = {
   free: {
-    essaysPerMonth: 3,
-    referatsPerMonth: 2,
-    courseworksPerMonth: 1,
+    essaysPerMonth: 10,
+    referatsPerMonth: 5,
+    courseworksPerMonth: 3,
     
-    analysisPerMonth: 5,
-    presentationsPerMonth: 3,
+    analysisPerMonth: 15,
+    presentationsPerMonth: 10,
     slidesPerPresentation: 15,
     dalleImages: 0,
     
-    chatMessagesPerDay: 20,
-    plagiarismChecks: 2,
+    chatMessagesPerDay: 50,
+    plagiarismChecks: 5,
     
     antiAIDetection: false,
     prioritySupport: false,
     
-    dissertationGenerations: 1,
+    dissertationGenerations: 3,
     largeChapterGenerations: 0,
     fullDissertationGeneration: false,
     
     exportFormats: ['pdf'] as string[],
-    maxEstimatedCost: 5,
+    maxEstimatedCost: 10,
   },
   starter: {
     essaysPerMonth: 15,
@@ -206,19 +206,19 @@ export const SUBSCRIPTION_PLANS = {
     name: 'Бесплатный',
     nameEn: 'Free',
     price: 0,
-    tokens: 100,
+    tokens: 1000,
     features: [
-      '1 эссе/мес',
-      '2 анализа/мес',
-      '1 презентация/мес',
-      '5 сообщений/день',
+      '10 эссе/мес',
+      '15 анализов/мес',
+      '10 презентаций/мес',
+      '50 сообщений/день',
       'Экспорт PDF',
     ],
     featuresEn: [
-      '1 essay/mo',
-      '2 analyses/mo',
-      '1 presentation/mo',
-      '5 messages/day',
+      '10 essays/mo',
+      '15 analyses/mo',
+      '10 presentations/mo',
+      '50 messages/day',
       'PDF export',
     ],
     isUnlimited: false,
@@ -664,10 +664,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       
       return {
       currentPlan: 'free',
-      tokensBalance: 100,
+      tokensBalance: 1000,
       tokensUsed: 0,
       freePresentationsUsed: 0,
-      freePresentationsLimit: 3,
+      freePresentationsLimit: 10,
       freeDissertationGenerationsUsed: 0,
       freeDissertationGenerationsLimit: 5,
       transactions: [],
