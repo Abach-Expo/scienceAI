@@ -68,13 +68,15 @@ export async function generateAI(
     try {
       data = JSON.parse(responseText);
     } catch (e) {
+      console.error(`[AI] Non-JSON response (${response.status}):`, responseText.slice(0, 200));
       return {
         content: '',
-        error: 'Некорректный JSON от сервера',
+        error: `Некорректный JSON от сервера (HTTP ${response.status})`,
       };
     }
 
     if (!response.ok || !data.success) {
+      console.warn(`[AI] generateAI error: status=${response.status}, error=${data.error}`);
       if (response.status === 401) {
         return {
           content: '',

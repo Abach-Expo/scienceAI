@@ -96,9 +96,9 @@ async function request<T = any>(
       if (refreshed) {
         return request<T>(endpoint, { ...options, _isRetry: true });
       }
-      // Refresh failed — log the user out
-      console.warn(`[Auth] Refresh failed, logging out`);
-      useAuthStore.getState().logout();
+      // Refresh failed — do NOT logout here; let the caller handle the error
+      // (logout triggers ProtectedRoute redirect, hiding error messages from users)
+      console.warn(`[Auth] Refresh failed for ${endpoint}, returning error to caller`);
     }
 
     const errorData = await response.json().catch(() => ({}));
@@ -194,9 +194,9 @@ export async function fetchWithAuth(
       // Retry with the fresh token
       response = await doFetch();
     } else {
-      // Refresh failed — log out
-      console.warn(`[Auth] Refresh failed on fetchWithAuth, logging out`);
-      useAuthStore.getState().logout();
+      // Refresh failed — do NOT logout here; let the caller handle the 401
+      // (logout would trigger ProtectedRoute redirect, hiding error messages)
+      console.warn(`[Auth] Refresh failed on fetchWithAuth, returning 401 to caller`);
     }
   }
 

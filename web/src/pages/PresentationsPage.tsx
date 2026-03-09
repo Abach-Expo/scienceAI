@@ -843,14 +843,22 @@ LAYOUTS: title(слайд 1), content, content-image, image-content, full-image,
       ));
       
       const err = error instanceof Error ? error : new Error('Unknown error');
+      console.error('[Presentation] Generation failed:', err.message, err);
       let chatError = '❌ Произошла ошибка при генерации.';
       
-      if (err.message?.includes('AUTH_ERROR') || err.message?.includes('Сессия истекла') || err.message?.includes('401')) {
+      const msg = err.message || '';
+      if (msg.includes('AUTH_ERROR') || msg.includes('Сессия истекла') || msg.includes('401') || msg.includes('Unauthorized')) {
         chatError = '🔐 Сессия истекла. Перезагрузите страницу (Ctrl+Shift+R) или войдите заново.';
-      } else if (err.message?.includes('RATE_LIMIT') || err.message?.includes('429')) {
+      } else if (msg.includes('RATE_LIMIT') || msg.includes('429')) {
         chatError = '⏳ Превышен лимит запросов. Подождите 1-2 минуты и попробуйте снова.';
+      } else if (msg.includes('504') || msg.includes('timeout') || msg.includes('Timeout') || msg.includes('FUNCTION_INVOCATION')) {
+        chatError = '⏱️ Сервер не успел ответить. Попробуйте снова — повторный запрос будет быстрее (кэш).';
+      } else if (msg.includes('некорректный JSON') || msg.includes('не вернул JSON') || msg.includes('Некорректная структура')) {
+        chatError = '🔄 AI вернул некорректный ответ. Попробуйте ещё раз.';
+      } else if (msg.includes('провайдеры недоступны') || msg.includes('providers')) {
+        chatError = '🔧 AI-сервис временно недоступен. Попробуйте через минуту.';
       } else {
-        chatError += ' Проверьте подключение к интернету и попробуйте снова.';
+        chatError += ` Ошибка: ${msg.slice(0, 150)}`;
       }
       
       setChatMessages(prev => [...prev, {
