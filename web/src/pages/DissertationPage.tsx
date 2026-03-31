@@ -1863,25 +1863,24 @@ ${selectedChapter
   const handleAIGenerate = async () => {
     const hasFiles = attachedFiles.length > 0;
     if (!aiPrompt.trim() && !hasFiles) return;
-    
-    // Build prompt with file content
+
     const userText = aiPrompt.trim();
     let fullPrompt = userText;
     let fileContents = '';
+
     if (hasFiles) {
       fileContents = attachedFiles.map(f => formatFileForPrompt(f)).join('\n\n');
     }
 
-    // User-visible message
-    const displayMessage = userText 
+    const displayMessage = userText
       ? (hasFiles ? `${userText}\n\n📎 ${attachedFiles.map(f => f.name).join(', ')}` : userText)
       : `📎 ${attachedFiles.map(f => f.name).join(', ')}`;
-    
-    // Clear attachments and prompt immediately
+
+    // Очищаем сразу
     setAttachedFiles([]);
     setAiPrompt('');
-    
-    // Add user message to chat
+
+    // Добавляем сообщение пользователя
     setAiMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'user',
@@ -1889,11 +1888,10 @@ ${selectedChapter
       timestamp: new Date(),
     }]);
 
-    // ═══════════════════════════════════════════
-    // FILE ANALYSIS PATH — separate from text generation
-    // ═══════════════════════════════════════════
+    // ==============================================
+    // 1. ОБРАБОТКА ПРИКРЕПЛЁННЫХ ФАЙЛОВ (твой старый код)
+    // ==============================================
     if (hasFiles) {
-      // Проверка лимитов
       const limitCheck = subscription.canGenerateDissertationContent();
       if (!limitCheck.allowed) {
         setShowLimitModal(true);
@@ -1908,6 +1906,7 @@ ${selectedChapter
 
       setIsGenerating(true);
       setGenerationProgress(0);
+
       const progressInterval = setInterval(() => {
         setGenerationProgress(prev => Math.min(prev + Math.random() * 12, 90));
       }, 500);
@@ -1918,12 +1917,10 @@ ${selectedChapter
 Тип: ${dissertation.degreeType}
 ${selectedChapter ? `Текущий раздел: ${getSelectedContent().title}` : ''}`;
 
-        const fileAnalysisSystemPrompt = `Ты — опытный научный консультант и эксперт по академическому письму. 
+        const fileAnalysisSystemPrompt = `Ты — опытный научный консультант и эксперт по академическому письму.
 Пользователь работает над диссертацией и прикрепил файл(ы) для анализа.
-
 КОНТЕКСТ РАБОТЫ:
 ${dissertationContext}
-
 ТВОЯ ЗАДАЧА:
 - Внимательно прочитай содержимое прикреплённых файлов
 - Если пользователь дал конкретную инструкцию — выполни её
@@ -1937,11 +1934,10 @@ ${dissertationContext}
 - Используй конкретные цитаты из текста файла
 - НЕ переписывай и НЕ копируй содержимое файла обратно
 - Давай именно АНАЛИЗ и ОЦЕНКУ, а не пересказ
-
 ЯЗЫК ОТВЕТА: русский (если файл не на другом языке)`;
 
-        const userAnalysisPrompt = userText 
-          ? `${userText}\n\n${fileContents}` 
+        const userAnalysisPrompt = userText
+          ? `${userText}\n\n${fileContents}`
           : `Проанализируй прикреплённый документ. Дай подробную оценку содержания, структуры, качества аргументации и рекомендации по улучшению.\n\n${fileContents}`;
 
         const response = await fetchWithAuth(`${API_URL}/llm/stream`, {
@@ -1965,16 +1961,14 @@ ${dissertationContext}
         clearInterval(progressInterval);
         setGenerationProgress(100);
 
-        // Read SSE stream
         const reader = response.body?.getReader();
         if (!reader) throw new Error('Streaming не поддерживается');
 
         const decoder = new TextDecoder();
         let streamContent = '';
         let sseBuffer = '';
-
-        // Add streaming placeholder message
         const fileMsgId = Date.now().toString();
+
         setAiMessages(prev => [...prev, {
           id: fileMsgId,
           role: 'assistant',
@@ -1995,7 +1989,7 @@ ${dissertationContext}
               if (data.error) throw new Error(data.error);
               if (data.content) {
                 streamContent += data.content;
-                setAiMessages(prev => prev.map(msg => 
+                setAiMessages(prev => prev.map(msg =>
                   msg.id === fileMsgId ? { ...msg, content: streamContent + '▍' } : msg
                 ));
               }
@@ -2007,14 +2001,13 @@ ${dissertationContext}
         }
 
         const aiContent = streamContent;
-        
-        // Track usage
+
         subscription.incrementDissertationGenerations();
 
-        // Update streaming message with final content
-        setAiMessages(prev => prev.map(msg => 
+        setAiMessages(prev => prev.map(msg =>
           msg.id === fileMsgId ? { ...msg, content: aiContent || '⚠️ AI не вернул ответ. Попробуйте ещё раз.' } : msg
         ));
+
       } catch (error) {
         clearInterval(progressInterval);
         const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
@@ -2031,70 +2024,48 @@ ${dissertationContext}
       return;
     }
 
-    // ═══════════════════════════════════════════
-    // TEXT GENERATION PATH — original flow (no files)
-    // ═══════════════════════════════════════════
-    fullPrompt = userText;
-    
-    // Умный анализ намерения
+    // ==============================================
+    // 2. ТЕКСТОВЫЙ ЗАПРОС + ИСПРАВЛЕНИЕ ДЛЯ ПОЛНОЙ ДИССЕРТАЦИИ
+    // ==============================================
     const intentAnalysis = await analyzeIntentWithAI(fullPrompt);
-    
-    // Если это не генерация — обрабатываем как разговор
+
+    // 🔥 Главное исправление: теперь полная диссертация идёт в редактор
+    if (
+      intentAnalysis.intent === 'generate_full' ||
+      /полн|всю|целик|50 страниц|полную диссертацию|всю работу|генерируй всю/i.test(fullPrompt)
+    ) {
+      await generateFullDissertation();
+      return;
+    }
+
+    // Обычные разговорные ответы
     if (!intentAnalysis.intent.startsWith('generate_')) {
       const handled = await handleSmartResponse(fullPrompt, intentAnalysis);
-      if (handled) {
-        return;
-      }
+      if (handled) return;
     }
-    
-    // Проверяем, нужно ли уточнение перед генерацией
+
+    // Уточнение при необходимости
     if (intentAnalysis.clarificationNeeded && intentAnalysis.confidence < 0.7) {
       setAiMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Уточните, пожалуйста:
-
-${!selectedChapter 
-  ? '⚠️ **Раздел не выбран.** Выберите главу или подраздел слева.\n\n' 
-  : `📍 Текущий раздел: **${getSelectedContent().title}**\n\n`}
-
-Что именно нужно сделать?
-• Написать текст с нуля
-• Расширить существующий
-• Улучшить/отредактировать`,
+        content: `Уточните, пожалуйста:\n${!selectedChapter ? '⚠️ **Раздел не выбран.** Выберите главу слева.\n\n' : `📍 Текущий раздел: **${getSelectedContent().title}**\n\n`}Что именно нужно сделать?`,
         timestamp: new Date(),
       }]);
       return;
     }
-    
-    // Генерируем — если раздел выбран, стримим прямо в редактор
+
+    // Обычная генерация в выбранный раздел
     if (selectedChapter) {
       const baseContent = getSelectedContent().content;
       const prefix = baseContent ? baseContent + '\n\n' : '';
-      
-      const result = await generateHumanText(fullPrompt, getSelectedContent().content, { 
+      const result = await generateHumanText(fullPrompt, getSelectedContent().content, {
         skipUserMessage: true,
-        onEditorChunk: (streamedText) => {
-          updateContent(prefix + streamedText);
-        },
+        onEditorChunk: (streamedText) => updateContent(prefix + streamedText),
       });
-      
-      // Final content — overwrite with server-postprocessed version if different
-      if (result) {
-        updateContent(prefix + result);
-      }
+      if (result) updateContent(prefix + result);
     } else {
-      // Нет выбранного раздела — пишем в чат как раньше
-      const result = await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
-      
-      if (result) {
-        setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: '💡 Выберите раздел слева, чтобы вставить текст в документ. Или нажмите ➕ на сообщении выше.',
-          timestamp: new Date(),
-        }]);
-      }
+      await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
     }
   };
 
