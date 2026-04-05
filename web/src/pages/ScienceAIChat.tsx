@@ -1195,34 +1195,36 @@ const ScienceAIChat = () => {
       {/* ═══ MAIN AREA ═══ */}
       <div className="flex-1 flex flex-col min-w-0 relative">
 
-        {/* Premium background — animated gradient orbs */}
+        {/* Premium background — matching landing page style */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Purple orb — top-left */}
           <motion.div
-            animate={{ x: [0, 30, -20, 0], y: [0, -20, 30, 0], scale: [1, 1.1, 0.95, 1] }}
-            transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.06), rgba(139,92,246,0.02) 40%, transparent 70%)', filter: 'blur(40px)' }} />
+            animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+            className="absolute top-[10%] left-[15%] w-[500px] h-[500px] bg-purple-500/[0.15] rounded-full blur-[120px]"
+          />
+          {/* Pink orb — bottom-right */}
           <motion.div
-            animate={{ x: [0, -25, 15, 0], y: [0, 25, -15, 0], scale: [1, 0.9, 1.05, 1] }}
-            transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut', delay: 5 }}
-            className="absolute top-[25%] right-[-15%] w-[600px] h-[600px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.05), rgba(99,102,241,0.015) 40%, transparent 70%)', filter: 'blur(40px)' }} />
+            animate={{ x: [0, -25, 0], y: [0, 15, 0] }}
+            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+            className="absolute bottom-[15%] right-[10%] w-[450px] h-[450px] bg-pink-500/[0.12] rounded-full blur-[100px]"
+          />
+          {/* Blue orb — center, pulsing */}
           <motion.div
-            animate={{ x: [0, 20, -25, 0], y: [0, -30, 20, 0] }}
-            transition={{ duration: 35, repeat: Infinity, ease: 'easeInOut', delay: 10 }}
-            className="absolute bottom-[-15%] left-[25%] w-[650px] h-[650px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(217,70,239,0.04), rgba(217,70,239,0.01) 40%, transparent 70%)', filter: 'blur(40px)' }} />
-          {/* Subtle grid overlay */}
-          <div className="absolute inset-0 opacity-[0.015]"
-            style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-500/[0.08] rounded-full blur-[140px]"
+          />
+          {/* Grid pattern with radial fade — like landing page */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black_40%,transparent_100%)]" />
         </div>
 
-        {/* Interactive mouse glow — premium feel */}
+        {/* Interactive mouse glow */}
         <motion.div className="fixed pointer-events-none z-[5]"
           animate={{ x: mousePos.x - 250, y: mousePos.y - 250 }}
           transition={{ type: 'spring', damping: 40, stiffness: 150, mass: 0.5 }}
-          style={{ width: 500, height: 500, borderRadius: '50%', opacity: isFocused ? 1 : 0.3,
-            background: 'radial-gradient(circle, rgba(139,92,246,0.04), rgba(217,70,239,0.02) 40%, transparent 70%)',
+          style={{ width: 500, height: 500, borderRadius: '50%', opacity: isFocused ? 0.8 : 0.25,
+            background: 'radial-gradient(circle, rgba(139,92,246,0.08), rgba(217,70,239,0.04) 40%, transparent 70%)',
             transition: 'opacity 0.5s ease' }} />
 
         {/* Top bar — premium glassmorphism */}
