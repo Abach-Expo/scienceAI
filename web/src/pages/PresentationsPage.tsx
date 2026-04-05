@@ -5283,7 +5283,7 @@ Layout: ${slide.layout}`
   // ==================== ГЛАВНАЯ СТРАНИЦА ====================
   
   return (
-    <div className="min-h-screen h-screen flex flex-col overflow-hidden" style={{ background: '#050508' }}>
+    <div className="min-h-[100dvh] h-[100dvh] flex flex-col overflow-hidden" style={{ background: '#050508' }}>
       {/* Шапка */}
       <motion.header
         initial={{ y: -20, opacity: 0 }}

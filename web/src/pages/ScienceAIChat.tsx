@@ -982,7 +982,7 @@ const ScienceAIChat = () => {
   // ═══════════════════════════════════════════
   return (
     <div
-      className="h-screen w-screen flex overflow-hidden"
+      className="h-[100dvh] w-screen flex overflow-hidden"
       style={{ background: '#050505' }}
       onMouseMove={handleMouseMove}
       onDragOver={handleDragOver}

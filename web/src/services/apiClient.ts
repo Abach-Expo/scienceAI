@@ -8,6 +8,8 @@ import { useAuthStore } from '../store/authStore';
 type RequestOptions = Omit<RequestInit, 'headers'> & {
   headers?: Record<string, string>;
   _isRetry?: boolean; // internal flag to prevent infinite retry loops
+  timeout?: number; // request timeout in ms (default: 30000)
+  retries?: number; // max retries on network error (default: 2)
 };
 
 /**
@@ -75,40 +77,66 @@ async function request<T = any>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { headers = {}, ...rest } = options;
+  const { headers = {}, timeout = 30000, retries = 2, ...rest } = options;
   
   const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
 
-  const response = await fetch(url, {
-    ...rest,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-      ...headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  if (!response.ok) {
-    // Auto-refresh on 401 (token expired) — retry once
-    if (response.status === 401 && !options._isRetry && useAuthStore.getState().isAuthenticated) {
-      console.log(`[Auth] Got 401 on ${endpoint}, attempting refresh...`);
-      const refreshed = await refreshAccessToken();
-      if (refreshed) {
-        return request<T>(endpoint, { ...options, _isRetry: true });
+  const doRequest = async (attempt: number): Promise<T> => {
+    try {
+      const response = await fetch(url, {
+        ...rest,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+          ...headers,
+        },
+      });
+
+      if (!response.ok) {
+        // Auto-refresh on 401 (token expired) — retry once
+        if (response.status === 401 && !options._isRetry && useAuthStore.getState().isAuthenticated) {
+          console.log(`[Auth] Got 401 on ${endpoint}, attempting refresh...`);
+          const refreshed = await refreshAccessToken();
+          if (refreshed) {
+            clearTimeout(timeoutId);
+            return request<T>(endpoint, { ...options, _isRetry: true });
+          }
+          console.warn(`[Auth] Refresh failed for ${endpoint}, returning error to caller`);
+        }
+
+        const errorData = await response.json().catch(() => ({}));
+        const error: Error & { status?: number; data?: unknown } = new Error(errorData.message || errorData.error || `HTTP ${response.status}`);
+        error.status = response.status;
+        error.data = errorData;
+        throw error;
       }
-      // Refresh failed — do NOT logout here; let the caller handle the error
-      // (logout triggers ProtectedRoute redirect, hiding error messages from users)
-      console.warn(`[Auth] Refresh failed for ${endpoint}, returning error to caller`);
+
+      return response.json();
+    } catch (err: any) {
+      // Retry on network errors (not on HTTP errors or aborts)
+      const isNetworkError = err.name === 'TypeError' || err.message === 'Failed to fetch';
+      if (isNetworkError && attempt < retries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+        await new Promise(r => setTimeout(r, delay));
+        return doRequest(attempt + 1);
+      }
+      // Convert AbortError to a more descriptive timeout error
+      if (err.name === 'AbortError') {
+        throw new Error(`Request timeout after ${timeout}ms: ${endpoint}`);
+      }
+      throw err;
     }
+  };
 
-    const errorData = await response.json().catch(() => ({}));
-    const error: Error & { status?: number; data?: unknown } = new Error(errorData.message || errorData.error || `HTTP ${response.status}`);
-    error.status = response.status;
-    error.data = errorData;
-    throw error;
+  try {
+    return await doRequest(0);
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return response.json();
 }
 
 /**

@@ -31,6 +31,7 @@ interface WebSocketState {
   isConnected: boolean;
   notifications: Notification[];
   progressTasks: Map<string, ProgressUpdate>;
+  subscribedChannels: string[];
   
   // Actions
   connect: (token: string) => void;
@@ -49,6 +50,7 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
   isConnected: false,
   notifications: [],
   progressTasks: new Map(),
+  subscribedChannels: [],
 
   connect: (token: string) => {
     const { socket: existingSocket } = get();
@@ -57,6 +59,9 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
     if (existingSocket?.connected) {
       return;
     }
+
+    // Track pingInterval for cleanup
+    let pingInterval: ReturnType<typeof setInterval> | null = null;
 
     const socket = io(API_URL, {
       auth: { token },
@@ -69,10 +74,19 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
     // Connection events
     socket.on('connect', () => {
       set({ isConnected: true });
+      // Resubscribe to channels after reconnect
+      const { subscribedChannels } = get();
+      if (subscribedChannels.length > 0) {
+        socket.emit('subscribe', subscribedChannels);
+      }
     });
 
     socket.on('disconnect', (_reason) => {
       set({ isConnected: false });
+      if (pingInterval) {
+        clearInterval(pingInterval);
+        pingInterval = null;
+      }
     });
 
     socket.on('connect_error', (_error) => {
@@ -105,7 +119,18 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
     socket.on('progress', (data: ProgressUpdate) => {
       set(state => {
         const newProgress = new Map(state.progressTasks);
-        newProgress.set(data.taskId, data);
+        if (data.status === 'completed' || data.status === 'failed') {
+          // Auto-remove completed/failed tasks after 5 seconds
+          newProgress.set(data.taskId, data);
+          setTimeout(() => {
+            const { progressTasks } = get();
+            const updated = new Map(progressTasks);
+            updated.delete(data.taskId);
+            set({ progressTasks: updated });
+          }, 5000);
+        } else {
+          newProgress.set(data.taskId, data);
+        }
         return { progressTasks: newProgress };
       });
     });
@@ -122,7 +147,7 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
     });
 
     // Keep alive ping
-    const pingInterval = setInterval(() => {
+    pingInterval = setInterval(() => {
       if (socket.connected) {
         socket.emit('ping');
       }
@@ -130,11 +155,6 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
 
     socket.on('pong', () => {
       // Connection is alive
-    });
-
-    // Cleanup on disconnect
-    socket.on('disconnect', () => {
-      clearInterval(pingInterval);
     });
 
     set({ socket });
@@ -149,14 +169,18 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => ({
   },
 
   subscribe: (channels: string[]) => {
-    const { socket } = get();
+    const { socket, subscribedChannels } = get();
+    const newChannels = [...new Set([...subscribedChannels, ...channels])];
+    set({ subscribedChannels: newChannels });
     if (socket?.connected) {
       socket.emit('subscribe', channels);
     }
   },
 
   unsubscribe: (channels: string[]) => {
-    const { socket } = get();
+    const { socket, subscribedChannels } = get();
+    const filtered = subscribedChannels.filter(c => !channels.includes(c));
+    set({ subscribedChannels: filtered });
     if (socket?.connected) {
       socket.emit('unsubscribe', channels);
     }

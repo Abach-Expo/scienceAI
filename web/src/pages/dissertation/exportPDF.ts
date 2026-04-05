@@ -2,14 +2,67 @@ import { Dissertation } from './types';
 import { DOCUMENT_TYPES, SCIENCE_FIELDS } from './constants';
 import { formatCitationGOST } from './utils';
 
+// Cache the font to avoid re-fetching
+let cachedFontBase64: string | null = null;
+
+/**
+ * Load a Cyrillic-compatible font (PT Serif) for jsPDF.
+ * Falls back to helvetica if font loading fails.
+ */
+async function loadCyrillicFont(pdf: any): Promise<string> {
+  try {
+    if (!cachedFontBase64) {
+      // PT Serif Regular — supports full Cyrillic range
+      const fontUrl = 'https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts-woff2-to-base64/fonts/pt-serif/pt-serif-regular.ttf';
+      const resp = await fetch(fontUrl, { signal: AbortSignal.timeout(10000) });
+      if (!resp.ok) throw new Error(`Font fetch failed: ${resp.status}`);
+      const buf = new Uint8Array(await resp.arrayBuffer());
+      let binary = '';
+      const chunk = 8192;
+      for (let i = 0; i < buf.length; i += chunk) {
+        binary += String.fromCharCode(...buf.subarray(i, i + chunk));
+      }
+      cachedFontBase64 = btoa(binary);
+    }
+    pdf.addFileToVFS('PTSerif-Regular.ttf', cachedFontBase64);
+    pdf.addFont('PTSerif-Regular.ttf', 'PTSerif', 'normal');
+    pdf.addFileToVFS('PTSerif-Bold.ttf', cachedFontBase64); // same file, bold simulated
+    pdf.addFont('PTSerif-Bold.ttf', 'PTSerif', 'bold');
+    return 'PTSerif';
+  } catch (e) {
+    console.warn('Failed to load Cyrillic font, falling back to helvetica:', e);
+    return 'helvetica';
+  }
+}
+
+/**
+ * Add page numbers to all pages (starting from page 2, centered at bottom)
+ */
+function addPageNumbers(pdf: any) {
+  const totalPages = pdf.getNumberOfPages();
+  for (let i = 2; i <= totalPages; i++) {
+    pdf.setPage(i);
+    pdf.setFontSize(10);
+    pdf.setFont(pdf.getFont().fontName, 'normal');
+    pdf.text(String(i), 105, 290, { align: 'center' });
+  }
+}
+
 // ================== ЭКСПОРТ В PDF ПО ГОСТ ==================
 export const exportToPDF = async (dissertation: Dissertation) => {
+  if (!dissertation || !dissertation.chapters || dissertation.chapters.length === 0) {
+    throw new Error('Невозможно экспортировать: диссертация не содержит глав.');
+  }
+
   const { jsPDF } = await import('jspdf');
   const pdf = new jsPDF('p', 'mm', 'a4');
   const docType = DOCUMENT_TYPES[dissertation.documentType || 'dissertation'];
   
+  // Load Cyrillic font
+  const fontName = await loadCyrillicFont(pdf);
+  
   // ============ ТИТУЛЬНАЯ СТРАНИЦА ПО ГОСТ ============
-  pdf.setFont('helvetica');
+  pdf.setFont(fontName);
   
   // Шапка - министерство/ведомство
   pdf.setFontSize(12);
@@ -28,7 +81,7 @@ export const exportToPDF = async (dissertation: Dissertation) => {
   
   // Тип работы
   pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(fontName, 'bold');
   pdf.text(docType.nameRu.toUpperCase(), 105, 100, { align: 'center' });
   
   // Тема
@@ -42,7 +95,7 @@ export const exportToPDF = async (dissertation: Dissertation) => {
   
   // Степень
   pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont(fontName, 'normal');
   const degreeText = dissertation.degreeType === 'phd' ? 'кандидата наук' : 
                      dissertation.degreeType === 'master' ? 'магистра' : 'бакалавра';
   if (dissertation.documentType === 'dissertation') {
@@ -64,13 +117,13 @@ export const exportToPDF = async (dissertation: Dissertation) => {
   // ============ ОГЛАВЛЕНИЕ ============
   pdf.addPage();
   pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setFont(fontName, 'bold');
   pdf.text('ОГЛАВЛЕНИЕ', 105, 25, { align: 'center' });
   
   let tocY = 45;
   let pageNum = 3;
   
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont(fontName, 'normal');
   pdf.setFontSize(12);
   
   // Аннотация
@@ -91,13 +144,13 @@ export const exportToPDF = async (dissertation: Dissertation) => {
       tocY = 25;
     }
     
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(fontName, 'bold');
     pdf.text(chapter.title, 20, tocY);
     pdf.text(String(pageNum), 190, tocY, { align: 'right' });
     tocY += 8;
     pageNum++;
     
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(fontName, 'normal');
     chapter.subchapters.forEach(sub => {
       if (tocY > 270) {
         pdf.addPage();
@@ -114,11 +167,11 @@ export const exportToPDF = async (dissertation: Dissertation) => {
   if (dissertation.abstract) {
     pdf.addPage();
     pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(fontName, 'bold');
     pdf.text('АННОТАЦИЯ', 105, 25, { align: 'center' });
     
     pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(fontName, 'normal');
     const abstractLines = pdf.splitTextToSize(dissertation.abstract, 170);
     let absY = 45;
     abstractLines.forEach((line: string) => {
@@ -140,7 +193,7 @@ export const exportToPDF = async (dissertation: Dissertation) => {
     
     // Заголовок главы
     pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(fontName, 'bold');
     const chapterTitleLines = pdf.splitTextToSize(chapter.title.toUpperCase(), 170);
     chapterTitleLines.forEach((line: string) => {
       pdf.text(line, 105, y, { align: 'center' });
@@ -151,7 +204,7 @@ export const exportToPDF = async (dissertation: Dissertation) => {
     // Содержимое главы
     if (chapter.content) {
       pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont(fontName, 'normal');
       const lines = pdf.splitTextToSize(chapter.content, 170);
       lines.forEach((line: string) => {
         if (y > 275) {
@@ -173,13 +226,13 @@ export const exportToPDF = async (dissertation: Dissertation) => {
       
       // Заголовок подраздела
       pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont(fontName, 'bold');
       pdf.text(sub.title, 20, y);
       y += 10;
       
       // Содержимое подраздела
       if (sub.content) {
-        pdf.setFont('helvetica', 'normal');
+        pdf.setFont(fontName, 'normal');
         const lines = pdf.splitTextToSize(sub.content, 170);
         lines.forEach((line: string) => {
           if (y > 275) {
@@ -201,12 +254,12 @@ export const exportToPDF = async (dissertation: Dissertation) => {
     y = 25;
     
     pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFont(fontName, 'bold');
     pdf.text('СПИСОК ИСПОЛЬЗОВАННЫХ ИСТОЧНИКОВ', 105, y, { align: 'center' });
     y += 15;
     
     pdf.setFontSize(11);
-    pdf.setFont('helvetica', 'normal');
+    pdf.setFont(fontName, 'normal');
     
     dissertation.citations.forEach((citation, idx) => {
       if (y > 270) {
@@ -226,6 +279,9 @@ export const exportToPDF = async (dissertation: Dissertation) => {
       y += 2;
     });
   }
+  
+  // Добавить нумерацию страниц
+  addPageNumbers(pdf);
   
   // Сохранение
   const fileName = `${dissertation.title || docType.nameRu}_${new Date().toISOString().split('T')[0]}.pdf`;

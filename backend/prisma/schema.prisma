@@ -226,6 +226,8 @@ model Reference {
   @@index([projectId])
   @@index([doi])
   @@index([arxivId])
+  @@index([source])
+  @@index([year])
 }
 
 // AI Analysis model - stores AI feedback on documents

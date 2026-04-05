@@ -78,6 +78,7 @@ const DissertationPage = () => {
   const abstractTextareaRef = useRef<HTMLTextAreaElement>(null);
   const aiMessagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const generationAbortRef = useRef<AbortController | null>(null);
   
   // Подписка и лимиты
   const subscription = useSubscriptionStore();
@@ -308,6 +309,15 @@ const DissertationPage = () => {
       console.error('Error saving dissertation:', e);
       setSaveStatus('unsaved');
     }
+  }, []);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (generationAbortRef.current) {
+        generationAbortRef.current.abort();
+      }
+    };
   }, []);
 
   // Auto-save effect with proper debounce
@@ -1179,11 +1189,11 @@ ${fullContent.slice(-4000)}
     }]);
 
     try {
-      const abortController = new AbortController();
+      generationAbortRef.current = new AbortController();
       
       const response = await fetchWithAuth(`${API_URL}/dissertation/generate`, {
         method: 'POST',
-        signal: abortController.signal,
+        signal: generationAbortRef.current.signal,
         body: JSON.stringify({
           topic: dissertation.title,
           type: backendType,
@@ -1383,6 +1393,7 @@ ${fullContent.slice(-4000)}
       }]);
     } finally {
       setIsGenerating(false);
+      generationAbortRef.current = null;
       setGenerationProgress(0);
       setLargeGenerationProgress({ current: 0, total: 0, section: '' });
     }
@@ -1614,7 +1625,8 @@ ${fullContent.slice(-4000)}
     }
     
     // Генерация - полная диссертация
-    if (/(вс[юея]|полн|целик)\s*(диссертаци|работ|глав)/i.test(lower)) {
+    if (/(вс[юея]|полн|целик)\s*(диссертаци|работ|глав)/i.test(lower) ||
+        /(напиши|создай|сгенерируй|сделай)\s*(мне\s+)?(диссертаци|дипломн|курсов)/i.test(lower)) {
       return { intent: 'generate_full', confidence: 0.85 };
     }
     
@@ -2032,41 +2044,63 @@ ${dissertationContext}
     // 🔥 Главное исправление: теперь полная диссертация идёт в редактор
     if (
       intentAnalysis.intent === 'generate_full' ||
-      /полн|всю|целик|50 страниц|полную диссертацию|всю работу|генерируй всю/i.test(fullPrompt)
+      /полн|всю|целик|50 страниц|полную диссертацию|всю работу|генерируй всю/i.test(fullPrompt) ||
+      /(напиши|создай|сгенерируй|сделай)\s*(мне\s+)?(диссертаци|дипломн|курсов)/i.test(fullPrompt)
     ) {
       await generateFullDissertation();
       return;
     }
 
-    // Обычные разговорные ответы
+    // Обычные разговорные ответы — отвечаем в чате
     if (!intentAnalysis.intent.startsWith('generate_')) {
       const handled = await handleSmartResponse(fullPrompt, intentAnalysis);
       if (handled) return;
     }
 
-    // Уточнение при необходимости
-    if (intentAnalysis.clarificationNeeded && intentAnalysis.confidence < 0.7) {
+    // ── Генерация контента — ВСЕГДА пишем в редактор ──
+
+    // Если раздел не выбран — просим выбрать
+    if (!selectedChapter) {
       setAiMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Уточните, пожалуйста:\n${!selectedChapter ? '⚠️ **Раздел не выбран.** Выберите главу слева.\n\n' : `📍 Текущий раздел: **${getSelectedContent().title}**\n\n`}Что именно нужно сделать?`,
+        content: `⚠️ **Раздел не выбран.** Выберите главу или подраздел слева, чтобы я написал текст прямо в редактор.\n\n📍 Выберите раздел и повторите запрос.`,
         timestamp: new Date(),
       }]);
       return;
     }
 
-    // Обычная генерация в выбранный раздел
-    if (selectedChapter) {
-      const baseContent = getSelectedContent().content;
-      const prefix = baseContent ? baseContent + '\n\n' : '';
-      const result = await generateHumanText(fullPrompt, getSelectedContent().content, {
-        skipUserMessage: true,
-        onEditorChunk: (streamedText) => updateContent(prefix + streamedText),
-      });
-      if (result) updateContent(prefix + result);
-    } else {
-      await generateHumanText(fullPrompt, getSelectedContent().content, { skipUserMessage: true });
+    // Уточнение при необходимости (только для неясных запросов)
+    if (intentAnalysis.clarificationNeeded && intentAnalysis.confidence < 0.7) {
+      setAiMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Уточните, пожалуйста:\n📍 Текущий раздел: **${getSelectedContent().title}**\n\nЧто именно нужно сделать?`,
+        timestamp: new Date(),
+      }]);
+      return;
     }
+
+    // Расширение текста → пишем в редактор
+    if (intentAnalysis.intent === 'generate_expand') {
+      await expandText();
+      return;
+    }
+
+    // Улучшение текста → пишем в редактор
+    if (intentAnalysis.intent === 'generate_improve') {
+      await improveText();
+      return;
+    }
+
+    // Генерация раздела / специфической части → пишем в редактор
+    const baseContent = getSelectedContent().content;
+    const prefix = baseContent ? baseContent + '\n\n' : '';
+    const result = await generateHumanText(fullPrompt, getSelectedContent().content, {
+      skipUserMessage: true,
+      onEditorChunk: (streamedText) => updateContent(prefix + streamedText),
+    });
+    if (result) updateContent(prefix + result);
   };
 
   const generateSection = async () => {
@@ -3262,7 +3296,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
   const progressPercentage = Math.round((wordCount / dissertation.targetWordCount) * 100);
 
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: '#050508' }}>
+    <div className="h-[100dvh] flex overflow-hidden" style={{ background: '#050508' }}>
       {/* Subtle animated background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div animate={{ x: [0, 20, -15, 0], y: [0, -15, 20, 0] }} transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut' }}

@@ -1820,7 +1820,7 @@ ${generateBibliography(selectedSources, citationStyle) ? `<h2>Список ли�
   // Шаг 3: Редактор
   if (step === 'editor' && document && selectedType) {
     return (
-      <div className="h-screen bg-bg-primary flex overflow-hidden">
+      <div className="h-[100dvh] bg-bg-primary flex overflow-hidden">
         {/* Sidebar - Sources — full-screen overlay on mobile, side panel on desktop */}
         <AnimatePresence>
           {showSourcePanel && (

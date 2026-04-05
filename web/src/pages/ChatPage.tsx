@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify';
 import { API_URL } from '../config';
 import { fetchWithAuth } from '../services/apiClient';
 import { useSubscriptionStore } from '../store/subscriptionStore';
+import { useAuthStore } from '../store/authStore';
 import FocusTrap from '../components/FocusTrap';
 import {
   ArrowLeft,
@@ -84,6 +85,7 @@ const ChatPage = () => {
   const [limitWarning, setLimitWarning] = useState<string | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [showShortcutsPanel, setShowShortcutsPanel] = useState(false);
+  const userScrolledUpRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -177,10 +179,10 @@ const ChatPage = () => {
     };
   }, []);
 
-  // Scroll to bottom — smooth scroll for new messages
+  // Scroll to bottom — only when user is near bottom or during loading
   useEffect(() => {
     const container = document.getElementById('chat-messages-container');
-    if (container) {
+    if (container && !userScrolledUpRef.current) {
       requestAnimationFrame(() => {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       });
@@ -195,13 +197,14 @@ const ChatPage = () => {
     }
   }, [input]);
 
-  // Track scroll position for "scroll to bottom" button
+  // Track scroll position for "scroll to bottom" button and auto-scroll lock
   useEffect(() => {
     const container = document.getElementById('chat-messages-container');
     if (!container) return;
     const handleScroll = () => {
       const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
       setShowScrollButton(distanceFromBottom > 200);
+      userScrolledUpRef.current = distanceFromBottom > 200;
     };
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
@@ -210,6 +213,7 @@ const ChatPage = () => {
   const scrollToBottom = () => {
     const container = document.getElementById('chat-messages-container');
     if (container) {
+      userScrolledUpRef.current = false;
       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
     }
   };
@@ -269,7 +273,7 @@ const ChatPage = () => {
       const REFERAT_RE = /реферат/i;
       const ESSAY_RE = /эссе|сочинени/i;
       const ARTICLE_RE = /научн\w*\s*стать|стать[юяией]\s*(для|в)\s*(журнал|вак|scopus|ринц|wos)|публикаци|journal\s*article|research\s*paper|paper\s*for\s*publication/i;
-      const LONGFORM_RE = /написа[тьй]|сгенерир|на\s+\d+\s+страниц|доклад|дипломн|лабораторн|контрольн[уюаой]|отчёт|отчет|тезис[ыов]|монограф|аннотаци|рецензи|обзор\s+литератур|введение\s+к|заключение\s+к|глав[уыа]\s+\d|парагра[фф]|раздел\s+\d|write\s+(a\s+)?(paper|essay|thesis|article|report|review)|compose|draft\s+(a\s+)?/i;
+      const LONGFORM_RE = /(?:написа[тьй]|сгенерир|создай|подготов)\s+(?:доклад|дипломн|лабораторн|контрольн|отчёт|отчет|тезис|монограф|аннотаци|рецензи|текст|работ|введени|заключени)|на\s+\d+\s+страниц|обзор\s+литератур|введение\s+к|заключение\s+к|глав[уыа]\s+\d|парагра[фф]|раздел\s+\d|write\s+(a\s+)?(paper|essay|thesis|article|report|review)|compose\s+(a\s+)?|draft\s+(a\s+)?/i;
 
       // Pick taskType based on content detection
       let taskType = 'chat';
@@ -498,6 +502,7 @@ const ChatPage = () => {
     setInput('');
     localStorage.removeItem(`chat-draft-${chat.id}`);
     setIsLoading(true);
+    userScrolledUpRef.current = false;
 
     // Increment usage
     subscription.incrementChatMessages();
@@ -687,10 +692,12 @@ const ChatPage = () => {
           : m
       ),
     }));
-    // Save feedback for analytics
-    const feedbackData = JSON.parse(localStorage.getItem('chat-feedback') || '{}');
+    // Save feedback for analytics (namespaced by user ID)
+    const userId = useAuthStore.getState().user?.id || 'anonymous';
+    const feedbackKey = `chat-feedback-${userId}`;
+    const feedbackData = JSON.parse(localStorage.getItem(feedbackKey) || '{}');
     feedbackData[messageId] = feedback;
-    localStorage.setItem('chat-feedback', JSON.stringify(feedbackData));
+    localStorage.setItem(feedbackKey, JSON.stringify(feedbackData));
   };
 
   // Edit user message
@@ -1025,7 +1032,7 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="h-screen bg-bg-primary flex overflow-hidden">
+    <div className="h-[100dvh] bg-bg-primary flex overflow-hidden">
       {/* Limit Warning Modal */}
       <AnimatePresence>
         {limitWarning && (

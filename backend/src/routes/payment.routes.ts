@@ -205,14 +205,14 @@ router.post('/webhook', async (req: Request, res: Response) => {
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            subscriptionPlan: 'starter',
+            subscriptionPlan: 'free',
             subscriptionStatus: 'expired',
-            tokensLimit: getTokensLimit('starter'),
-            aiGenerationsLimit: getAiGenerationsLimit('starter'),
+            tokensLimit: getTokensLimit('free'),
+            aiGenerationsLimit: getAiGenerationsLimit('free'),
           },
         });
 
-        logger.info(`Subscription expired: user=${user.id}, downgraded to starter`);
+        logger.info(`Subscription expired: user=${user.id}, downgraded to free`);
         break;
       }
 
@@ -394,11 +394,11 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
           where: { id: userId },
           data: {
             subscriptionStatus: 'expired',
-            subscriptionPlan: 'starter',
+            subscriptionPlan: 'free',
           },
         });
         user.subscriptionStatus = 'expired';
-        user.subscriptionPlan = 'starter';
+        user.subscriptionPlan = 'free';
       }
     }
 

@@ -51,9 +51,16 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-// Warn about weak JWT secret
+// Enforce strong JWT secret in production
 if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-  logger.warn('JWT_SECRET is too short. Use at least 32 characters!');
+  if (process.env.NODE_ENV === 'production') {
+    const msg = 'FATAL: JWT_SECRET must be at least 32 characters in production!';
+    logger.error(msg);
+    if (process.env.VERCEL) throw new Error(msg);
+    process.exit(1);
+  } else {
+    logger.warn('JWT_SECRET is too short. Use at least 32 characters!');
+  }
 }
 
 // Initialize Prisma Client with connection pooling for high concurrency
@@ -157,8 +164,14 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+    // Allow requests with no origin only in development (Postman, etc.)
+    // In production, only allow from known origins
     if (!origin) {
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      // In production, allow server-to-server (webhooks) but log it
+      logger.info('No-origin request in production (webhook/server-to-server)');
       return callback(null, true);
     }
     
