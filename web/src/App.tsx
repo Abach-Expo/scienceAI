@@ -93,6 +93,7 @@ const AppContent = () => {
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<ScienceAIChat />} />
+                <Route path="/new-project" element={<NewProjectPage />} />
                 <Route path="/presentations" element={<PresentationsPage />} />
                 <Route path="/presentations/:id" element={<PresentationsPage />} />
                 <Route path="/chat" element={<ChatPage />} />
@@ -104,11 +105,10 @@ const AppContent = () => {
                 <Route path="/academic/:type/:id" element={<AcademicWorksPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/profile-setup" element={<ProfileSetupPage />} />
+                <Route path="/workspace-setup" element={<WorkspaceSetupPage />} />
               </Route>
               
               {/* Public routes */}
-              <Route path="/new-project" element={<NewProjectPage />} />
-              <Route path="/workspace-setup" element={<ProtectedRoute><WorkspaceSetupPage /></ProtectedRoute>} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
