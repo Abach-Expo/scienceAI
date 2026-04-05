@@ -1135,6 +1135,12 @@ ${fullContent.slice(-4000)}
     const limitCheck = subscription.canGenerateFullDissertation();
     if (!limitCheck.allowed) {
       setShowLimitModal(true);
+      setAiMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `⚠️ ${limitCheck.reason || 'Недостаточно лимитов для генерации.'}\n\nОбновите подписку для доступа к этой функции.`,
+        timestamp: new Date(),
+      }]);
       return;
     }
 

@@ -976,11 +976,17 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       },
 
       canGenerateFullDissertation: () => {
-        const limits = PLAN_LIMITS[safePlan(get().currentPlan)];
-        if (limits.courseworksPerMonth <= 0) {
+        const plan = safePlan(get().currentPlan);
+        const limits = PLAN_LIMITS[plan];
+        // Check the dedicated flag first
+        if (!limits.fullDissertationGeneration) {
           return {
             allowed: false,
-            reason: 'Генерация полной диссертации доступна только в Pro подписке.',
+            reason: plan === 'free'
+              ? 'Генерация полных работ доступна начиная с подписки Starter. Обновите план.'
+              : plan === 'starter'
+                ? 'Полная генерация диссертаций доступна на Pro подписке. На Starter вы можете генерировать по главам.'
+                : 'Генерация полной диссертации недоступна на вашем плане.',
           };
         }
         return { allowed: true };
