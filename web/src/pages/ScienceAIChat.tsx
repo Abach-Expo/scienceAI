@@ -38,6 +38,12 @@ import {
   RotateCcw,
   AlertTriangle,
   ArrowDown,
+  ThumbsUp,
+  ThumbsDown,
+  Edit3,
+  Volume2,
+  VolumeX,
+  Square,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════
@@ -59,6 +65,7 @@ interface ChatMessage {
   timestamp: Date;
   taskType?: string;
   attachments?: AttachedFile[];
+  feedback?: 'up' | 'down' | null;
 }
 
 interface AttachedFile {
@@ -400,6 +407,9 @@ const ScienceAIChat = () => {
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'warning' | 'info' } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [commandIndex, setCommandIndex] = useState(0);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -744,6 +754,103 @@ const ScienceAIChat = () => {
     setMessages(prev => prev.slice(0, lastUserIdx + 1));
     setTimeout(() => handleSend(cleanText), 100);
   }, [messages, handleSend]);
+
+  // ── Regenerate specific AI message ──
+  const handleRegenerateMessage = useCallback((aiMsgId: string) => {
+    const aiIdx = messages.findIndex(m => m.id === aiMsgId);
+    if (aiIdx <= 0) return;
+    // Find the user message right before this AI message
+    let userIdx = aiIdx - 1;
+    while (userIdx >= 0 && messages[userIdx].role !== 'user') userIdx--;
+    if (userIdx < 0) return;
+    const userMsg = messages[userIdx];
+    const cleanText = userMsg.content.replace(/\n\n📎.*$/, '').trim();
+    // Remove the AI message and everything after it
+    setMessages(prev => prev.slice(0, aiIdx));
+    setTimeout(() => handleSend(cleanText), 100);
+  }, [messages, handleSend]);
+
+  // ── Feedback (like/dislike) ──
+  const handleFeedback = useCallback((msgId: string, type: 'up' | 'down') => {
+    setMessages(prev => prev.map(m => {
+      if (m.id !== msgId) return m;
+      return { ...m, feedback: m.feedback === type ? null : type };
+    }));
+    // Persist to localStorage
+    if (currentChatId) {
+      const saved = localStorage.getItem('chats');
+      if (saved) {
+        try {
+          const chats = JSON.parse(saved);
+          const chatIdx = chats.findIndex((c: ChatItem) => c.id === currentChatId);
+          if (chatIdx >= 0) {
+            const msgIdx = chats[chatIdx].messages.findIndex((m: ChatMessage) => m.id === msgId);
+            if (msgIdx >= 0) {
+              const current = chats[chatIdx].messages[msgIdx].feedback;
+              chats[chatIdx].messages[msgIdx].feedback = current === type ? null : type;
+              localStorage.setItem('chats', JSON.stringify(chats));
+            }
+          }
+        } catch { /* skip */ }
+      }
+    }
+  }, [currentChatId]);
+
+  // ── Edit user message ──
+  const handleStartEdit = useCallback((msg: ChatMessage) => {
+    const cleanText = msg.content.replace(/\n\n📎.*$/, '').trim();
+    setEditingMessageId(msg.id);
+    setEditText(cleanText);
+  }, []);
+
+  const handleSaveEdit = useCallback((msgId: string) => {
+    const text = editText.trim();
+    if (!text) return;
+    const msgIdx = messages.findIndex(m => m.id === msgId);
+    if (msgIdx < 0) return;
+    // Remove all messages from this one onwards and resend
+    setMessages(prev => prev.slice(0, msgIdx));
+    setEditingMessageId(null);
+    setEditText('');
+    setTimeout(() => handleSend(text), 100);
+  }, [editText, messages, handleSend]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessageId(null);
+    setEditText('');
+  }, []);
+
+  // ── Text-to-Speech ──
+  const handleSpeak = useCallback((msgId: string, text: string) => {
+    if (speakingMsgId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgId(null);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    // Strip markdown formatting for cleaner speech
+    const cleanText = text
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/`(.+?)`/g, '$1')
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+      .replace(/[>|_~]/g, '')
+      .trim();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ru-RU';
+    utterance.rate = 1;
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
+    setSpeakingMsgId(msgId);
+    window.speechSynthesis.speak(utterance);
+  }, [speakingMsgId]);
+
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => { window.speechSynthesis.cancel(); };
+  }, []);
 
   const handleStop = () => {
     if (abortControllerRef.current) { abortControllerRef.current.abort(); abortControllerRef.current = null; }
@@ -1270,7 +1377,40 @@ const ScienceAIChat = () => {
                             </div>
                           )}
 
+                          {/* User message editing */}
+                          {msg.role === 'user' && editingMessageId === msg.id ? (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.98 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="w-full max-w-md"
+                            >
+                              <div className="rounded-2xl overflow-hidden"
+                                style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)' }}>
+                                <textarea
+                                  value={editText}
+                                  onChange={e => setEditText(e.target.value)}
+                                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(msg.id); } if (e.key === 'Escape') handleCancelEdit(); }}
+                                  className="w-full bg-transparent px-4 py-3 text-sm text-white/90 resize-none focus:outline-none"
+                                  rows={3}
+                                  autoFocus
+                                />
+                                <div className="flex items-center gap-2 px-3 py-2 border-t border-violet-500/15">
+                                  <span className="text-[10px] text-white/20 flex-1">Enter — отправить, Esc — отмена</span>
+                                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleCancelEdit}
+                                    className="px-3 py-1.5 text-xs text-white/50 hover:text-white/80 rounded-lg hover:bg-white/5 transition-all">
+                                    Отмена
+                                  </motion.button>
+                                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSaveEdit(msg.id)}
+                                    className="px-3.5 py-1.5 text-xs text-white font-medium bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-lg shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transition-all">
+                                    Отправить
+                                  </motion.button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ) : (
+                          <>
                           {/* Message bubble — premium glassmorphism */}
+                          <div className="group/msg relative">
                           <div className={`rounded-2xl text-sm leading-relaxed ${
                             msg.role === 'user'
                               ? 'px-4 py-3 text-white rounded-br-md'
@@ -1299,26 +1439,116 @@ const ScienceAIChat = () => {
                             )}
                           </div>
 
-                          {/* Message footer */}
-                          <div className={`flex items-center gap-1.5 mt-1 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                            <span className="text-[10px] text-white/15">{formatTime(msg.timestamp)}</span>
-                            {msg.role === 'assistant' && !isStreaming && msg.content && (
-                              <>
+                          {/* ── Stop button during streaming ── */}
+                          {isStreaming && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="flex justify-start mt-2"
+                            >
+                              <motion.button
+                                whileHover={{ scale: 1.04 }}
+                                whileTap={{ scale: 0.96 }}
+                                onClick={handleStop}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white transition-all"
+                                style={{
+                                  background: 'rgba(239,68,68,0.08)',
+                                  border: '1px solid rgba(239,68,68,0.2)',
+                                  backdropFilter: 'blur(12px)',
+                                }}
+                              >
+                                <Square size={12} className="fill-current" />
+                                Остановить генерацию
+                              </motion.button>
+                            </motion.div>
+                          )}
+
+                          {/* ── Action toolbar for AI messages ── */}
+                          {msg.role === 'assistant' && !isStreaming && msg.content && !isError && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className={`flex items-center gap-0.5 mt-1.5 transition-opacity duration-200 ${msg.feedback ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100'}`}
+                            >
+                              <div className="flex items-center gap-0.5 px-1.5 py-1 rounded-xl"
+                                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
                                 <CopyButton text={msg.content} />
-                                {isError && (
-                                  <motion.button
-                                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                                    onClick={handleRetry}
-                                    className="p-1.5 rounded-lg text-white/25 hover:text-amber-400 hover:bg-white/5 transition-all"
-                                    aria-label="Повторить запрос"
-                                    title="Повторить"
-                                  >
-                                    <RotateCcw size={14} />
-                                  </motion.button>
-                                )}
-                              </>
-                            )}
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
+                                  onClick={() => handleRegenerateMessage(msg.id)}
+                                  className="p-1.5 rounded-lg text-white/30 hover:text-violet-400 hover:bg-violet-500/10 transition-all"
+                                  title="Перегенерировать"
+                                >
+                                  <RotateCcw size={14} />
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
+                                  onClick={() => handleSpeak(msg.id, msg.content)}
+                                  className={`p-1.5 rounded-lg transition-all ${speakingMsgId === msg.id ? 'text-violet-400 bg-violet-500/10' : 'text-white/30 hover:text-violet-400 hover:bg-violet-500/10'}`}
+                                  title={speakingMsgId === msg.id ? 'Остановить' : 'Озвучить'}
+                                >
+                                  {speakingMsgId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                                </motion.button>
+
+                                <div className="w-px h-4 bg-white/[0.06] mx-1" />
+
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
+                                  onClick={() => handleFeedback(msg.id, 'up')}
+                                  className={`p-1.5 rounded-lg transition-all ${msg.feedback === 'up' ? 'text-green-400 bg-green-500/10' : 'text-white/30 hover:text-green-400 hover:bg-green-500/10'}`}
+                                  title="Полезно"
+                                >
+                                  <ThumbsUp size={14} />
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
+                                  onClick={() => handleFeedback(msg.id, 'down')}
+                                  className={`p-1.5 rounded-lg transition-all ${msg.feedback === 'down' ? 'text-red-400 bg-red-500/10' : 'text-white/30 hover:text-red-400 hover:bg-red-500/10'}`}
+                                  title="Не полезно"
+                                >
+                                  <ThumbsDown size={14} />
+                                </motion.button>
+                              </div>
+                              <span className="text-[10px] text-white/15 ml-2">{formatTime(msg.timestamp)}</span>
+                            </motion.div>
+                          )}
+
+                          {/* ── Retry button for errors ── */}
+                          {msg.role === 'assistant' && isError && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <motion.button
+                                whileHover={{ scale: 1.04 }}
+                                whileTap={{ scale: 0.96 }}
+                                onClick={handleRetry}
+                                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium text-amber-400/80 hover:text-amber-300 transition-all"
+                                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)' }}
+                              >
+                                <RotateCcw size={13} />
+                                Повторить
+                              </motion.button>
+                              <span className="text-[10px] text-white/15">{formatTime(msg.timestamp)}</span>
+                            </div>
+                          )}
+
+                          {/* ── User message actions ── */}
+                          {msg.role === 'user' && (
+                            <div className="flex items-center gap-1 mt-1 justify-end opacity-0 group-hover/msg:opacity-100 transition-opacity duration-200">
+                              <span className="text-[10px] text-white/15 mr-1">{formatTime(msg.timestamp)}</span>
+                              {!isLoading && (
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
+                                  onClick={() => handleStartEdit(msg)}
+                                  className="p-1.5 rounded-lg text-white/30 hover:text-violet-400 hover:bg-white/5 transition-all"
+                                  title="Редактировать"
+                                >
+                                  <Edit3 size={13} />
+                                </motion.button>
+                              )}
+                            </div>
+                          )}
                           </div>
+                          </>
+                          )}
                         </div>
 
                         {/* User avatar — premium style */}
