@@ -46,7 +46,7 @@ export const SUBSCRIPTION_LIMITS = {
     periodDays: 30,
   },
   premium: {
-    name: 'Premium',
+    name: 'Pro+',
     aiGenerations: 2000,
     tokensLimit: 1000000,
     gpt4oTokensLimit: 500000,

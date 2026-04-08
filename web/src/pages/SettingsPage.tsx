@@ -555,7 +555,7 @@ const SettingsPage = () => {
               <div className="text-right">
                 <div className="text-xl font-bold text-text-primary">
                   {subscription.currentPlan === 'starter' ? 'Starter' :
-                   subscription.currentPlan === 'premium' ? 'Maximum' : 
+                   subscription.currentPlan === 'premium' ? 'Pro+' : 
                    subscription.currentPlan === 'pro' ? 'Pro' : 'Нет плана'}
                 </div>
                 <p className="text-sm text-text-muted">

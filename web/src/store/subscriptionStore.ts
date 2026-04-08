@@ -293,8 +293,8 @@ export const SUBSCRIPTION_PLANS = {
   },
   premium: {
     id: 'premium',
-    name: 'Maximum',
-    nameEn: 'Maximum',
+    name: 'Pro+',
+    nameEn: 'Pro+',
     price: 24.99,
     tokens: 15000,
     features: [
@@ -398,8 +398,8 @@ export const ANNUAL_PLANS = {
   },
   premium_annual: {
     id: 'premium_annual',
-    name: 'Maximum (Год)',
-    nameEn: 'Maximum (Annual)',
+    name: 'Pro+ (Год)',
+    nameEn: 'Pro+ (Annual)',
     monthlyPrice: 24.99,
     annualPrice: 239.90,
     savings: 59.98,

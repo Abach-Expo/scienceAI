@@ -379,7 +379,7 @@ const DissertationPage = () => {
     setAiMessages(prev => [...prev, {
       id: `auto-${Date.now()}`,
       role: 'assistant',
-      content: `${t('dissertation.autoCreation')}\n\n📌 ${t('dissertation.topicLabel')}: «${autoTask.topic || t('dissertation.notSpecifiedTopic')}»\n📄 ${t('dissertation.type')}: ${DOCUMENT_TYPES[(autoTask.documentType || 'dissertation') as DocumentType]?.nameRu || t('dissertation.defaultDocType')}${autoTask.pageCount ? `\n📑 ${t('dissertation.pagesCountLabel')}: ~${autoTask.pageCount}` : ''}\n\n${t('dissertation.generationStartsAuto')}`,
+      content: `🚀 **Автоматическое создание**\n\n📌 Тема: «${autoTask.topic || 'не указана'}»\n📄 Тип: ${DOCUMENT_TYPES[(autoTask.documentType || 'dissertation') as DocumentType]?.nameRu || 'Диссертация'}${autoTask.pageCount ? `\n📑 Страниц: ~${autoTask.pageCount}` : ''}\n\n⏳ Генерация начнётся автоматически...`,
       timestamp: new Date(),
     }]);
 
@@ -728,7 +728,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
         setAiMessages(prev => [...prev, {
           id: streamMsgId,
           role: 'assistant',
-          content: t('dissertation.writingToEditor'),
+          content: '📝 Пишу текст в редактор...',
           timestamp: new Date(),
         }]);
       }
@@ -837,11 +837,18 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
         }
         
         // Все попытки исчерпаны
-        const errorMessage = error instanceof Error ? error.message : t('dissertation.retryOrCheckConnection');
+        const errorMessage = error instanceof Error ? error.message : 'Попробуйте ещё раз или проверьте соединение с сервером.';
         setAiMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: `${t('dissertation.errorLabel')}: ${errorMessage}\n\n${t('dissertation.possibleCauses')}\n• ${t('dissertation.serverTemporarilyDown')}\n• ${t('dissertation.internetIssues')}\n• ${t('dissertation.apiLimitExceeded')}\n\n${t('dissertation.tryRefreshPage')}`,
+          content: `❌ Ошибка: ${errorMessage}
+          
+💡 **Возможные причины:**
+• Сервер временно недоступен
+• Проблемы с интернет-соединением  
+• Превышен лимит API
+
+Попробуйте обновить страницу или повторить позже.`,
           timestamp: new Date(),
         }]);
         return null;
@@ -1133,7 +1140,7 @@ ${fullContent.slice(-4000)}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `⚠️ ${limitCheck.reason || t('dissertation.insufficientLimits')}\n\n${t('dissertation.upgradeForFeature')}`,
+        content: `⚠️ ${limitCheck.reason || 'Недостаточно лимитов для генерации.'}\n\nОбновите подписку для доступа к этой функции.`,
         timestamp: new Date(),
       }]);
       return;
@@ -1171,7 +1178,7 @@ ${fullContent.slice(-4000)}
     setAiMessages(prev => [...prev, {
       id: thinkingMsgId,
       role: 'assistant',
-      content: `${t('dissertation.generationProgressLabel')}: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || t('dissertation.defaultDocType')} · ~${targetPages} ${t('dissertation.pagesShort')}`,
+      content: `Генерация: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || 'Диссертация'} · ~${targetPages} стр.`,
       timestamp: new Date(),
       isThinking: true,
       thinkingActive: true,
@@ -1266,7 +1273,7 @@ ${fullContent.slice(-4000)}
             msg.id === thinkingMsgId 
               ? { 
                   ...msg, 
-                  content: `${t('dissertation.generationProgressLabel')}: ${data.percentComplete}% · ${(data.wordsGenerated as number).toLocaleString()} ${t('dissertation.wordsShort')} · ~${data.pagesGenerated} ${t('dissertation.pagesShort')}`,
+                  content: `Генерация: ${data.percentComplete}% · ${(data.wordsGenerated as number).toLocaleString()} слов · ~${data.pagesGenerated} стр.`,
                   thinkingSteps: [...(msg.thinkingSteps || []), newStep],
                 }
               : msg
@@ -1319,11 +1326,11 @@ ${fullContent.slice(-4000)}
             msg.id === thinkingMsgId 
               ? { 
                   ...msg, 
-                  content: `${t('dissertation.generationCompleteLabel')}: ${(data.totalWords as number)?.toLocaleString() || '?'} ${t('dissertation.wordsShort')} · ~${data.totalPages || '?'} ${t('dissertation.pagesShort')} · ${generationTimeSec} ${t('dissertation.secShort')}`,
+                  content: `Генерация завершена: ${(data.totalWords as number)?.toLocaleString() || '?'} слов · ~${data.totalPages || '?'} стр. · ${generationTimeSec} сек.`,
                   thinkingActive: false,
                   thinkingSteps: [...(msg.thinkingSteps || []), {
                     phase: 'done' as const,
-                    phaseLabel: t('dissertation.done'),
+                    phaseLabel: 'Готово!',
                     currentChapter: resultChapters.length,
                     totalChapters: resultChapters.length,
                     chapterTitle: t('dissertation.allChaptersWritten'),

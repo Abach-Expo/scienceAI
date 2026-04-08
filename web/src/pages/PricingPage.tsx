@@ -38,30 +38,6 @@ const PricingPage = () => {
   // Цены синхронизированы с backend/usage.middleware.ts
   const plans = [
     {
-      id: 'free' as PlanType,
-      name: 'Free',
-      description: 'Попробуйте бесплатно',
-      monthlyPrice: 0,
-      yearlyPrice: 0,
-      yearlyMonthly: 0,
-      icon: <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-500/20 to-slate-500/20 border border-gray-500/30 flex items-center justify-center"><Users size={20} className="text-gray-400" /></div>,
-      popular: false,
-      premium: false,
-      features: [
-        { text: '3 эссе + 1 реферат/мес', included: true },
-        { text: '2 презентации/мес', included: true },
-        { text: '5 AI-анализов', included: true },
-        { text: '10 сообщений/день', included: true },
-        { text: 'Экспорт PDF', included: true },
-        { text: 'AI изображения', included: false },
-        { text: 'Anti-AI Detection', included: false },
-        { text: 'Диссертации', included: false },
-        { text: 'Приоритетная поддержка', included: false },
-      ],
-      buttonText: 'Начать бесплатно',
-      buttonVariant: 'outline' as const,
-    },
-    {
       id: 'starter' as PlanType,
       name: 'Starter',
       description: 'Идеально для студентов',
@@ -111,7 +87,7 @@ const PricingPage = () => {
     },
     {
       id: 'premium' as PlanType,
-      name: 'Maximum',
+      name: 'Pro+',
       description: 'Без ограничений',
       monthlyPrice: 24.99,
       yearlyPrice: 239.90,
@@ -130,7 +106,7 @@ const PricingPage = () => {
         { text: 'Anti-AI Detection v3', included: true },
         { text: 'Антиплагиат + приоритетная поддержка', included: true },
       ],
-      buttonText: billingPeriod === 'yearly' ? 'Выбрать Maximum за $19.99/мес' : 'Выбрать Maximum за $24.99/мес',
+      buttonText: billingPeriod === 'yearly' ? 'Выбрать Pro+ за $19.99/мес' : 'Выбрать Pro+ за $24.99/мес',
       buttonVariant: 'primary' as const,
     },
   ];
@@ -142,13 +118,6 @@ const PricingPage = () => {
   const [successModal, setSuccessModal] = useState(false);
 
   const handleSelectPlan = (planId: PlanType) => {
-    // Бесплатный план - активируем сразу без оплаты
-    if (planId === 'free') {
-      subscription.setPlan('free');
-      setSuccessModal(true);
-      return;
-    }
-    
     const plan = plans.find(p => p.id === planId);
     const price = billingPeriod === 'yearly' ? plan?.yearlyPrice || 0 : plan?.monthlyPrice || 0;
     const period = billingPeriod === 'yearly' ? 'год' : 'месяц';

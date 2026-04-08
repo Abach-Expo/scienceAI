@@ -19,30 +19,6 @@ router.use(authMiddleware);
 router.get('/plans', async (_req: Request, res: Response) => {
   const plans = [
     {
-      id: 'free',
-      name: 'Free',
-      displayName: 'Бесплатный',
-      price: { monthly: 0, annual: 0 },
-      features: [
-        '3 essays/month',
-        '1 term paper/month',
-        '5 document analyses',
-        '2 presentations',
-        '10 chat messages/day',
-        'PDF export',
-      ],
-      limits: {
-        essaysPerMonth: 3,
-        referatsPerMonth: 1,
-        courseworksPerMonth: 0,
-        analysisPerMonth: 5,
-        presentationsPerMonth: 2,
-        chatMessagesPerDay: 10,
-        dalleImages: 0,
-        antiAIDetection: false,
-      },
-    },
-    {
       id: 'starter',
       name: 'Starter',
       displayName: 'Стартер',
@@ -100,8 +76,8 @@ router.get('/plans', async (_req: Request, res: Response) => {
     },
     {
       id: 'premium',
-      name: 'Maximum',
-      displayName: 'Максимум',
+      name: 'Pro+',
+      displayName: 'Pro+',
       price: { monthly: 24.99, annual: 239.90 },
       features: [
         '200 essays/month',

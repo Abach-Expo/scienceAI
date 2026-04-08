@@ -83,7 +83,7 @@ export const UsageBanner = ({ compact = false }: UsageBannerProps) => {
             )}
             <span className="font-semibold text-text-primary">
               {currentPlan === 'starter' ? 'Starter' :
-               currentPlan === 'premium' ? 'Maximum' : 'Pro'}
+               currentPlan === 'premium' ? 'Pro+' : 'Pro'}
             </span>
           </div>
           
