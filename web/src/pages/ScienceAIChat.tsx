@@ -82,23 +82,23 @@ const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024; // 5 MB — skip base64 preview for huge images
 const ACCEPTED_FILES = 'image/*,.pdf,.doc,.docx,.txt,.xlsx,.xls,.pptx,.ppt,.csv,.rtf,.odt,.md';
 
-const QUICK_ACTIONS = [
-  { icon: BookOpen, label: 'Написать введение', prompt: 'Напиши введение для моей диссертации' },
-  { icon: PenTool, label: 'Расширить текст', prompt: 'Расширь и углуби следующий текст' },
-  { icon: Wand2, label: 'Гуманизировать', prompt: 'Перепиши текст более живым, человеческим научным стилем' },
-  { icon: Quote, label: 'Добавить цитаты', prompt: 'Добавь релевантные научные цитаты и ссылки на источники' },
-  { icon: FileText, label: 'Заключение', prompt: 'Сгенерируй заключение для моей работы' },
+const QUICK_ACTIONS_KEYS = [
+  { icon: BookOpen, labelKey: 'chat.cmdWriteIntro', prompt: 'Напиши введение для моей диссертации' },
+  { icon: PenTool, labelKey: 'chat.cmdExpand', prompt: 'Расширь и углуби следующий текст' },
+  { icon: Wand2, labelKey: 'chat.cmdHumanize', prompt: 'Перепиши текст более живым, человеческим научным стилем' },
+  { icon: Quote, labelKey: 'chat.cmdAddCitations', prompt: 'Добавь релевантные научные цитаты и ссылки на источники' },
+  { icon: FileText, labelKey: 'chat.cmdConclusion', prompt: 'Сгенерируй заключение для моей работы' },
 ] as const;
 
-const COMMANDS = [
-  { icon: BookOpen, label: 'Введение', description: 'Написать введение к работе', prompt: 'Напиши введение для научной работы на тему' },
-  { icon: FileText, label: 'Заключение', description: 'Сгенерировать заключение', prompt: 'Напиши заключение для научной работы' },
-  { icon: PenTool, label: 'Расширить', description: 'Расширить и углубить текст', prompt: 'Расширь следующий текст, добавив научную глубину:' },
-  { icon: Wand2, label: 'Гуманизировать', description: 'Живой научный стиль', prompt: 'Перепиши текст более живым академическим стилем:' },
-  { icon: Quote, label: 'Цитаты', description: 'Добавить научные ссылки', prompt: 'Добавь цитаты и ссылки на источники в текст:' },
-  { icon: GraduationCap, label: 'Диссертация', description: 'Создать новую диссертацию', prompt: '' },
-  { icon: Layers, label: 'Презентация', description: 'Создать презентацию', prompt: '' },
-  { icon: Search, label: 'Найти источники', description: 'Поиск научных статей', prompt: 'Найди научные статьи и источники по теме:' },
+const COMMANDS_KEYS = [
+  { icon: BookOpen, labelKey: 'chat.cmdIntro', descKey: 'chat.cmdIntroDesc', prompt: 'Напиши введение для научной работы на тему' },
+  { icon: FileText, labelKey: 'chat.cmdConclusion', descKey: 'chat.cmdConclusionDesc', prompt: 'Напиши заключение для научной работы' },
+  { icon: PenTool, labelKey: 'chat.cmdExpand', descKey: 'chat.cmdExpandDesc', prompt: 'Расширь следующий текст, добавив научную глубину:' },
+  { icon: Wand2, labelKey: 'chat.cmdHumanize', descKey: 'chat.cmdHumanizeDesc', prompt: 'Перепиши текст более живым академическим стилем:' },
+  { icon: Quote, labelKey: 'chat.cmdCitations', descKey: 'chat.cmdCitationsDesc', prompt: 'Добавь цитаты и ссылки на источники в текст:' },
+  { icon: GraduationCap, labelKey: 'chat.cmdDissertation', descKey: 'chat.cmdDissertationDesc', prompt: '' },
+  { icon: Layers, labelKey: 'chat.cmdPresentation', descKey: 'chat.cmdPresentationDesc', prompt: '' },
+  { icon: Search, labelKey: 'chat.cmdFindSources', descKey: 'chat.cmdFindSourcesDesc', prompt: 'Найди научные статьи и источники по теме:' },
 ] as const;
 
 // ═══════════════════════════════════════════
@@ -269,63 +269,63 @@ const throttle = <T extends (...args: any[]) => void>(fn: T, ms: number): T => {
 // ═══════════════════════════════════════════
 const mdComponents = {
   h1: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <h1 className="text-lg font-bold text-white/90 mt-4 mb-2 first:mt-0" {...props}>{children}</h1>
+    <h1 className="text-lg font-bold text-text-primary/90 mt-4 mb-2 first:mt-0" {...props}>{children}</h1>
   ),
   h2: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <h2 className="text-base font-semibold text-white/90 mt-3 mb-1.5 first:mt-0" {...props}>{children}</h2>
+    <h2 className="text-base font-semibold text-text-primary/90 mt-3 mb-1.5 first:mt-0" {...props}>{children}</h2>
   ),
   h3: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <h3 className="text-sm font-semibold text-white/85 mt-2.5 mb-1 first:mt-0" {...props}>{children}</h3>
+    <h3 className="text-sm font-semibold text-text-primary/85 mt-2.5 mb-1 first:mt-0" {...props}>{children}</h3>
   ),
   p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="text-sm leading-relaxed text-white/80 mb-2 last:mb-0" {...props}>{children}</p>
+    <p className="text-sm leading-relaxed text-text-primary/80 mb-2 last:mb-0" {...props}>{children}</p>
   ),
   ul: ({ children, ...props }: React.HTMLAttributes<HTMLUListElement>) => (
-    <ul className="list-disc list-inside space-y-1 mb-2 text-sm text-white/80" {...props}>{children}</ul>
+    <ul className="list-disc list-inside space-y-1 mb-2 text-sm text-text-primary/80" {...props}>{children}</ul>
   ),
   ol: ({ children, ...props }: React.HTMLAttributes<HTMLOListElement>) => (
-    <ol className="list-decimal list-inside space-y-1 mb-2 text-sm text-white/80" {...props}>{children}</ol>
+    <ol className="list-decimal list-inside space-y-1 mb-2 text-sm text-text-primary/80" {...props}>{children}</ol>
   ),
   li: ({ children, ...props }: React.HTMLAttributes<HTMLLIElement>) => (
-    <li className="text-white/75 leading-relaxed" {...props}>{children}</li>
+    <li className="text-text-primary/75 leading-relaxed" {...props}>{children}</li>
   ),
   code: ({ children, className, ...props }: React.HTMLAttributes<HTMLElement>) => {
     const isBlock = className?.includes('language-');
     if (isBlock) {
       return (
-        <div className="relative my-3 rounded-xl overflow-hidden border border-white/[0.06]">
-          <div className="bg-white/[0.03] px-4 py-1.5 text-[10px] text-white/30 uppercase tracking-wider border-b border-white/[0.04]">
+        <div className="relative my-3 rounded-xl overflow-hidden border border-text-primary/[0.06]">
+          <div className="bg-bg-tertiary/30 px-4 py-1.5 text-[10px] text-text-secondary/50 uppercase tracking-wider border-b border-border-primary/30">
             {className?.replace('language-', '') || 'code'}
           </div>
           <pre className="p-4 overflow-x-auto text-sm leading-relaxed">
-            <code className="text-violet-300/90 font-mono" {...props}>{children}</code>
+            <code className="text-violet-400 dark:text-violet-300/90 font-mono" {...props}>{children}</code>
           </pre>
         </div>
       );
     }
-    return <code className="px-1.5 py-0.5 rounded-md bg-white/[0.06] text-violet-300/90 text-[13px] font-mono" {...props}>{children}</code>;
+    return <code className="px-1.5 py-0.5 rounded-md bg-text-primary/[0.06] text-violet-300/90 text-[13px] font-mono" {...props}>{children}</code>;
   },
   blockquote: ({ children, ...props }: React.HTMLAttributes<HTMLQuoteElement>) => (
-    <blockquote className="border-l-2 border-violet-500/40 pl-4 my-2 text-white/60 italic" {...props}>{children}</blockquote>
+    <blockquote className="border-l-2 border-violet-500/40 pl-4 my-2 text-text-secondary/70 italic" {...props}>{children}</blockquote>
   ),
   strong: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
-    <strong className="font-semibold text-white/90" {...props}>{children}</strong>
+    <strong className="font-semibold text-text-primary/90" {...props}>{children}</strong>
   ),
   table: ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
-    <div className="overflow-x-auto my-3 rounded-xl border border-white/[0.06]">
+    <div className="overflow-x-auto my-3 rounded-xl border border-text-primary/[0.06]">
       <table className="w-full text-sm" {...props}>{children}</table>
     </div>
   ),
   th: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
-    <th className="bg-white/[0.04] px-3 py-2 text-left text-white/70 font-medium border-b border-white/[0.06]" {...props}>{children}</th>
+    <th className="bg-bg-tertiary/20 px-3 py-2 text-left text-text-primary/70 font-medium border-b border-border-primary/30" {...props}>{children}</th>
   ),
   td: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
-    <td className="px-3 py-2 text-white/65 border-b border-white/[0.03]" {...props}>{children}</td>
+    <td className="px-3 py-2 text-text-primary/65 border-b border-border-primary/15" {...props}>{children}</td>
   ),
   a: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a className="text-violet-400 hover:text-violet-300 underline underline-offset-2 transition-colors" target="_blank" rel="noopener noreferrer" {...props}>{children}</a>
   ),
-  hr: () => <hr className="border-white/[0.06] my-4" />,
+  hr: () => <hr className="border-text-primary/[0.06] my-4" />,
 };
 
 // ═══════════════════════════════════════════
@@ -361,6 +361,7 @@ const Toast = ({ message, type = 'error', onClose }: { message: string; type?: '
 // ═══════════════════════════════════════════
 const CopyButton = ({ text }: { text: string }) => {
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation();
   const handleCopy = async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
@@ -370,9 +371,9 @@ const CopyButton = ({ text }: { text: string }) => {
     <motion.button
       whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
       onClick={handleCopy}
-      className="p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/5 transition-all"
-      aria-label="Копировать ответ"
-      title="Копировать"
+      className="p-1.5 rounded-lg text-text-secondary/50 hover:text-text-primary/60 hover:bg-text-primary/5 transition-all"
+      aria-label={t('chat.copy')}
+      title={t('chat.copy')}
     >
       {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
     </motion.button>
@@ -387,7 +388,7 @@ const ScienceAIChat = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const subscription = useSubscriptionStore();
-  useDocumentTitle('Science AI — Чат');
+  useDocumentTitle(`Science AI — ${t('chat.title')}`);
 
   // ── State ──
   const [input, setInput] = useState('');
@@ -418,11 +419,19 @@ const ScienceAIChat = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const COMMANDS = useMemo(() => COMMANDS_KEYS.map(cmd => ({
+    ...cmd, label: t(cmd.labelKey), description: t(cmd.descKey),
+  })), [t]);
+
+  const QUICK_ACTIONS = useMemo(() => QUICK_ACTIONS_KEYS.map(a => ({
+    ...a, label: t(a.labelKey),
+  })), [t]);
+
   const filteredCommands = useMemo(() =>
     COMMANDS.filter(cmd =>
       cmd.label.toLowerCase().includes(commandFilter.toLowerCase()) ||
       cmd.description.toLowerCase().includes(commandFilter.toLowerCase())
-    ), [commandFilter]);
+    ), [commandFilter, COMMANDS]);
 
   // ── Load chats from localStorage ──
   useEffect(() => {
@@ -566,7 +575,7 @@ const ScienceAIChat = () => {
     }));
     const chatData: ChatItem = {
       id: chatId,
-      title: title || (chatMessages[0]?.content.slice(0, 40) + '...' || 'Новый чат'),
+      title: title || (chatMessages[0]?.content.slice(0, 40) + '...' || t('chat.newChat')),
       messages: cleanMessages,
       starred: idx >= 0 ? chats[idx].starred : false,
       createdAt: idx >= 0 ? new Date(chats[idx].createdAt) : new Date(),
@@ -576,7 +585,7 @@ const ScienceAIChat = () => {
     else chats.unshift(chatData);
     localStorage.setItem('chats', JSON.stringify(chats));
     setAllChats(chats.map(c => ({ ...c, createdAt: new Date(c.createdAt), updatedAt: new Date(c.updatedAt) })));
-  }, []);
+  }, [t]);
 
   // ── Generate AI response ──
   const generateResponse = useCallback(async (
@@ -603,15 +612,15 @@ const ScienceAIChat = () => {
 
     if (!response.ok) {
       const errText = await response.text();
-      let errMsg = `Ошибка сервера (${response.status})`;
+      let errMsg = `${t('chat.serverError')} (${response.status})`;
       try { const e = JSON.parse(errText); errMsg = e.error || e.message || errMsg; } catch {}
-      if (response.status === 401) errMsg = 'Сессия истекла. Пожалуйста, войдите заново.';
-      if (response.status === 429) errMsg = 'Лимит запросов исчерпан. Подождите или обновите план.';
+      if (response.status === 401) errMsg = t('chat.sessionExpired');
+      if (response.status === 429) errMsg = t('chat.rateLimitReached');;
       throw new Error(errMsg);
     }
 
     const reader = response.body?.getReader();
-    if (!reader) throw new Error('Streaming не поддерживается');
+    if (!reader) throw new Error(t('chat.streamingNotSupported'));
 
     const decoder = new TextDecoder();
     let content = '';
@@ -636,7 +645,7 @@ const ScienceAIChat = () => {
       }
     }
     return content;
-  }, []);
+  }, [t]);
 
   // ── Handle send ──
   const handleSend = useCallback(async (messageText?: string) => {
@@ -684,7 +693,7 @@ const ScienceAIChat = () => {
 
     const remaining = subscription.getRemainingLimits();
     if (remaining.chatMessages <= 0) {
-      setToast({ message: 'Достигнут лимит сообщений. Обновите подписку для продолжения.', type: 'warning' });
+      setToast({ message: t('chat.messageLimitReached'), type: 'warning' });
       return;
     }
 
@@ -722,11 +731,11 @@ const ScienceAIChat = () => {
       const finalMsg: ChatMessage = { id: streamId, role: 'assistant', content: aiResponse, timestamp: new Date() };
       const finalMessages = [...newMessages, finalMsg];
       setMessages(finalMessages);
-      saveChat(chatId, finalMessages, (text || fileNames[0] || 'Новый чат').slice(0, 40) + '...');
+      saveChat(chatId, finalMessages, (text || fileNames[0] || t('chat.newChat')).slice(0, 40) + '...');
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         setMessages(prev => prev.map(m =>
-          m.id === streamId ? { ...m, content: m.content || 'Генерация отменена.' } : m
+          m.id === streamId ? { ...m, content: m.content || t('chat.generationCancelled') } : m
         ));
       } else {
         setMessages(prev => prev.filter(m => m.id !== streamId));
@@ -861,8 +870,8 @@ const ScienceAIChat = () => {
 
   const handleCommandSelect = (cmd: typeof COMMANDS[number]) => {
     setShowCommandPalette(false);
-    if (cmd.label === 'Диссертация') { navigate('/dissertation'); return; }
-    if (cmd.label === 'Презентация') { navigate('/presentations'); return; }
+    if (cmd.labelKey === 'chat.cmdDissertation') { navigate('/dissertation'); return; }
+    if (cmd.labelKey === 'chat.cmdPresentation') { navigate('/presentations'); return; }
     setInput(cmd.prompt + ' ');
     inputRef.current?.focus();
   };
@@ -916,14 +925,14 @@ const ScienceAIChat = () => {
   const filteredChats = allChats.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()));
   const hasMessages = messages.length > 0;
   const hasAttachments = attachedFiles.length > 0;
-  const userName = user?.name || user?.email?.split('@')[0] || 'Пользователь';
+  const userName = user?.name || user?.email?.split('@')[0] || t('chat.user');
 
   // ═══════════════════════════════════════════
   // SHARED INPUT AREA (render function — avoids remount)
   // ═══════════════════════════════════════════
   const renderInputArea = (isWelcome = false) => (
-    <div className={isWelcome ? 'relative' : 'relative z-20 border-t border-white/[0.03] p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))]'}
-      style={isWelcome ? undefined : { background: 'rgba(5,5,8,0.92)', backdropFilter: 'blur(32px)' }}>
+    <div className={isWelcome ? 'relative' : 'relative z-20 border-t border-border-primary/20 p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))]'}
+      style={isWelcome ? undefined : { background: 'rgb(var(--bg-primary) / 0.92)', backdropFilter: 'blur(32px)' }}>
       <div className={isWelcome ? '' : 'max-w-3xl mx-auto'}>
 
         {/* Attached files */}
@@ -946,25 +955,25 @@ const ScienceAIChat = () => {
                     className="relative group"
                   >
                     {file.preview ? (
-                      <div className="w-20 h-20 rounded-xl overflow-hidden border border-white/10 relative">
+                      <div className="w-20 h-20 rounded-xl overflow-hidden border border-text-primary/10 relative">
                         <img src={file.preview} alt={file.name} className="w-full h-full object-cover" />
                         <button
                           onClick={() => removeFile(i)}
                           aria-label={`Удалить ${file.name}`}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black/80 border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-bg-primary/80 border border-text-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <X size={10} className="text-white/70" />
+                          <X size={10} className="text-text-primary/70" />
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03]">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-text-primary/[0.08] bg-text-primary/[0.03]">
                         <File size={14} className="text-violet-400 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-white/70 truncate max-w-[120px]">{file.name}</p>
-                          <p className="text-[10px] text-white/35">{formatFileSize(file.size)}</p>
+                          <p className="text-xs text-text-primary/70 truncate max-w-[120px]">{file.name}</p>
+                          <p className="text-[10px] text-text-secondary/50">{formatFileSize(file.size)}</p>
                         </div>
                         <button onClick={() => removeFile(i)} aria-label={`Удалить ${file.name}`}
-                          className="p-0.5 rounded-full hover:bg-white/10 text-white/30 hover:text-white/60 transition-colors">
+                          className="p-0.5 rounded-full hover:bg-text-primary/10 text-text-secondary/50 hover:text-text-primary/60 transition-colors">
                           <X size={12} />
                         </button>
                       </div>
@@ -988,14 +997,14 @@ const ScienceAIChat = () => {
                 : ''
           }`}
           style={{
-            background: 'rgba(255,255,255,0.025)',
+            background: 'rgb(var(--text-primary) / 0.025)',
             backdropFilter: 'blur(40px)',
             border: isDragOver
               ? '1px solid rgba(139,92,246,0.4)'
               : isFocused
                 ? '1px solid rgba(139,92,246,0.2)'
-                : '1px solid rgba(255,255,255,0.06)',
-            boxShadow: isFocused ? '0 0 0 1px rgba(139,92,246,0.05), inset 0 1px 0 rgba(255,255,255,0.03)' : 'inset 0 1px 0 rgba(255,255,255,0.02)',
+                : '1px solid rgb(var(--border-primary) / 0.3)',
+            boxShadow: isFocused ? '0 0 0 1px rgba(139,92,246,0.05), inset 0 1px 0 rgb(var(--text-primary) / 0.03)' : 'inset 0 1px 0 rgb(var(--text-primary) / 0.02)',
           }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -1032,11 +1041,11 @@ const ScienceAIChat = () => {
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             onKeyDown={handleInputKeyDown}
-            placeholder="Напишите запрос или попросите создать диссертацию, презентацию, курсовую..."
+            placeholder={t('chat.inputPlaceholderFull')}
             rows={1}
             disabled={isLoading}
-            aria-label="Сообщение для ИИ-ассистента"
-            className="w-full bg-transparent text-white/90 placeholder-white/30 text-[15px] pl-14 pr-14 py-4 resize-none focus:outline-none"
+            aria-label={t('chat.inputAriaLabel')}
+            className="w-full bg-transparent text-text-primary/90 placeholder-text-secondary/50 text-[15px] pl-14 pr-14 py-4 resize-none focus:outline-none"
             style={{ height: textareaHeight, lineHeight: '1.6', maxHeight: 200 }}
           />
 
@@ -1046,9 +1055,9 @@ const ScienceAIChat = () => {
             whileTap={{ scale: 0.9 }}
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="absolute left-3.5 bottom-3.5 p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-all disabled:opacity-30"
-            aria-label="Прикрепить файл"
-            title="Прикрепить файл"
+            className="absolute left-3.5 bottom-3.5 p-1.5 rounded-lg text-text-secondary/50 hover:text-text-primary/60 hover:bg-text-primary/5 transition-all disabled:opacity-30"
+            aria-label={t('chat.attachFile')}
+            title={t('chat.attachFile')}
           >
             <Paperclip size={18} />
           </motion.button>
@@ -1057,14 +1066,14 @@ const ScienceAIChat = () => {
           <div className="absolute right-3 bottom-3">
             {isLoading ? (
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleStop}
-                aria-label="Остановить генерацию"
+                aria-label={t('chat.stopGeneration')}
                 className="p-2.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all border border-red-500/20">
                 <X size={16} />
               </motion.button>
             ) : (
               <motion.button whileHover={{ scale: 1.08, boxShadow: '0 0 24px rgba(139,92,246,0.4)' }} whileTap={{ scale: 0.92 }} onClick={() => handleSend()}
                 disabled={!input.trim() && !hasAttachments}
-                aria-label="Отправить сообщение"
+                aria-label={t('chat.send')}
                 className="p-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white disabled:opacity-10 disabled:cursor-not-allowed transition-all"
                 style={{ boxShadow: (input.trim() || hasAttachments) ? '0 0 20px rgba(139,92,246,0.3)' : 'none' }}>
                 <Send size={16} />
@@ -1074,10 +1083,10 @@ const ScienceAIChat = () => {
         </motion.div>
 
         {isWelcome && (
-          <div className="hidden sm:flex items-center justify-center gap-5 mt-3 text-white/30 text-xs">
-            <span className="flex items-center gap-1"><Command size={10} />Enter — отправить</span>
-            <span className="flex items-center gap-1"><Paperclip size={10} />Файлы</span>
-            <span className="flex items-center gap-1"><Hash size={10} />/ — команды</span>
+          <div className="hidden sm:flex items-center justify-center gap-5 mt-3 text-text-secondary/50 text-xs">
+            <span className="flex items-center gap-1"><Command size={10} />{t('chat.enterToSendShort')}</span>
+            <span className="flex items-center gap-1"><Paperclip size={10} />{t('chat.files')}</span>
+            <span className="flex items-center gap-1"><Hash size={10} />{t('chat.slashCommands')}</span>
           </div>
         )}
       </div>
@@ -1089,8 +1098,7 @@ const ScienceAIChat = () => {
   // ═══════════════════════════════════════════
   return (
     <div
-      className="h-[100dvh] w-screen flex overflow-hidden"
-      style={{ background: '#050505' }}
+      className="h-[100dvh] w-screen flex overflow-hidden bg-bg-primary"
       onMouseMove={handleMouseMove}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -1110,80 +1118,80 @@ const ScienceAIChat = () => {
             <motion.aside
               initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -300, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed z-50 w-72 h-full flex flex-col border-r border-white/[0.04]"
-              style={{ background: 'rgba(8,8,14,0.97)', backdropFilter: 'blur(40px)', boxShadow: '4px 0 40px rgba(0,0,0,0.5), inset 1px 0 0 rgba(255,255,255,0.03)' }}
+              className="fixed z-50 w-72 h-full flex flex-col border-r border-border-primary/30"
+              style={{ background: 'rgb(var(--bg-primary) / 0.97)', backdropFilter: 'blur(40px)', boxShadow: '4px 0 40px rgba(0,0,0,0.3)' }}
               role="navigation"
-              aria-label="Боковая панель"
+              aria-label={t('chat.toggleSidebar')}
             >
-              <div className="p-4 flex items-center justify-between border-b border-white/[0.04]">
+              <div className="p-4 flex items-center justify-between border-b border-border-primary/30">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
                     <Brain size={17} className="text-white" />
                   </div>
                   <div>
-                    <span className="font-semibold text-white text-sm tracking-tight">Science AI</span>
-                    <p className="text-[10px] text-white/30 -mt-0.5">Научный ассистент</p>
+                    <span className="font-semibold text-text-primary text-sm tracking-tight">Science AI</span>
+                    <p className="text-[10px] text-text-secondary/50 -mt-0.5">{t('chat.aiSubtitle')}</p>
                   </div>
                 </div>
-                <button onClick={() => setShowSidebar(false)} aria-label="Закрыть меню"
-                  className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/70 transition-colors">
+                <button onClick={() => setShowSidebar(false)} aria-label={t('common.close')}
+                  className="p-1.5 rounded-lg hover:bg-text-primary/5 text-text-secondary/60 hover:text-text-primary/70 transition-colors">
                   <X size={18} />
                 </button>
               </div>
 
               <div className="p-3">
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={newChat}
-                  className="w-full flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 border border-violet-500/20 text-white/90 text-sm font-medium hover:from-violet-500/30 hover:to-fuchsia-500/30 transition-all">
-                  <Plus size={16} />Новый чат
+                  className="w-full flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 border border-violet-500/20 text-text-primary/90 text-sm font-medium hover:from-violet-500/30 hover:to-fuchsia-500/30 transition-all">
+                  <Plus size={16} />{t('chat.newChat')}
                 </motion.button>
               </div>
 
               <div className="px-3 mb-2">
                 <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                  <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Поиск чатов..."
-                    aria-label="Поиск чатов"
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-white/5 border border-white/[0.06] rounded-lg text-white/80 placeholder-white/35 focus:outline-none focus:border-violet-500/30" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/50" />
+                  <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t('chat.searchChats')}
+                    aria-label={t('chat.searchChats')}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-text-primary/5 border border-border-primary/30 rounded-lg text-text-primary/80 placeholder-text-secondary/50 focus:outline-none focus:border-violet-500/30" />
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-2 space-y-0.5 scrollbar-thin scrollbar-thumb-white/10" role="list" aria-label="История чатов">
+              <div className="flex-1 overflow-y-auto px-2 space-y-0.5 scrollbar-thin scrollbar-thumb-text-primary/10" role="list" aria-label={t('chat.history')}>
                 {filteredChats.length === 0 ? (
-                  <div className="text-center py-8 text-white/30 text-xs">Нет чатов</div>
+                  <div className="text-center py-8 text-text-secondary/50 text-xs">{t('chat.noChats')}</div>
                 ) : filteredChats.map(chat => (
-                  <motion.button key={chat.id} whileHover={{ backgroundColor: 'rgba(255,255,255,0.05)' }} onClick={() => openChat(chat)}
+                  <motion.button key={chat.id} whileHover={{ backgroundColor: 'rgba(var(--text-primary), 0.05)' }} onClick={() => openChat(chat)}
                     role="listitem"
-                    className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left group transition-colors ${currentChatId === chat.id ? 'bg-white/10' : ''}`}>
-                    <MessageSquare size={14} className="text-white/30 shrink-0" />
-                    <span className="flex-1 text-sm text-white/70 truncate">{chat.title}</span>
-                    <button onClick={(e) => deleteChat(chat.id, e)} aria-label={`Удалить чат ${chat.title}`}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-white/30 hover:text-red-400 transition-all">
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left group transition-colors ${currentChatId === chat.id ? 'bg-text-primary/10' : ''}`}>
+                    <MessageSquare size={14} className="text-text-secondary/50 shrink-0" />
+                    <span className="flex-1 text-sm text-text-primary/70 truncate">{chat.title}</span>
+                    <button onClick={(e) => deleteChat(chat.id, e)} aria-label={`${t('chat.deleteThisChat')} ${chat.title}`}
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-text-primary/10 text-text-secondary/50 hover:text-red-400 transition-all">
                       <Trash2 size={12} />
                     </button>
                   </motion.button>
                 ))}
               </div>
 
-              <div className="border-t border-white/[0.04] p-3 space-y-0.5">
-                <button onClick={() => navigate('/dissertation')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/90 hover:bg-white/[0.04] transition-all group">
-                  <GraduationCap size={15} className="group-hover:text-violet-400 transition-colors" />Диссертации
+              <div className="border-t border-border-primary/30 p-3 space-y-0.5">
+                <button onClick={() => navigate('/dissertation')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-text-secondary/70 hover:text-text-primary/90 hover:bg-text-primary/[0.04] transition-all group">
+                  <GraduationCap size={15} className="group-hover:text-violet-400 transition-colors" />{t('nav.dissertations')}
                 </button>
-                <button onClick={() => navigate('/presentations')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/90 hover:bg-white/[0.04] transition-all group">
-                  <Layers size={15} className="group-hover:text-fuchsia-400 transition-colors" />Презентации
+                <button onClick={() => navigate('/presentations')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-text-secondary/70 hover:text-text-primary/90 hover:bg-text-primary/[0.04] transition-all group">
+                  <Layers size={15} className="group-hover:text-fuchsia-400 transition-colors" />{t('nav.presentations')}
                 </button>
-                <button onClick={() => navigate('/settings')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/90 hover:bg-white/[0.04] transition-all group">
-                  <Settings size={15} className="group-hover:text-indigo-400 transition-colors" />Настройки
+                <button onClick={() => navigate('/settings')} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-text-secondary/70 hover:text-text-primary/90 hover:bg-text-primary/[0.04] transition-all group">
+                  <Layers size={15} className="group-hover:text-indigo-400 transition-colors" />{t('common.settings')}
                 </button>
               </div>
 
-              <div className="border-t border-white/[0.04] p-3">
+              <div className="border-t border-border-primary/30 p-3">
                 <div className="flex items-center gap-2.5 px-2 py-1">
                   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/80 to-fuchsia-500/80 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-violet-500/10">
                     {userName.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white/85 truncate font-medium">{userName}</p>
-                    <p className="text-[11px] text-white/35 truncate">{user?.email}</p>
+                    <p className="text-sm text-text-primary/85 truncate font-medium">{userName}</p>
+                    <p className="text-[11px] text-text-secondary/50 truncate">{user?.email}</p>
                   </div>
                 </div>
               </div>
@@ -1216,7 +1224,7 @@ const ScienceAIChat = () => {
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-500/[0.08] rounded-full blur-[140px]"
           />
           {/* Grid pattern with radial fade — like landing page */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black_40%,transparent_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgb(var(--text-primary)/0.03)_1px,transparent_1px),linear-gradient(90deg,rgb(var(--text-primary)/0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black_40%,transparent_100%)]" />
         </div>
 
         {/* Interactive mouse glow */}
@@ -1229,15 +1237,15 @@ const ScienceAIChat = () => {
 
         {/* Top bar — premium glassmorphism */}
         <div className="relative z-10 flex items-center justify-between px-3 sm:px-5 py-3"
-          style={{ background: 'rgba(8,8,14,0.6)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+          style={{ background: 'rgb(var(--bg-primary) / 0.6)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgb(var(--border-primary) / 0.3)' }}>
           <div className="flex items-center gap-1.5">
-            <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => setShowSidebar(true)} aria-label="Открыть меню"
-              className="p-2.5 rounded-xl hover:bg-white/[0.06] text-white/40 hover:text-white/80 transition-all duration-200">
+            <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => setShowSidebar(true)} aria-label={t('chat.openMenu')}
+              className="p-2.5 rounded-xl hover:bg-text-primary/[0.06] text-text-secondary/60 hover:text-text-primary/80 transition-all duration-200">
               <Menu size={20} />
             </motion.button>
             <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={newChat}
-              aria-label="Новый чат"
-              className="p-2.5 rounded-xl hover:bg-white/[0.06] text-white/40 hover:text-white/80 transition-all duration-200">
+              aria-label={t('chat.newChat')}
+              className="p-2.5 rounded-xl hover:bg-text-primary/[0.06] text-text-secondary/60 hover:text-text-primary/80 transition-all duration-200">
               <Plus size={20} />
             </motion.button>
           </div>
@@ -1245,10 +1253,10 @@ const ScienceAIChat = () => {
             <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
               <Sparkles size={10} className="text-white" />
             </div>
-            <span className="text-white/50 text-sm font-medium tracking-wide select-none">Science AI</span>
+            <span className="text-text-secondary/70 text-sm font-medium tracking-wide select-none">Science AI</span>
           </div>
-          <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => navigate('/settings')} aria-label="Настройки"
-            className="p-2.5 rounded-xl hover:bg-white/[0.06] text-white/40 hover:text-white/80 transition-all duration-200">
+          <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => navigate('/settings')} aria-label={t('common.settings')}
+            className="p-2.5 rounded-xl hover:bg-text-primary/[0.06] text-text-secondary/60 hover:text-text-primary/80 transition-all duration-200">
             <Settings size={18} />
           </motion.button>
         </div>
@@ -1267,8 +1275,8 @@ const ScienceAIChat = () => {
                   transition={{ delay: 0.1, type: 'spring', damping: 12, stiffness: 200 }}
                   className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-6 sm:mb-8">
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 opacity-20 blur-xl animate-pulse" />
-                  <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.08] flex items-center justify-center"
-                    style={{ boxShadow: '0 0 40px rgba(139,92,246,0.15), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                  <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-text-primary/[0.08] flex items-center justify-center"
+                    style={{ boxShadow: '0 0 40px rgba(139,92,246,0.15), inset 0 1px 0 rgb(var(--text-primary) / 0.05)' }}>
                     <motion.div animate={{ rotate: [0, 5, -5, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}>
                       <Sparkles size={32} className="text-violet-400/90" />
                     </motion.div>
@@ -1276,13 +1284,13 @@ const ScienceAIChat = () => {
                 </motion.div>
 
                 <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6 }}
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary mb-3 tracking-tight">
                   Чем помочь сегодня?
                 </motion.h1>
 
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-                  className="text-white/35 text-sm sm:text-base mb-8 sm:mb-10 font-light px-2 sm:px-0">
-                  Напишите запрос или используйте <span className="font-mono text-violet-400/70 px-1.5 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.05]">/команду</span>
+                  className="text-text-secondary/60 text-sm sm:text-base mb-8 sm:mb-10 font-light px-2 sm:px-0">
+                  Напишите запрос или используйте <span className="font-mono text-violet-400/70 px-1.5 py-0.5 rounded-md bg-text-primary/[0.03] border border-text-primary/[0.05]">/команду</span>
                 </motion.p>
 
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
@@ -1300,8 +1308,8 @@ const ScienceAIChat = () => {
                       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.55 + i * 0.05, type: 'spring', damping: 20 }}
                       onClick={() => handleQuickAction(action.prompt)}
-                      className="group flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm text-white/50 hover:text-white/90 transition-all duration-300"
-                      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)' }}>
+                      className="group flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm text-text-secondary/70 hover:text-text-primary/90 transition-all duration-300"
+                      style={{ background: 'rgb(var(--text-primary) / 0.025)', border: '1px solid rgb(var(--border-primary) / 0.3)', backdropFilter: 'blur(12px)' }}>
                       <action.icon size={14} className="text-violet-400/60 group-hover:text-violet-400 transition-colors" />
                       {action.label}
                     </motion.button>
@@ -1311,12 +1319,12 @@ const ScienceAIChat = () => {
                 {/* ═══ Capabilities — Premium glassmorphism cards ═══ */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
                   className="max-w-xl mx-auto">
-                  <p className="text-white/20 text-[11px] uppercase tracking-[0.2em] mb-5 font-medium">Просто опишите задачу</p>
+                  <p className="text-text-secondary/40 text-[11px] uppercase tracking-[0.2em] mb-5 font-medium">{t('chat.describeTask')}</p>
                   <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {[
-                      { icon: GraduationCap, title: 'Диссертации', desc: 'Дипломы, курсовые, рефераты', color: 'violet', gradient: 'from-violet-500/20 to-violet-600/5', path: '/dissertation' },
-                      { icon: Layers, title: 'Презентации', desc: 'Слайды и визуализации', color: 'fuchsia', gradient: 'from-fuchsia-500/20 to-fuchsia-600/5', path: '/presentations' },
-                      { icon: MessageSquare, title: 'Вопросы', desc: 'Консультации и источники', color: 'indigo', gradient: 'from-indigo-500/20 to-indigo-600/5', path: '' },
+                      { icon: GraduationCap, title: t('nav.dissertations'), desc: t('chat.capDissertations'), color: 'violet', gradient: 'from-violet-500/20 to-violet-600/5', path: '/dissertation' },
+                      { icon: Layers, title: t('nav.presentations'), desc: t('chat.capPresentations'), color: 'fuchsia', gradient: 'from-fuchsia-500/20 to-fuchsia-600/5', path: '/presentations' },
+                      { icon: MessageSquare, title: t('chat.questions'), desc: t('chat.capQuestions'), color: 'indigo', gradient: 'from-indigo-500/20 to-indigo-600/5', path: '' },
                     ].map((cap, i) => (
                       <motion.div key={i}
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -1324,7 +1332,7 @@ const ScienceAIChat = () => {
                         whileHover={{ y: -4, scale: 1.02 }}
                         onClick={() => cap.path && navigate(cap.path)}
                         className={`group relative p-3 sm:p-5 rounded-2xl overflow-hidden ${cap.path ? 'cursor-pointer' : 'cursor-default'}`}
-                        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', backdropFilter: 'blur(16px)' }}>
+                        style={{ background: 'rgb(var(--text-primary) / 0.02)', border: '1px solid rgb(var(--border-primary) / 0.2)', backdropFilter: 'blur(16px)' }}>
                         {/* Card glow on hover */}
                         <div className={`absolute inset-0 bg-gradient-to-br ${cap.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                         <div className="relative">
@@ -1332,13 +1340,13 @@ const ScienceAIChat = () => {
                             style={{ boxShadow: `0 0 20px rgba(var(--accent-primary), 0.05)` }}>
                             <cap.icon size={18} className={`text-${cap.color}-400/80`} />
                           </div>
-                          <p className="text-white/70 text-sm font-semibold mb-1">{cap.title}</p>
-                          <p className="text-white/30 text-xs">{cap.desc}</p>
+                          <p className="text-text-primary/70 text-sm font-semibold mb-1">{cap.title}</p>
+                          <p className="text-text-secondary/50 text-xs">{cap.desc}</p>
                         </div>
                       </motion.div>
                     ))}
                   </div>
-                  <p className="text-white/15 text-[11px] mt-5">ИИ автоматически определит задачу и откроет нужное пространство</p>
+                  <p className="text-text-secondary/30 text-[11px] mt-5">{t('chat.aiAutoDetect')}</p>
                 </motion.div>
               </motion.div>
             </div>
@@ -1347,7 +1355,7 @@ const ScienceAIChat = () => {
             <>
               <div ref={messagesContainerRef} onScroll={handleScroll}
                 className="flex-1 overflow-y-auto px-2.5 sm:px-4 py-4 sm:py-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
-                role="log" aria-label="Сообщения чата">
+                role="log" aria-label={t('chat.title')}>
                 <div className="max-w-3xl mx-auto space-y-6">
                   {messages.map((msg, msgIdx) => {
                     const isError = msg.role === 'assistant' && msg.content.startsWith('❌');
@@ -1360,7 +1368,7 @@ const ScienceAIChat = () => {
                         {msg.role === 'assistant' && (
                           <div className="relative w-8 h-8 shrink-0 mt-1">
                             {isStreaming && <div className="absolute inset-0 rounded-xl bg-violet-500/20 blur-md animate-pulse" />}
-                            <div className="relative w-full h-full rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.06] flex items-center justify-center"
+                            <div className="relative w-full h-full rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-text-primary/[0.06] flex items-center justify-center"
                               style={{ boxShadow: isStreaming ? '0 0 16px rgba(139,92,246,0.2)' : 'none' }}>
                               <Sparkles size={14} className={`text-violet-400/80 ${isStreaming ? 'animate-pulse' : ''}`} />
                             </div>
@@ -1372,7 +1380,7 @@ const ScienceAIChat = () => {
                           {msg.attachments && msg.attachments.some(a => a.preview) && (
                             <div className="flex flex-wrap gap-2 mb-2 justify-end">
                               {msg.attachments.filter(a => a.preview).map((a, i) => (
-                                <div key={i} className="w-28 h-28 rounded-xl overflow-hidden border border-white/10">
+                                <div key={i} className="w-28 h-28 rounded-xl overflow-hidden border border-text-primary/10">
                                   <img src={a.preview} alt={a.name} className="w-full h-full object-cover" />
                                 </div>
                               ))}
@@ -1392,19 +1400,19 @@ const ScienceAIChat = () => {
                                   value={editText}
                                   onChange={e => setEditText(e.target.value)}
                                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(msg.id); } if (e.key === 'Escape') handleCancelEdit(); }}
-                                  className="w-full bg-transparent px-4 py-3 text-sm text-white/90 resize-none focus:outline-none"
+                                  className="w-full bg-transparent px-4 py-3 text-sm text-text-primary/90 resize-none focus:outline-none"
                                   rows={3}
                                   autoFocus
                                 />
                                 <div className="flex items-center gap-2 px-3 py-2 border-t border-violet-500/15">
-                                  <span className="text-[10px] text-white/20 flex-1">Enter — отправить, Esc — отмена</span>
+                                  <span className="text-[10px] text-text-secondary/30 flex-1">{t('chat.enterToSend')}</span>
                                   <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleCancelEdit}
-                                    className="px-3 py-1.5 text-xs text-white/50 hover:text-white/80 rounded-lg hover:bg-white/5 transition-all">
-                                    Отмена
+                                    className="px-3 py-1.5 text-xs text-text-secondary/50 hover:text-text-primary/80 rounded-lg hover:bg-text-primary/5 transition-all">
+                                    {t('chat.cancel')}
                                   </motion.button>
                                   <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleSaveEdit(msg.id)}
                                     className="px-3.5 py-1.5 text-xs text-white font-medium bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-lg shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transition-all">
-                                    Отправить
+                                    {t('chat.submit')}
                                   </motion.button>
                                 </div>
                               </div>
@@ -1418,14 +1426,14 @@ const ScienceAIChat = () => {
                               ? 'px-4 py-3 text-white rounded-br-md'
                               : isError
                                 ? 'px-4 py-3 text-red-300 rounded-bl-md'
-                                : 'px-4 py-3 text-white/80 rounded-bl-md'
+                                : 'px-4 py-3 text-text-primary/80 rounded-bl-md'
                           }`}
                           style={
                             msg.role === 'user'
                               ? { background: 'linear-gradient(135deg, rgba(139,92,246,0.9), rgba(168,85,247,0.85))', boxShadow: '0 4px 20px rgba(139,92,246,0.25)' }
                               : isError
                                 ? { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }
-                                : { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)' }
+                                : { background: 'rgb(var(--text-primary) / 0.025)', border: '1px solid rgb(var(--text-primary) / 0.05)', backdropFilter: 'blur(12px)' }
                           }>
                             {msg.role === 'assistant' && !isError ? (
                               <div className="prose-chat">
@@ -1452,7 +1460,7 @@ const ScienceAIChat = () => {
                                 whileHover={{ scale: 1.04 }}
                                 whileTap={{ scale: 0.96 }}
                                 onClick={handleStop}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white transition-all"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-text-primary/70 hover:text-text-primary transition-all"
                                 style={{
                                   background: 'rgba(239,68,68,0.08)',
                                   border: '1px solid rgba(239,68,68,0.2)',
@@ -1473,45 +1481,45 @@ const ScienceAIChat = () => {
                               className={`flex items-center gap-0.5 mt-1.5 transition-opacity duration-200 ${msg.feedback ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100'}`}
                             >
                               <div className="flex items-center gap-0.5 px-1.5 py-1 rounded-xl"
-                                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                                style={{ background: 'rgb(var(--text-primary) / 0.02)', border: '1px solid rgb(var(--text-primary) / 0.04)' }}>
                                 <CopyButton text={msg.content} />
                                 <motion.button
                                   whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
                                   onClick={() => handleRegenerateMessage(msg.id)}
-                                  className="p-1.5 rounded-lg text-white/30 hover:text-violet-400 hover:bg-violet-500/10 transition-all"
-                                  title="Перегенерировать"
+                                  className="p-1.5 rounded-lg text-text-secondary/50 hover:text-violet-400 hover:bg-violet-500/10 transition-all"
+                                  title={t('chat.regenerate')}
                                 >
                                   <RotateCcw size={14} />
                                 </motion.button>
                                 <motion.button
                                   whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
                                   onClick={() => handleSpeak(msg.id, msg.content)}
-                                  className={`p-1.5 rounded-lg transition-all ${speakingMsgId === msg.id ? 'text-violet-400 bg-violet-500/10' : 'text-white/30 hover:text-violet-400 hover:bg-violet-500/10'}`}
-                                  title={speakingMsgId === msg.id ? 'Остановить' : 'Озвучить'}
+                                  className={`p-1.5 rounded-lg transition-all ${speakingMsgId === msg.id ? 'text-violet-400 bg-violet-500/10' : 'text-text-secondary/50 hover:text-violet-400 hover:bg-violet-500/10'}`}
+                                  title={speakingMsgId === msg.id ? t('chat.stopSpeaking') : t('chat.speak')}
                                 >
                                   {speakingMsgId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
                                 </motion.button>
 
-                                <div className="w-px h-4 bg-white/[0.06] mx-1" />
+                                <div className="w-px h-4 bg-text-primary/[0.06] mx-1" />
 
                                 <motion.button
                                   whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
                                   onClick={() => handleFeedback(msg.id, 'up')}
-                                  className={`p-1.5 rounded-lg transition-all ${msg.feedback === 'up' ? 'text-green-400 bg-green-500/10' : 'text-white/30 hover:text-green-400 hover:bg-green-500/10'}`}
-                                  title="Полезно"
+                                  className={`p-1.5 rounded-lg transition-all ${msg.feedback === 'up' ? 'text-green-400 bg-green-500/10' : 'text-text-secondary/50 hover:text-green-400 hover:bg-green-500/10'}`}
+                                  title={t('chat.helpfulResponse')}
                                 >
                                   <ThumbsUp size={14} />
                                 </motion.button>
                                 <motion.button
                                   whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
                                   onClick={() => handleFeedback(msg.id, 'down')}
-                                  className={`p-1.5 rounded-lg transition-all ${msg.feedback === 'down' ? 'text-red-400 bg-red-500/10' : 'text-white/30 hover:text-red-400 hover:bg-red-500/10'}`}
-                                  title="Не полезно"
+                                  className={`p-1.5 rounded-lg transition-all ${msg.feedback === 'down' ? 'text-red-400 bg-red-500/10' : 'text-text-secondary/50 hover:text-red-400 hover:bg-red-500/10'}`}
+                                  title={t('chat.unhelpfulResponse')}
                                 >
                                   <ThumbsDown size={14} />
                                 </motion.button>
                               </div>
-                              <span className="text-[10px] text-white/15 ml-2">{formatTime(msg.timestamp)}</span>
+                              <span className="text-[10px] text-text-secondary/30 ml-2">{formatTime(msg.timestamp)}</span>
                             </motion.div>
                           )}
 
@@ -1526,22 +1534,22 @@ const ScienceAIChat = () => {
                                 style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)' }}
                               >
                                 <RotateCcw size={13} />
-                                Повторить
+                                {t('chat.retry')}
                               </motion.button>
-                              <span className="text-[10px] text-white/15">{formatTime(msg.timestamp)}</span>
+                              <span className="text-[10px] text-text-secondary/30">{formatTime(msg.timestamp)}</span>
                             </div>
                           )}
 
                           {/* ── User message actions ── */}
                           {msg.role === 'user' && (
                             <div className="flex items-center gap-1 mt-1 justify-end opacity-0 group-hover/msg:opacity-100 transition-opacity duration-200">
-                              <span className="text-[10px] text-white/15 mr-1">{formatTime(msg.timestamp)}</span>
+                              <span className="text-[10px] text-text-secondary/30 mr-1">{formatTime(msg.timestamp)}</span>
                               {!isLoading && (
                                 <motion.button
                                   whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.85 }}
                                   onClick={() => handleStartEdit(msg)}
-                                  className="p-1.5 rounded-lg text-white/30 hover:text-violet-400 hover:bg-white/5 transition-all"
-                                  title="Редактировать"
+                                  className="p-1.5 rounded-lg text-text-secondary/50 hover:text-violet-400 hover:bg-text-primary/5 transition-all"
+                                  title={t('common.edit')}
                                 >
                                   <Edit3 size={13} />
                                 </motion.button>
@@ -1555,7 +1563,7 @@ const ScienceAIChat = () => {
 
                         {/* User avatar — premium style */}
                         {msg.role === 'user' && (
-                          <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.04] flex items-center justify-center shrink-0 mt-1 text-white/50 text-xs font-semibold">
+                          <div className="w-8 h-8 rounded-xl bg-text-primary/[0.06] border border-text-primary/[0.04] flex items-center justify-center shrink-0 mt-1 text-text-secondary text-xs font-semibold">
                             {userName.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -1568,12 +1576,12 @@ const ScienceAIChat = () => {
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
                       <div className="relative w-8 h-8 shrink-0">
                         <div className="absolute inset-0 rounded-xl bg-violet-500/20 blur-md animate-pulse" />
-                        <div className="relative w-full h-full rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-white/[0.06] flex items-center justify-center">
+                        <div className="relative w-full h-full rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-text-primary/[0.06] flex items-center justify-center">
                           <Sparkles size={14} className="text-violet-400 animate-pulse" />
                         </div>
                       </div>
                       <div className="px-4 py-3.5 rounded-2xl rounded-bl-md"
-                        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)' }}>
+                        style={{ background: 'rgb(var(--text-primary) / 0.025)', border: '1px solid rgb(var(--text-primary) / 0.05)', backdropFilter: 'blur(12px)' }}>
                         <div className="flex gap-1.5">
                           {[0, 1, 2].map(i => (
                             <motion.div key={i} animate={{ scale: [0.7, 1.2, 0.7], opacity: [0.3, 0.9, 0.3] }}
@@ -1594,9 +1602,9 @@ const ScienceAIChat = () => {
                 {showScrollBtn && (
                   <motion.button initial={{ opacity: 0, scale: 0.8, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.8, y: 10 }}
                     onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                    aria-label="Прокрутить вниз"
-                    className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 p-2.5 rounded-full text-white/50 hover:text-white/80 transition-all"
-                    style={{ background: 'rgba(20,20,30,0.8)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
+                    aria-label={t('chat.scrollDown')}
+                    className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 p-2.5 rounded-full text-text-secondary/70 hover:text-text-primary/80 transition-all"
+                    style={{ background: 'rgb(var(--bg-primary) / 0.8)', backdropFilter: 'blur(20px)', border: '1px solid rgb(var(--border-primary) / 0.3)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
                     <ArrowDown size={16} />
                   </motion.button>
                 )}
@@ -1612,16 +1620,16 @@ const ScienceAIChat = () => {
           {showCommandPalette && (
             <motion.div initial={{ opacity: 0, y: 10, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.97 }}
               className="absolute bottom-32 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-lg rounded-2xl overflow-hidden"
-              style={{ background: 'rgba(10,10,16,0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02)' }}
-              role="listbox" aria-label="Палитра команд">
-              <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-2">
+              style={{ background: 'rgb(var(--bg-primary) / 0.95)', backdropFilter: 'blur(40px)', border: '1px solid rgb(var(--border-primary) / 0.3)', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
+              role="listbox" aria-label={t('chat.commandPalette')}>
+              <div className="px-4 py-3 border-b border-text-primary/[0.06] flex items-center gap-2">
                 <Command size={14} className="text-violet-400" />
-                <span className="text-sm text-white/50">Команды</span>
-                <span className="text-[10px] text-white/20 ml-auto">↑↓ для навигации</span>
+                <span className="text-sm text-text-secondary/60">{t('chat.commands')}</span>
+                <span className="text-[10px] text-text-secondary/30 ml-auto">{t('chat.navigationHint')}</span>
               </div>
               <div className="max-h-64 overflow-y-auto p-2">
                 {filteredCommands.length === 0 ? (
-                  <div className="text-center py-6 text-white/25 text-sm">Команда не найдена</div>
+                  <div className="text-center py-6 text-text-secondary/40 text-sm">{t('chat.commandNotFound')}</div>
                 ) : filteredCommands.map((cmd, i) => (
                   <motion.button
                     key={i}
@@ -1629,18 +1637,18 @@ const ScienceAIChat = () => {
                     role="option"
                     aria-selected={i === commandIndex}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                      i === commandIndex ? 'bg-violet-500/10 border border-violet-500/15' : 'border border-transparent hover:bg-white/[0.04]'
+                      i === commandIndex ? 'bg-violet-500/10 border border-violet-500/15' : 'border border-transparent hover:bg-text-primary/[0.04]'
                     }`}>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      i === commandIndex ? 'bg-violet-500/15' : 'bg-white/[0.04]'
+                      i === commandIndex ? 'bg-violet-500/15' : 'bg-text-primary/[0.04]'
                     }`}>
                       <cmd.icon size={14} className={i === commandIndex ? 'text-violet-400' : 'text-violet-400/70'} />
                     </div>
                     <div>
-                      <p className={`text-sm ${i === commandIndex ? 'text-white/90' : 'text-white/70'}`}>{cmd.label}</p>
-                      <p className="text-xs text-white/30">{cmd.description}</p>
+                      <p className={`text-sm ${i === commandIndex ? 'text-text-primary/90' : 'text-text-primary/70'}`}>{cmd.label}</p>
+                      <p className="text-xs text-text-secondary/40">{cmd.description}</p>
                     </div>
-                    <ChevronRight size={12} className={`ml-auto ${i === commandIndex ? 'text-violet-400/50' : 'text-white/10'}`} />
+                    <ChevronRight size={12} className={`ml-auto ${i === commandIndex ? 'text-violet-400/50' : 'text-text-secondary/20'}`} />
                   </motion.button>
                 ))}
               </div>

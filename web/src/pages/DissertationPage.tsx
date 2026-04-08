@@ -55,6 +55,7 @@ import {
   X,
 } from 'lucide-react';
 import { useSubscriptionStore, SUBSCRIPTION_PLANS, PLAN_LIMITS } from '../store/subscriptionStore';
+import { useTranslation } from '../store/languageStore';
 import PlagiarismChecker from '../components/PlagiarismChecker';
 import { useConfirm } from '../components/ConfirmModal';
 import { lazy, Suspense } from 'react';
@@ -68,7 +69,8 @@ import type { Chapter, DocumentType, DocumentTypeConfig, Dissertation, Citation,
 import { DOCUMENT_TYPES, SCIENCE_FIELDS, formatCitationGOST, checkUniqueness, generateBibliography, getHumanWritingSystemPrompt, exportToPDF } from './dissertation';
 
 const DissertationPage = () => {
-  useDocumentTitle('Диссертации');
+  const { t } = useTranslation();
+  useDocumentTitle(t('dissertation.pageTitle'));
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
@@ -193,67 +195,67 @@ const DissertationPage = () => {
     }
     return {
       id: id || `diss-${Date.now()}`,
-      title: 'Новая диссертация',
+      title: t('dissertation.newDissertation'),
       topic: '',
       abstract: '',
       chapters: [
         {
           id: 'ch-1',
-          title: 'Введение',
+          title: t('dissertation.chIntroduction'),
           content: '',
           subchapters: [
-            { id: 'sub-1-1', title: 'Актуальность исследования', content: '' },
-            { id: 'sub-1-2', title: 'Цель и задачи', content: '' },
-            { id: 'sub-1-3', title: 'Объект и предмет исследования', content: '' },
-            { id: 'sub-1-4', title: 'Научная новизна', content: '' },
-            { id: 'sub-1-5', title: 'Практическая значимость', content: '' },
+            { id: 'sub-1-1', title: t('dissertation.subResearchRelevance'), content: '' },
+            { id: 'sub-1-2', title: t('dissertation.subGoalsAndObjectives'), content: '' },
+            { id: 'sub-1-3', title: t('dissertation.subObjectAndSubject'), content: '' },
+            { id: 'sub-1-4', title: t('dissertation.subNovelty'), content: '' },
+            { id: 'sub-1-5', title: t('dissertation.subPracticalSignificance'), content: '' },
           ]
         },
         {
           id: 'ch-2',
-          title: 'Глава 1. Теоретические основы исследования',
+          title: t('dissertation.chTheory'),
           content: '',
           subchapters: [
-            { id: 'sub-2-1', title: '1.1. Обзор литературы', content: '' },
-            { id: 'sub-2-2', title: '1.2. Основные понятия и определения', content: '' },
-            { id: 'sub-2-3', title: '1.3. Анализ существующих подходов', content: '' },
+            { id: 'sub-2-1', title: t('dissertation.subLitReview'), content: '' },
+            { id: 'sub-2-2', title: t('dissertation.subConcepts'), content: '' },
+            { id: 'sub-2-3', title: t('dissertation.subApproaches'), content: '' },
           ]
         },
         {
           id: 'ch-3',
-          title: 'Глава 2. Методология исследования',
+          title: t('dissertation.chMethodology'),
           content: '',
           subchapters: [
-            { id: 'sub-3-1', title: '2.1. Методы исследования', content: '' },
-            { id: 'sub-3-2', title: '2.2. Этапы исследования', content: '' },
-            { id: 'sub-3-3', title: '2.3. База исследования', content: '' },
+            { id: 'sub-3-1', title: t('dissertation.subMethods'), content: '' },
+            { id: 'sub-3-2', title: t('dissertation.subStages'), content: '' },
+            { id: 'sub-3-3', title: t('dissertation.subResearchBase'), content: '' },
           ]
         },
         {
           id: 'ch-4',
-          title: 'Глава 3. Результаты исследования',
+          title: t('dissertation.chResults'),
           content: '',
           subchapters: [
-            { id: 'sub-4-1', title: '3.1. Анализ полученных данных', content: '' },
-            { id: 'sub-4-2', title: '3.2. Интерпретация результатов', content: '' },
-            { id: 'sub-4-3', title: '3.3. Обсуждение', content: '' },
+            { id: 'sub-4-1', title: t('dissertation.subDataAnalysis'), content: '' },
+            { id: 'sub-4-2', title: t('dissertation.subInterpretation'), content: '' },
+            { id: 'sub-4-3', title: t('dissertation.subDiscussion'), content: '' },
           ]
         },
         {
           id: 'ch-5',
-          title: 'Заключение',
+          title: t('dissertation.chConclusion'),
           content: '',
           subchapters: []
         },
         {
           id: 'ch-6',
-          title: 'Список литературы',
+          title: t('dissertation.chReferences'),
           content: '',
           subchapters: []
         },
         {
           id: 'ch-7',
-          title: 'Приложения',
+          title: t('dissertation.chAppendices'),
           content: '',
           subchapters: []
         }
@@ -377,7 +379,7 @@ const DissertationPage = () => {
     setAiMessages(prev => [...prev, {
       id: `auto-${Date.now()}`,
       role: 'assistant',
-      content: `🚀 **Автоматическое создание**\n\n📌 Тема: «${autoTask.topic || 'не указана'}»\n📄 Тип: ${DOCUMENT_TYPES[(autoTask.documentType || 'dissertation') as DocumentType]?.nameRu || 'Диссертация'}${autoTask.pageCount ? `\n📑 Страниц: ~${autoTask.pageCount}` : ''}\n\n⏳ Генерация начнётся автоматически...`,
+      content: `${t('dissertation.autoCreation')}\n\n📌 ${t('dissertation.topicLabel')}: «${autoTask.topic || t('dissertation.notSpecifiedTopic')}»\n📄 ${t('dissertation.type')}: ${DOCUMENT_TYPES[(autoTask.documentType || 'dissertation') as DocumentType]?.nameRu || t('dissertation.defaultDocType')}${autoTask.pageCount ? `\n📑 ${t('dissertation.pagesCountLabel')}: ~${autoTask.pageCount}` : ''}\n\n${t('dissertation.generationStartsAuto')}`,
       timestamp: new Date(),
     }]);
 
@@ -402,7 +404,7 @@ const DissertationPage = () => {
   const getSelectedContent = useCallback(() => {
     if (!selectedChapter) return { title: '', content: '' };
     if (selectedChapter === 'abstract') {
-      return { title: 'Аннотация', content: dissertation.abstract };
+      return { title: t('dissertation.annotation'), content: dissertation.abstract };
     }
     const chapter = dissertation.chapters.find(c => c.id === selectedChapter);
     if (!chapter) return { title: '', content: '' };
@@ -455,7 +457,7 @@ const DissertationPage = () => {
     
     const newChapter: Chapter = {
       id: `ch-${Date.now()}`,
-      title: `Глава ${lastMainChapterNum + 1}. Новая глава`,
+      title: `${t('dissertation.chapter')} ${lastMainChapterNum + 1}. ${t('dissertation.newChapter')}`,
       content: '',
       subchapters: []
     };
@@ -517,7 +519,7 @@ const DissertationPage = () => {
             ...ch,
             subchapters: [...ch.subchapters, {
               id: `sub-${Date.now()}`,
-              title: `${chapterNum}.${ch.subchapters.length + 1}. Новый подраздел`,
+              title: `${chapterNum}.${ch.subchapters.length + 1}. ${t('dissertation.newSubchapter')}`,
               content: ''
             }]
           };
@@ -696,7 +698,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
       if (!response.ok) {
         // Non-streaming error response (e.g. 401, 400)
         const errorText = await response.text();
-        let errorMsg = `Ошибка сервера (${response.status})`;
+        let errorMsg = `${t('dissertation.serverError')} (${response.status})`;
         try {
           const errorData = JSON.parse(errorText);
           errorMsg = errorData.error || errorData.message || errorMsg;
@@ -706,7 +708,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 
       // Read SSE stream
       const reader = response.body?.getReader();
-      if (!reader) throw new Error('Streaming не поддерживается');
+      if (!reader) throw new Error(t('dissertation.streamNotSupported'));
 
       const decoder = new TextDecoder();
       let streamedText = '';
@@ -726,7 +728,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
         setAiMessages(prev => [...prev, {
           id: streamMsgId,
           role: 'assistant',
-          content: '📝 Пишу текст в редактор...',
+          content: t('dissertation.writingToEditor'),
           timestamp: new Date(),
         }]);
       }
@@ -757,7 +759,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
                 const wordCount = streamedText.split(/\s+/).length;
                 setAiMessages(prev => prev.map(msg => 
                   msg.id === streamMsgId 
-                    ? { ...msg, content: `📝 Пишу текст в редактор... (${wordCount} слов)` }
+                    ? { ...msg, content: t('dissertation.writingToEditorWords').replace('{count}', String(wordCount)) }
                     : msg
                 ));
               } else {
@@ -785,7 +787,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
       clearInterval(progressInterval);
 
       if (!fullContent && !streamedText) {
-        throw new Error('Сервер вернул пустой ответ');
+        throw new Error(t('dissertation.emptyResponse'));
       }
 
       const generatedText = fullContent || streamedText;
@@ -802,7 +804,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
         const wordCount = generatedText.split(/\s+/).length;
         setAiMessages(prev => prev.map(msg => 
           msg.id === streamMsgId 
-            ? { ...msg, content: `✅ Текст записан в редактор.\n📊 Слов: ~${wordCount.toLocaleString()}` }
+            ? { ...msg, content: t('dissertation.textWrittenStats').replace('{count}', wordCount.toLocaleString()) }
             : msg
         ));
       } else {
@@ -825,7 +827,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
           setAiMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'assistant',
-            content: `⚠️ Ошибка генерации. Повторная попытка ${attempt + 1}/${retries}...`,
+            content: `${t('dissertation.generationError')} ${attempt + 1}/${retries}`,
             timestamp: new Date(),
           }]);
           
@@ -835,18 +837,11 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
         }
         
         // Все попытки исчерпаны
-        const errorMessage = error instanceof Error ? error.message : 'Попробуйте ещё раз или проверьте соединение с сервером.';
+        const errorMessage = error instanceof Error ? error.message : t('dissertation.retryOrCheckConnection');
         setAiMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: `❌ Ошибка: ${errorMessage}
-          
-💡 **Возможные причины:**
-• Сервер временно недоступен
-• Проблемы с интернет-соединением  
-• Превышен лимит API
-
-Попробуйте обновить страницу или повторить позже.`,
+          content: `${t('dissertation.errorLabel')}: ${errorMessage}\n\n${t('dissertation.possibleCauses')}\n• ${t('dissertation.serverTemporarilyDown')}\n• ${t('dissertation.internetIssues')}\n• ${t('dissertation.apiLimitExceeded')}\n\n${t('dissertation.tryRefreshPage')}`,
           timestamp: new Date(),
         }]);
         return null;
@@ -884,18 +879,18 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
     const subchapters = chapter.subchapters?.length > 0 
       ? chapter.subchapters 
       : [
-          { id: `${chapterId}-1`, title: 'Теоретические основы', content: '' },
-          { id: `${chapterId}-2`, title: 'Анализ подходов', content: '' },
-          { id: `${chapterId}-3`, title: 'Методология исследования', content: '' },
-          { id: `${chapterId}-4`, title: 'Практические аспекты', content: '' },
-          { id: `${chapterId}-5`, title: 'Выводы по главе', content: '' },
+          { id: `${chapterId}-1`, title: t('dissertation.theoryBase'), content: '' },
+          { id: `${chapterId}-2`, title: t('dissertation.approachAnalysis'), content: '' },
+          { id: `${chapterId}-3`, title: t('dissertation.researchMethodology'), content: '' },
+          { id: `${chapterId}-4`, title: t('dissertation.practicalAspects'), content: '' },
+          { id: `${chapterId}-5`, title: t('dissertation.chapterConclusions'), content: '' },
         ];
 
     const wordsPerPage = 350; // ~350 слов на страницу A4
     const totalWords = targetPages * wordsPerPage;
     const wordsPerSection = Math.floor(totalWords / subchapters.length);
     
-    setLargeGenerationProgress({ current: 0, total: subchapters.length, section: 'Подготовка...' });
+    setLargeGenerationProgress({ current: 0, total: subchapters.length, section: t('dissertation.preparation') });
 
     let fullContent = `# ${chapter.title}\n\n`;
 
@@ -903,7 +898,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `🚀 **Начинаю генерацию главы "${chapter.title}"**\n\n📄 Целевой объём: ~${targetPages} страниц (${totalWords.toLocaleString()} слов)\n📑 Разделов: ${subchapters.length}\n⏱️ Примерное время: ${Math.ceil(subchapters.length * 1.5)} минут`,
+        content: `🚀 **${t('dissertation.generatingChapter')}**\n\n📄 ${t('dissertation.targetVolume')}: ~${targetPages} ${t('dissertation.pages')} (${totalWords.toLocaleString()} ${t('dissertation.words')})\n📑 ${t('dissertation.sections')}: ${subchapters.length}\n⏱️ ${t('dissertation.estimatedTime')}: ${Math.ceil(subchapters.length * 1.5)} ${t('dissertation.minutes')}`,
         timestamp: new Date(),
       }]);
 
@@ -1107,7 +1102,7 @@ ${fullContent.slice(-4000)}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `✅ **Глава "${chapter.title}" сгенерирована!**\n\n📊 Статистика:\n• Слов: ${wordCount.toLocaleString()}\n• Страниц: ~${pageCount}\n• Разделов: ${subchapters.length}\n\n💡 Контент добавлен в редактор. Проверьте и отредактируйте при необходимости.`,
+        content: `✅ **${t('dissertation.chapterGenerated')}**\n\n📊 ${t('dissertation.generationStats')}:\n• ${t('dissertation.words')}: ${wordCount.toLocaleString()}\n• ${t('dissertation.pages')}: ~${pageCount}\n• ${t('dissertation.sections')}: ${subchapters.length}\n\n💡 ${t('dissertation.contentAddedToEditor')}`,
         timestamp: new Date(),
       }]);
 
@@ -1119,7 +1114,7 @@ ${fullContent.slice(-4000)}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `❌ Ошибка генерации: ${errorMessage}`,
+        content: `${t('dissertation.chapterGenerationError')}: ${errorMessage}`,
         timestamp: new Date(),
       }]);
       return null;
@@ -1138,17 +1133,17 @@ ${fullContent.slice(-4000)}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `⚠️ ${limitCheck.reason || 'Недостаточно лимитов для генерации.'}\n\nОбновите подписку для доступа к этой функции.`,
+        content: `⚠️ ${limitCheck.reason || t('dissertation.insufficientLimits')}\n\n${t('dissertation.upgradeForFeature')}`,
         timestamp: new Date(),
       }]);
       return;
     }
 
-    if (!dissertation.title.trim() || dissertation.title === 'Новая диссертация') {
+    if (!dissertation.title.trim() || dissertation.title === t('dissertation.newDissertation')) {
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '⚠️ Сначала укажите тему диссертации (заголовок).',
+        content: t('dissertation.enterTopicTitle'),
         timestamp: new Date(),
       }]);
       return;
@@ -1176,16 +1171,16 @@ ${fullContent.slice(-4000)}
     setAiMessages(prev => [...prev, {
       id: thinkingMsgId,
       role: 'assistant',
-      content: `Генерация: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || 'Диссертация'} · ~${targetPages} стр.`,
+      content: `${t('dissertation.generationProgressLabel')}: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || t('dissertation.defaultDocType')} · ~${targetPages} ${t('dissertation.pagesShort')}`,
       timestamp: new Date(),
       isThinking: true,
       thinkingActive: true,
       thinkingSteps: [{
         phase: 'planning',
-        phaseLabel: 'Планирование структуры',
+        phaseLabel: t('dissertation.planningStructure'),
         currentChapter: 0,
         totalChapters: 0,
-        chapterTitle: 'Анализ темы',
+        chapterTitle: t('dissertation.planningStructure'),
         wordsGenerated: 0,
         pagesGenerated: 0,
         percentComplete: 0,
@@ -1249,10 +1244,10 @@ ${fullContent.slice(-4000)}
           setGenerationProgress(data.percentComplete as number);
 
           // Обновляем thinking-шаги
-          const phaseLabel = data.phase === 'planning' ? 'Планирование структуры' 
-            : data.phase === 'generating' ? 'Написание текста' 
-            : data.phase === 'assembling' ? 'Сборка документа' 
-            : 'Готово!';
+          const phaseLabel = data.phase === 'planning' ? t('dissertation.planningStructure') 
+            : data.phase === 'generating' ? t('dissertation.writingText') 
+            : data.phase === 'assembling' ? t('dissertation.assemblingDoc') 
+            : t('dissertation.done');
 
           const newStep: ThinkingStep = {
             phase: data.phase as ThinkingStep['phase'],
@@ -1271,7 +1266,7 @@ ${fullContent.slice(-4000)}
             msg.id === thinkingMsgId 
               ? { 
                   ...msg, 
-                  content: `Генерация: ${data.percentComplete}% · ${(data.wordsGenerated as number).toLocaleString()} слов · ~${data.pagesGenerated} стр.`,
+                  content: `${t('dissertation.generationProgressLabel')}: ${data.percentComplete}% · ${(data.wordsGenerated as number).toLocaleString()} ${t('dissertation.wordsShort')} · ~${data.pagesGenerated} ${t('dissertation.pagesShort')}`,
                   thinkingSteps: [...(msg.thinkingSteps || []), newStep],
                 }
               : msg
@@ -1324,14 +1319,14 @@ ${fullContent.slice(-4000)}
             msg.id === thinkingMsgId 
               ? { 
                   ...msg, 
-                  content: `Генерация завершена: ${(data.totalWords as number)?.toLocaleString() || '?'} слов · ~${data.totalPages || '?'} стр. · ${generationTimeSec} сек.`,
+                  content: `${t('dissertation.generationCompleteLabel')}: ${(data.totalWords as number)?.toLocaleString() || '?'} ${t('dissertation.wordsShort')} · ~${data.totalPages || '?'} ${t('dissertation.pagesShort')} · ${generationTimeSec} ${t('dissertation.secShort')}`,
                   thinkingActive: false,
                   thinkingSteps: [...(msg.thinkingSteps || []), {
                     phase: 'done' as const,
-                    phaseLabel: 'Готово!',
+                    phaseLabel: t('dissertation.done'),
                     currentChapter: resultChapters.length,
                     totalChapters: resultChapters.length,
-                    chapterTitle: 'Все главы записаны в редактор',
+                    chapterTitle: t('dissertation.allChaptersWritten'),
                     wordsGenerated: data.totalWords as number,
                     pagesGenerated: data.totalPages as number,
                     percentComplete: 100,
@@ -1346,7 +1341,7 @@ ${fullContent.slice(-4000)}
           setAiMessages(prev => [...prev, {
             id: Date.now().toString(),
             role: 'assistant',
-            content: `✅ Текст записан в редактор.\n\n📄 Объём: **${(data.totalWords as number)?.toLocaleString() || '?'} слов** (~${data.totalPages || '?'} стр.)\n📑 Глав: ${resultChapters.length}\n⏱️ Время: ${generationTimeSec} сек.\n\nВыберите главу слева для просмотра и редактирования.`,
+            content: `${t('dissertation.fullGenerationDone')}\n\n📄 ${t('dissertation.words')}: **${(data.totalWords as number)?.toLocaleString() || '?'}** (~${data.totalPages || '?'} ${t('dissertation.pages')})\n📑 ${t('dissertation.chapters')}: ${resultChapters.length}\n⏱️ ${generationTimeSec} sec.\n\n${t('dissertation.selectChapterToView')}`,
             timestamp: new Date(),
           }]);
 
@@ -1394,7 +1389,7 @@ ${fullContent.slice(-4000)}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `❌ **Ошибка генерации:**\n\n${error instanceof Error ? error.message : 'Неизвестная ошибка'}\n\n💡 Попробуйте ещё раз или сгенерируйте главы по отдельности.`,
+        content: `❌ **${t('dissertation.fullGenerationError')}:**\n\n${error instanceof Error ? error.message : 'Unknown error'}\n\n💡 ${t('dissertation.tryAgainOrSeparate')}`,
         timestamp: new Date(),
       }]);
     } finally {
@@ -1660,77 +1655,49 @@ ${fullContent.slice(-4000)}
     
     switch (intent) {
       case 'greeting':
-        response = `Привет! 👋 Рад помочь с вашей работой!
+        response = `${t('dissertation.smartGreeting')}
 
 📚 **"${dissertation.title}"**
-Тип: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || 'Диссертация'}
+${t('dissertation.type')}: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || t('dissertation.defaultDocType')}
 
 ${selectedChapter 
-  ? `📍 Сейчас открыт раздел: **${getSelectedContent().title}**\n${getSelectedContent().content.length > 0 ? `(${getSelectedContent().content.length} символов текста)` : '(пока пустой)'}`
-  : '📍 Выберите раздел слева для начала работы'}
+  ? `📍 ${t('dissertation.openSection')}: **${getSelectedContent().title}**\n${getSelectedContent().content.length > 0 ? `(${getSelectedContent().content.length} ${t('dissertation.symbolsText')})` : `(${t('dissertation.emptyYet')})`}`
+  : `📍 ${t('dissertation.selectChapterToStart')}`}
 
-**Что могу сделать:**
-• Написать текст для раздела
-• Расширить существующий текст
-• Улучшить стиль и добавить источники
-• Ответить на вопросы
-
-Просто опишите, что нужно! 💬`;
+${t('dissertation.whatCanDo')}
+${t('dissertation.describeTask')} 💬`;
         break;
         
       case 'farewell':
-        response = `До свидания! 👋 
+        response = `${t('dissertation.smartFarewell')}
 
-Ваша работа автоматически сохранена. Возвращайтесь продолжить работу над "${dissertation.title}" в любое время!
+${t('dissertation.returnAnytime').replace('{title}', dissertation.title)}
 
-Удачи с написанием! 🎓`;
+${t('dissertation.goodLuck')} 🎓`;
         break;
         
       case 'thanks':
-        response = `Всегда пожалуйста! 😊 
-
-Если нужна ещё помощь — просто напишите. Я здесь, чтобы помочь с вашей диссертацией! 📝`;
+        response = `${t('dissertation.smartThanks')} 📝`;
         break;
         
       case 'help':
-        response = `📖 **Как пользоваться редактором:**
+        response = `${t('dissertation.smartHelp')}
 
-**Структура работы (слева):**
-• Нажмите на главу/раздел для выбора
-• ➕ добавляет новые разделы
-• 🗑️ удаляет ненужные
+${t('dissertation.helpStructure')}
+${t('dissertation.helpEditor')}
+${t('dissertation.helpAI')}
 
-**Редактор (центр):**
-• Пишите текст напрямую
-• Или используйте AI для генерации
-
-**AI-помощник (здесь):**
-Просто опишите задачу своими словами:
-• _"Напиши введение с актуальностью"_
-• _"Расширь этот текст научным стилем"_
-• _"Добавь обзор литературы"_
-• _"Сделай выводы по главе"_
-
-**Быстрые действия** ниже — для типовых задач одним кликом.
-
-${!selectedChapter ? '⚠️ **Совет:** Сначала выберите раздел слева!' : ''}`;
+${!selectedChapter ? `⚠️ ${t('dissertation.selectChapterTip')}` : ''}`;
         break;
         
       case 'about':
-        response = `🤖 **Я — Science AI, ваш помощник по научным работам**
+        response = `${t('dissertation.smartAbout')}
 
-**Специализация:**
-• Диссертации (кандидатские, докторские)
-• Магистерские и дипломные работы
-• Научные статьи и курсовые
+${t('dissertation.aboutSpecialization')}
+${t('dissertation.aboutAbilities')}
+✨ ${t('dissertation.aboutAdapt')}: **${SCIENCE_FIELDS.find(f => f.id === dissertation.scienceField)?.name || t('dissertation.anyScience')}**
 
-**Мои способности:**
-🧠 Понимаю контекст и намерения, а не только ключевые слова
-📚 Пишу научным языком по ГОСТ/APA/DIN
-🔗 Добавляю ссылки на реальные источники
-✨ Адаптируюсь под вашу область: **${SCIENCE_FIELDS.find(f => f.id === dissertation.scienceField)?.name || 'любая наука'}**
-
-Работаю вместе с вами — вы направляете, я помогаю! 💪`;
+${t('dissertation.aboutTogether')} 💪`;
         break;
         
       case 'status':
@@ -1743,23 +1710,23 @@ ${!selectedChapter ? '⚠️ **Совет:** Сначала выберите р�
           return sum + chapterWords + subchapterWords;
         }, 0);
         
-        response = `📊 **Статус вашей работы:**
+        response = `${t('dissertation.smartStatus')}
 
 📝 **"${dissertation.title}"**
-Тип: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || 'Диссертация'}
-Область: ${SCIENCE_FIELDS.find(f => f.id === dissertation.scienceField)?.name || 'Не указана'}
+${t('dissertation.type')}: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || t('dissertation.defaultDocType')}
+${t('dissertation.scienceFieldLabel')}: ${SCIENCE_FIELDS.find(f => f.id === dissertation.scienceField)?.name || t('dissertation.notSpecified')}
 
-**Прогресс:**
-• Глав: ${dissertation.chapters.length}
-• С контентом: ${chaptersWithContent} из ${dissertation.chapters.length}
-• Примерно слов: ~${totalWords.toLocaleString()}
-• Примерно страниц: ~${Math.ceil(totalWords / 250)}
+${t('dissertation.progressLabel')}:
+• ${t('dissertation.chaptersCount')}: ${dissertation.chapters.length}
+• ${t('dissertation.withContent')}: ${chaptersWithContent} ${t('dissertation.outOf')} ${dissertation.chapters.length}
+• ${t('dissertation.approxWords')}: ~${totalWords.toLocaleString()}
+• ${t('dissertation.approxPages')}: ~${Math.ceil(totalWords / 250)}
 
 ${selectedChapter 
-  ? `📍 Открыт: **${getSelectedContent().title}**` 
-  : '📍 Раздел не выбран'}
+  ? `📍 ${t('dissertation.openSection')}: **${getSelectedContent().title}**` 
+  : `📍 ${t('dissertation.noSectionSelected')}`}
 
-Чем помочь прямо сейчас? 🚀`;
+${t('dissertation.howToHelpNow')} 🚀`;
         break;
         
       case 'question':
@@ -1782,37 +1749,32 @@ ${selectedChapter
           
           if (questionResponse.ok) {
             const data = await questionResponse.json();
-            response = data.content || 'Не удалось получить ответ. Попробуйте переформулировать вопрос.';
+            response = data.content || t('dissertation.questionError');
           } else {
-            response = 'Произошла ошибка при обработке вопроса. Попробуйте ещё раз.';
+            response = t('dissertation.questionProcessError');
           }
         } catch (e) {
-          response = 'Ошибка соединения. Проверьте интернет и попробуйте снова.';
+          response = t('dissertation.connectionError');
         }
         setIsGenerating(false);
         break;
         
       case 'unclear':
         if (confidence < 0.5) {
-          response = `🤔 Не совсем понял, что нужно сделать.
+          response = `${t('dissertation.unclearIntent')}
 
-**Вы имели в виду:**
-• _Написать текст_ — "Напиши [что именно]"
-• _Задать вопрос_ — "Что такое [термин]?"
-• _Расширить текст_ — "Расширь этот раздел"
+${t('dissertation.didYouMean')}
+${t('dissertation.unclearExamples')}
 
 ${selectedChapter 
-  ? `Или выберите одно из **быстрых действий** для раздела "${getSelectedContent().title}"` 
-  : '💡 Подсказка: сначала выберите раздел слева'}`;
+  ? `${t('dissertation.orChooseQuickAction').replace('{title}', getSelectedContent().title)}` 
+  : `💡 ${t('dissertation.selectChapterTip')}`}`;
         } else {
-          response = `Я хочу помочь, но мне нужно уточнение. 
+          response = `${t('dissertation.needClarification')}
 
-Что именно нужно сделать${selectedChapter ? ` с разделом "${getSelectedContent().title}"` : ''}?
+${t('dissertation.whatExactly')}${selectedChapter ? ` ${t('dissertation.withSection').replace('{title}', getSelectedContent().title)}` : ''}?
 
-**Примеры запросов:**
-• "Напиши введение с обоснованием актуальности"
-• "Расширь текст, добавь научные источники"
-• "Что такое [термин]?"`;
+${t('dissertation.exampleRequests')}`;
         }
         break;
         
@@ -1845,7 +1807,7 @@ ${selectedChapter
         setAiMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: `⚠️ Файл "${file.name}" слишком большой (${formatFileSize(file.size)}). Максимум: ${formatFileSize(MAX_FILE_SIZE)}`,
+          content: `${t('dissertation.fileTooLarge')} "${file.name}" (${formatFileSize(file.size)}). Max: ${formatFileSize(MAX_FILE_SIZE)}`,
           timestamp: new Date(),
         }]);
         continue;
@@ -1855,7 +1817,7 @@ ${selectedChapter
         const parsed = await parseFile(file);
         newFiles.push(parsed);
       } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Не удалось прочитать файл';
+        const msg = error instanceof Error ? error.message : t('dissertation.fileReadError');
         setAiMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
@@ -1971,7 +1933,7 @@ ${dissertationContext}
 
         if (!response.ok) {
           const errText = await response.text();
-          let errMsg = `Ошибка сервера (${response.status})`;
+          let errMsg = `${t('dissertation.serverError')} (${response.status})`;
           try { const errData = JSON.parse(errText); errMsg = errData.error || errData.message || errMsg; } catch {}
           throw new Error(errMsg);
         }
@@ -2023,16 +1985,16 @@ ${dissertationContext}
         subscription.incrementDissertationGenerations();
 
         setAiMessages(prev => prev.map(msg =>
-          msg.id === fileMsgId ? { ...msg, content: aiContent || '⚠️ AI не вернул ответ. Попробуйте ещё раз.' } : msg
+          msg.id === fileMsgId ? { ...msg, content: aiContent || t('dissertation.aiNoResponse') } : msg
         ));
 
       } catch (error) {
         clearInterval(progressInterval);
-        const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+        const errorMessage = error instanceof Error ? error.message : t('dissertation.unknownError');
         setAiMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: `❌ Ошибка при анализе файлов: ${errorMessage}`,
+          content: `${t('dissertation.fileAnalysisError')}: ${errorMessage}`,
           timestamp: new Date(),
         }]);
       } finally {
@@ -2070,7 +2032,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `⚠️ **Раздел не выбран.** Выберите главу или подраздел слева, чтобы я написал текст прямо в редактор.\n\n📍 Выберите раздел и повторите запрос.`,
+        content: `${t('dissertation.sectionNotSelected')}\n\n${t('dissertation.selectAndRetry')}`,
         timestamp: new Date(),
       }]);
       return;
@@ -2081,7 +2043,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Уточните, пожалуйста:\n📍 Текущий раздел: **${getSelectedContent().title}**\n\nЧто именно нужно сделать?`,
+        content: `${t('dissertation.clarifyRequest')}\n📍 ${t('dissertation.currentSection')}: **${getSelectedContent().title}**\n\n${t('dissertation.whatToDo')}`,
         timestamp: new Date(),
       }]);
       return;
@@ -2114,7 +2076,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '⚠️ Сначала выберите раздел для генерации.',
+        content: t('dissertation.selectSectionFirst'),
         timestamp: new Date(),
       }]);
       return;
@@ -2144,7 +2106,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '⚠️ Раздел пуст. Сначала добавьте текст для расширения.',
+        content: t('dissertation.noTextToExpand'),
         timestamp: new Date(),
       }]);
       return;
@@ -2196,7 +2158,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `✅ Текст расширен! Было: ${currentContent.split(/\s+/).length} слов → Стало: ${result.split(/\s+/).length} слов`,
+        content: `${t('dissertation.textExpanded')} ${t('dissertation.wasBecame').replace('{was}', String(currentContent.split(/\s+/).length)).replace('{now}', String(result.split(/\s+/).length))}`,
         timestamp: new Date(),
       }]);
     }
@@ -2247,7 +2209,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '✅ Текст улучшен! Проверьте результат и внесите правки по желанию.',
+        content: t('dissertation.textImproved'),
         timestamp: new Date(),
       }]);
     }
@@ -2300,7 +2262,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '✅ Текст перефразирован! Уникальность повышена.',
+        content: t('dissertation.textParaphrased'),
         timestamp: new Date(),
       }]);
     }
@@ -2350,7 +2312,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '✅ Добавлены научные ссылки и цитаты!',
+        content: t('dissertation.citationsAdded'),
         timestamp: new Date(),
       }]);
     }
@@ -2412,7 +2374,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '✅ Обзор литературы сгенерирован!',
+        content: t('dissertation.litReviewGenerated'),
         timestamp: new Date(),
       }]);
     }
@@ -2489,7 +2451,7 @@ ${dissertationContext}
         setAiMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: '✅ Заключение сгенерировано! Раздел обновлён.',
+          content: t('dissertation.conclusionGenerated'),
           timestamp: new Date(),
         }]);
       }
@@ -2698,7 +2660,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '⚠️ Сначала напишите содержание глав, чтобы сгенерировать аннотацию.',
+        content: t('dissertation.writeContentFirst'),
         timestamp: new Date(),
       }]);
       return;
@@ -2739,7 +2701,7 @@ ${dissertationContext}
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '✅ Аннотация сгенерирована! Проверьте и отредактируйте при необходимости.',
+        content: t('dissertation.abstractGenerated'),
         timestamp: new Date(),
       }]);
     }
@@ -2795,7 +2757,7 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
         setAiMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: '✅ Введение сгенерировано! Раздел "Введение" обновлён.',
+          content: t('dissertation.introGenerated'),
           timestamp: new Date(),
         }]);
       }
@@ -2808,7 +2770,7 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '⚠️ Сначала введите тему диссертации!',
+        content: t('dissertation.enterTopicFirst'),
         timestamp: new Date(),
       }]);
       return;
@@ -2822,7 +2784,7 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `🧠 Анализирую тему и генерирую оптимальную структуру ${docType.nameRu.toLowerCase()}...`,
+        content: `${t('dissertation.analyzingStructure')}`,
         timestamp: new Date(),
       }]);
 
@@ -2899,22 +2861,22 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
         setAiMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: `✅ **Структура сгенерирована!**
+          content: `${t('dissertation.structureGenerated')}
 
-📚 **Главы:** ${newChapters.length}
-📑 **Подразделы:** ${newChapters.reduce((acc: number, ch: { subchapters?: unknown[] }) => acc + (ch.subchapters?.length || 0), 0)}
+📚 **${t('dissertation.chaptersCount')}:** ${newChapters.length}
+📑 **${t('dissertation.subsectionsCount')}:** ${newChapters.reduce((acc: number, ch: { subchapters?: unknown[] }) => acc + (ch.subchapters?.length || 0), 0)}
 
-${structure.hypothesis ? `\n🎯 **Гипотеза:**\n${structure.hypothesis}` : ''}
+${structure.hypothesis ? `\n🎯 **${t('dissertation.hypothesisLabel')}:**\n${structure.hypothesis}` : ''}
 
-${structure.methods ? `\n🔬 **Методы:**\n${structure.methods.map((m: string) => `• ${m}`).join('\n')}` : ''}
+${structure.methods ? `\n🔬 **${t('dissertation.methodsLabel')}:**\n${structure.methods.map((m: string) => `• ${m}`).join('\n')}` : ''}
 
-${structure.researchQuestions ? `\n❓ **Исследовательские вопросы:**\n${structure.researchQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')}` : ''}
+${structure.researchQuestions ? `\n❓ **${t('dissertation.researchQuestionsLabel')}:**\n${structure.researchQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')}` : ''}
 
-💡 Теперь вы можете генерировать содержание для каждой главы!`,
+💡 ${t('dissertation.canGenerateContent')}`,
           timestamp: new Date(),
         }]);
       } else {
-        throw new Error('Не удалось распарсить структуру');
+        throw new Error(t('dissertation.structureError'));
       }
 
     } catch (error: unknown) {
@@ -2923,7 +2885,7 @@ ${structure.researchQuestions ? `\n❓ **Исследовательские во
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `❌ Ошибка генерации структуры: ${errorMessage}`,
+        content: `${t('dissertation.structureError')}: ${errorMessage}`,
         timestamp: new Date(),
       }]);
     } finally {
@@ -2940,7 +2902,7 @@ ${structure.researchQuestions ? `\n❓ **Исследовательские во
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '⚠️ Нет текста для проверки уникальности.',
+        content: t('dissertation.noTextForCheck'),
         timestamp: new Date(),
       }]);
       return;
@@ -2959,15 +2921,15 @@ ${structure.researchQuestions ? `\n❓ **Исследовательские во
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `✅ Проверка уникальности завершена!
+        content: `${t('dissertation.uniquenessComplete')}
 
-📊 **Уникальность текста: ${result.uniqueness.toFixed(1)}%**
+📊 **${t('dissertation.uniquenessScore')}: ${result.uniqueness.toFixed(1)}%**
 
-${result.uniqueness >= 85 ? '🟢 Отличный результат! Текст соответствует требованиям.' : 
-  result.uniqueness >= 70 ? '🟡 Хороший результат. Рекомендуется перефразировать некоторые участки.' :
-  '🔴 Требуется доработка. Используйте функцию "Перефразировать" для повышения уникальности.'}
+${result.uniqueness >= 85 ? `🟢 ${t('dissertation.uniquenessGood')}` : 
+  result.uniqueness >= 70 ? `🟡 ${t('dissertation.uniquenessOk')}` :
+  `🔴 ${t('dissertation.uniquenessBad')}`}
 
-${result.matches.length > 0 ? '\n**Найденные совпадения:**\n' + result.matches.map(m => `• ${m.source}: ${m.similarity.toFixed(1)}%`).join('\n') : ''}`,
+${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + result.matches.map(m => `• ${m.source}: ${m.similarity.toFixed(1)}%`).join('\n') : ''}`,
         timestamp: new Date(),
       }]);
       
@@ -2976,7 +2938,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '❌ Ошибка при проверке уникальности.',
+        content: t('dissertation.uniquenessError'),
         timestamp: new Date(),
       }]);
     } finally {
@@ -3077,7 +3039,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: '⚠️ Список источников пуст. Добавьте источники через менеджер цитат.',
+        content: t('dissertation.emptySourceList'),
         timestamp: new Date(),
       }]);
       return;
@@ -3104,7 +3066,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
       setAiMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `✅ Список литературы сформирован по ГОСТ!\n\nДобавлено ${citations.length} источников.`,
+        content: `${t('dissertation.referencesGenerated')}\n\n${t('dissertation.sourcesAdded').replace('{count}', String(citations.length))}`,
         timestamp: new Date(),
       }]);
     }
@@ -3119,7 +3081,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
     setAiMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'assistant',
-      content: '✅ Текст добавлен в текущий раздел.',
+      content: t('dissertation.textAddedToSection'),
       timestamp: new Date(),
     }]);
   };
@@ -3132,22 +3094,22 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
   };
 
   const aiSuggestions = [
-    { icon: Wand2, text: 'Написать раздел', action: generateSection, color: 'from-purple-500 to-pink-500' },
-    { icon: FileText, text: 'Аннотация', action: generateAbstract, color: 'from-violet-500 to-purple-500' },
-    { icon: Lightbulb, text: 'Введение', action: generateIntroduction, color: 'from-amber-500 to-yellow-500' },
-    { icon: TrendingUp, text: 'Расширить текст', action: expandText, color: 'from-blue-500 to-cyan-500' },
-    { icon: PenTool, text: 'Улучшить стиль', action: improveText, color: 'from-green-500 to-emerald-500' },
-    { icon: RefreshCw, text: 'Перефразировать', action: paraphraseText, color: 'from-orange-500 to-amber-500' },
-    { icon: BookOpen, text: 'Добавить цитаты', action: addCitations, color: 'from-red-500 to-rose-500' },
-    { icon: Search, text: 'Обзор литературы', action: generateLiteratureReview, color: 'from-indigo-500 to-violet-500' },
-    { icon: Target, text: 'Заключение', action: generateConclusion, color: 'from-teal-500 to-cyan-500' },
-    { icon: AlertCircle, text: 'Проверка на AI', action: checkAntiPlagiarism, color: 'from-yellow-500 to-orange-500' },
+    { icon: Wand2, text: t('dissertation.writeSection'), action: generateSection, color: 'from-purple-500 to-pink-500' },
+    { icon: FileText, text: t('dissertation.abstractAction'), action: generateAbstract, color: 'from-violet-500 to-purple-500' },
+    { icon: Lightbulb, text: t('dissertation.introductionAction'), action: generateIntroduction, color: 'from-amber-500 to-yellow-500' },
+    { icon: TrendingUp, text: t('dissertation.expandText'), action: expandText, color: 'from-blue-500 to-cyan-500' },
+    { icon: PenTool, text: t('dissertation.improveStyle'), action: improveText, color: 'from-green-500 to-emerald-500' },
+    { icon: RefreshCw, text: t('dissertation.paraphrase'), action: paraphraseText, color: 'from-orange-500 to-amber-500' },
+    { icon: BookOpen, text: t('dissertation.addCitations'), action: addCitations, color: 'from-red-500 to-rose-500' },
+    { icon: Search, text: t('dissertation.litReview'), action: generateLiteratureReview, color: 'from-indigo-500 to-violet-500' },
+    { icon: Target, text: t('dissertation.conclusionAction'), action: generateConclusion, color: 'from-teal-500 to-cyan-500' },
+    { icon: AlertCircle, text: t('dissertation.aiCheck'), action: checkAntiPlagiarism, color: 'from-yellow-500 to-orange-500' },
     // ✨ НОВЫЕ ФУНКЦИИ
-    { icon: Layers, text: 'Методология', action: generateMethodology, color: 'from-sky-500 to-blue-500' },
-    { icon: CheckCircle, text: 'Рекомендации', action: generateRecommendations, color: 'from-lime-500 to-green-500' },
-    { icon: BarChart, text: 'Создать таблицы', action: generateTableDescription, color: 'from-slate-500 to-gray-600' },
-    { icon: Microscope, text: 'Научность +', action: makeMoreScientific, color: 'from-rose-500 to-pink-500' },
-    { icon: MessageSquare, text: 'Обсуждение', action: addDiscussion, color: 'from-cyan-500 to-teal-500' },
+    { icon: Layers, text: t('dissertation.methodology'), action: generateMethodology, color: 'from-sky-500 to-blue-500' },
+    { icon: CheckCircle, text: t('dissertation.recommendations'), action: generateRecommendations, color: 'from-lime-500 to-green-500' },
+    { icon: BarChart, text: t('dissertation.createTables'), action: generateTableDescription, color: 'from-slate-500 to-gray-600' },
+    { icon: Microscope, text: t('dissertation.moreScientific'), action: makeMoreScientific, color: 'from-rose-500 to-pink-500' },
+    { icon: MessageSquare, text: t('dissertation.discussion'), action: addDiscussion, color: 'from-cyan-500 to-teal-500' },
   ];
 
   // 🚀 СУПЕР ФУНКЦИИ для генерации большого объёма
@@ -3158,30 +3120,30 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
   const largeSuggestions = [
     { 
       icon: Brain, 
-      text: '🧠 Сгенерировать структуру', 
+      text: t('dissertation.generateStructure'), 
       action: generateSmartStructure,
       color: 'from-violet-600 to-indigo-600',
-      description: 'AI создаст оптимальную структуру по теме',
+      description: t('dissertation.structureDesc'),
       disabled: !dissertation.title.trim() || isGenerating
     },
     { 
       icon: Rocket, 
-      text: `📚 Генерация главы (~25 стр) ${remainingLimits.largeChapters !== Infinity ? `[${remainingLimits.largeChapters}]` : ''}`, 
+      text: `${t('dissertation.generateChapter')} ${remainingLimits.largeChapters !== Infinity ? `[${remainingLimits.largeChapters}]` : ''}`, 
       action: () => selectedChapter && generateLargeContent(selectedChapter, 25),
       color: 'from-fuchsia-600 to-pink-600',
       description: canDoLargeChapter.allowed 
-        ? 'Сгенерировать полную главу с подразделами' 
-        : canDoLargeChapter.reason || 'Недоступно',
+        ? t('dissertation.generateChapterDesc') 
+        : canDoLargeChapter.reason || t('dissertation.unavailable'),
       disabled: !canDoLargeChapter.allowed || !selectedChapter
     },
     { 
       icon: Sparkles, 
-      text: '🎓 Полная работа (авто)', 
+      text: t('dissertation.fullWork'), 
       action: generateFullDissertation,
       color: 'from-violet-600 to-purple-600',
       description: canDoFullDiss.allowed 
-        ? `ИИ сам напишет всю работу (~${Math.round((dissertation.targetWordCount || 80000) / 280)} стр.)` 
-        : canDoFullDiss.reason || 'Только для Pro',
+        ? t('dissertation.fullWorkDesc').replace('{pages}', String(Math.round((dissertation.targetWordCount || 80000) / 280))) 
+        : canDoFullDiss.reason || t('dissertation.proOnly'),
       disabled: !canDoFullDiss.allowed,
       proOnly: !canDoFullDiss.allowed
     },
@@ -3249,32 +3211,32 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
   const formatQuote = () => insertAtLineStart('> ');
   
   const insertLink = () => {
-    const url = prompt('Введите URL ссылки:');
+    const url = prompt(t('dissertation.enterLinkUrl'));
     if (url) {
-      const linkText = prompt('Введите текст ссылки:') || url;
+      const linkText = prompt(t('dissertation.enterLinkText')) || url;
       insertTextAtCursor(`[${linkText}](${url})`);
     }
   };
 
   const insertImage = () => {
-    const url = prompt('Введите URL изображения:');
+    const url = prompt(t('dissertation.enterImageUrl'));
     if (url) {
-      const alt = prompt('Введите описание изображения:') || 'Изображение';
+      const alt = prompt(t('dissertation.enterImageDesc')) || t('dissertation.image');
       insertTextAtCursor(`\n![${alt}](${url})\n`);
     }
   };
 
   const insertTable = () => {
-    const rows = parseInt(prompt('Количество строк:') || '3');
-    const cols = parseInt(prompt('Количество столбцов:') || '3');
+    const rows = parseInt(prompt(t('dissertation.rowCount')) || '3');
+    const cols = parseInt(prompt(t('dissertation.colCount')) || '3');
     if (rows && cols) {
       let table = '\n';
       // Header
-      table += '| ' + Array(cols).fill('Заголовок').join(' | ') + ' |\n';
+      table += '| ' + Array(cols).fill(t('dissertation.tableHeader')).join(' | ') + ' |\n';
       table += '| ' + Array(cols).fill('---').join(' | ') + ' |\n';
       // Rows
       for (let i = 0; i < rows - 1; i++) {
-        table += '| ' + Array(cols).fill('Ячейка').join(' | ') + ' |\n';
+        table += '| ' + Array(cols).fill(t('dissertation.tableCell')).join(' | ') + ' |\n';
       }
       table += '\n';
       insertTextAtCursor(table);
@@ -3282,21 +3244,21 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
   };
 
   const toolbarButtons: Array<{ icon?: React.ComponentType<{ size?: number | string; className?: string }>; action?: () => void; title?: string; divider?: boolean }> = [
-    { icon: Bold, action: formatBold, title: 'Жирный (**текст**)' },
-    { icon: Italic, action: formatItalic, title: 'Курсив (*текст*)' },
-    { icon: Underline, action: formatUnderline, title: 'Подчёркнутый' },
+    { icon: Bold, action: formatBold, title: t('dissertation.bold') },
+    { icon: Italic, action: formatItalic, title: t('dissertation.italic') },
+    { icon: Underline, action: formatUnderline, title: t('dissertation.underline') },
     { divider: true },
-    { icon: Heading1, action: formatHeading1, title: 'Заголовок 1' },
-    { icon: Heading2, action: formatHeading2, title: 'Заголовок 2' },
-    { icon: Heading3, action: formatHeading3, title: 'Заголовок 3' },
+    { icon: Heading1, action: formatHeading1, title: t('dissertation.heading1') },
+    { icon: Heading2, action: formatHeading2, title: t('dissertation.heading2') },
+    { icon: Heading3, action: formatHeading3, title: t('dissertation.heading3') },
     { divider: true },
-    { icon: List, action: formatBulletList, title: 'Маркированный список' },
-    { icon: ListOrdered, action: formatNumberedList, title: 'Нумерованный список' },
+    { icon: List, action: formatBulletList, title: t('dissertation.bulletList') },
+    { icon: ListOrdered, action: formatNumberedList, title: t('dissertation.numberedList') },
     { divider: true },
-    { icon: Quote, action: formatQuote, title: 'Цитата' },
-    { icon: Link2, action: insertLink, title: 'Вставить ссылку' },
-    { icon: ImageIcon, action: insertImage, title: 'Вставить изображение' },
-    { icon: Table, action: insertTable, title: 'Вставить таблицу' },
+    { icon: Quote, action: formatQuote, title: t('dissertation.quote') },
+    { icon: Link2, action: insertLink, title: t('dissertation.insertLink') },
+    { icon: ImageIcon, action: insertImage, title: t('dissertation.insertImage') },
+    { icon: Table, action: insertTable, title: t('dissertation.insertTable') },
   ];
 
   const progressPercentage = Math.round((wordCount / dissertation.targetWordCount) * 100);
@@ -3354,7 +3316,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               className="flex items-center gap-2 text-white/40 hover:text-white/80 transition-colors text-sm"
             >
               <ArrowLeft size={16} />
-              Назад
+              {t('dissertation.back')}
             </motion.button>
             <button
               onClick={() => setShowSidebarMobile(false)}
@@ -3369,14 +3331,14 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             value={dissertation.title}
             onChange={(e) => setDissertation(prev => ({ ...prev, title: e.target.value, updatedAt: new Date() }))}
             className="w-full text-lg font-bold bg-transparent border-none focus:outline-none text-white/90 mb-2 placeholder-white/20"
-            placeholder="Название диссертации"
+            placeholder={t('dissertation.dissertationTitle')}
           />
           
           {/* Прогресс */}
           <div className="mb-3">
             <div className="flex justify-between text-xs text-text-muted mb-1">
-              <span>{wordCount.toLocaleString()} слов</span>
-              <span>Цель: {dissertation.targetWordCount.toLocaleString()}</span>
+              <span>{wordCount.toLocaleString()} {t('dissertation.words')}</span>
+              <span>{t('dissertation.target')}: {dissertation.targetWordCount.toLocaleString()}</span>
             </div>
             <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
               <motion.div
@@ -3391,13 +3353,13 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               />
             </div>
             <div className="flex justify-between text-xs text-white/35 mt-1">
-              <span>{progressPercentage}% выполнено</span>
+              <span>{progressPercentage}% {t('dissertation.completed')}</span>
               {dissertation.uniquenessScore && (
                 <span className={`flex items-center gap-1 ${
                   dissertation.uniquenessScore >= 90 ? 'text-green-400' :
                   dissertation.uniquenessScore >= 80 ? 'text-yellow-400' : 'text-red-400'
                 }`}>
-                  ✓ {dissertation.uniquenessScore.toFixed(0)}% уникальность
+                  ✓ {dissertation.uniquenessScore.toFixed(0)}% {t('dissertation.uniqueness')}
                 </span>
               )}
             </div>
@@ -3421,7 +3383,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   
                   {/* AI генерации */}
                   <div className="flex items-center justify-between text-[10px] mt-1">
-                    <span className="text-text-muted">AI генерации:</span>
+                    <span className="text-text-muted">{t('dissertation.aiGenerations')}:</span>
                     <span className={`font-medium ${
                       remaining.dissertationGenerations <= 0 ? 'text-red-400' : `text-${colors.light}`
                     }`}>
@@ -3431,7 +3393,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   
                   {/* Большие главы */}
                   <div className="flex items-center justify-between text-[10px] mt-0.5">
-                    <span className="text-text-muted">Главы (25+ стр):</span>
+                    <span className="text-text-muted">{t('dissertation.chaptersLarge')}:</span>
                     <span className={`font-medium ${
                       remaining.largeChapters <= 0 ? 'text-red-400' : `text-${colors.light}`
                     }`}>
@@ -3444,7 +3406,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                       onClick={() => navigate('/settings')}
                       className={`w-full mt-1 text-[10px] text-${colors.text} hover:text-${colors.light} underline`}
                     >
-                      Оформить Pro для больше лимитов →
+                      {t('dissertation.getProForMore')}
                     </button>
                   )}
                 </div>
@@ -3455,16 +3417,16 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
           <div className="flex items-center gap-3 text-xs text-text-muted">
             <span className="flex items-center gap-1">
               <Clock size={12} />
-              {saveStatus === 'saved' ? 'Сохранено' : saveStatus === 'saving' ? 'Сохранение...' : 'Не сохранено'}
+              {saveStatus === 'saved' ? t('dissertation.savedStatus') : saveStatus === 'saving' ? t('dissertation.savingStatus') : t('dissertation.unsavedStatus')}
             </span>
             <select
               value={dissertation.degreeType}
               onChange={(e) => setDissertation(prev => ({ ...prev, degreeType: e.target.value as 'bachelor' | 'master' | 'phd' }))}
               className="bg-bg-tertiary border-none rounded px-2 py-1 text-xs"
             >
-              <option value="bachelor">Бакалавр</option>
-              <option value="master">Магистр</option>
-              <option value="phd">Кандидат</option>
+              <option value="bachelor">{t('dissertation.bachelor')}</option>
+              <option value="master">{t('dissertation.master')}</option>
+              <option value="phd">{t('dissertation.phd')}</option>
             </select>
           </div>
           
@@ -3484,7 +3446,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 className="px-2 py-1.5 rounded-lg bg-bg-tertiary hover:bg-bg-primary border border-border-primary text-text-secondary text-xs flex items-center gap-1 transition-all"
               >
                 <BookOpen size={12} />
-                Источники ({(dissertation.citations || []).length})
+                {t('dissertation.sources')} ({(dissertation.citations || []).length})
               </button>
               <button
                 onClick={handleCheckUniqueness}
@@ -3492,7 +3454,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 className="px-2 py-1.5 rounded-lg bg-bg-tertiary hover:bg-bg-primary border border-border-primary text-text-secondary text-xs flex items-center gap-1 transition-all disabled:opacity-50"
               >
                 {isCheckingUniqueness ? <RefreshCw size={12} className="animate-spin" /> : <Search size={12} />}
-                {dissertation.uniquenessScore ? `${dissertation.uniquenessScore.toFixed(0)}%` : 'Проверка'}
+                {dissertation.uniquenessScore ? `${dissertation.uniquenessScore.toFixed(0)}%` : t('dissertation.checking')}
               </button>
             </div>
           </div>
@@ -3509,7 +3471,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   : 'hover:bg-bg-tertiary text-text-secondary'
               }`}
             >
-              📝 Аннотация
+              📝 {t('dissertation.annotation')}
             </button>
           </div>
 
@@ -3520,7 +3482,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   <button
                     onClick={() => toggleChapter(chapter.id)}
                     className="p-1 hover:bg-bg-tertiary rounded transition-colors"
-                    aria-label={expandedChapters.includes(chapter.id) ? 'Свернуть' : 'Развернуть'}
+                    aria-label={expandedChapters.includes(chapter.id) ? t('dissertation.collapse') : t('dissertation.expand')}
                     aria-expanded={expandedChapters.includes(chapter.id)}
                   >
                     {expandedChapters.includes(chapter.id) ? (
@@ -3545,18 +3507,18 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 <button
                   onClick={() => addSubchapter(chapter.id)}
                   className="p-1 hover:bg-bg-tertiary rounded transition-colors opacity-0 group-hover:opacity-100"
-                  title="Добавить подраздел"
+                  title={t('dissertation.addSubchapter')}
                   aria-label="Add subsection"
                 >
                   <Plus size={12} className="text-text-muted" />
                 </button>
                 <button
                   onClick={async () => {
-                    const yes = await confirm({ title: 'Удаление главы', message: `Удалить "${chapter.title}"?`, type: 'danger', confirmText: 'Удалить', cancelText: 'Отмена' });
+                    const yes = await confirm({ title: t('dissertation.deleteChapterTitle'), message: `${t('dissertation.deleteChapterTitle')} "${chapter.title}"?`, type: 'danger', confirmText: t('dissertation.confirm'), cancelText: t('dissertation.cancel') });
                     if (yes) deleteChapter(chapter.id);
                   }}
                   className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover:opacity-100"
-                  title="Удалить главу"
+                  title={t('dissertation.deleteChapter')}
                   aria-label="Delete chapter"
                 >
                   <Trash2 size={12} className="text-red-400" />
@@ -3587,11 +3549,11 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
-                            const yes = await confirm({ title: 'Удаление подраздела', message: `Удалить "${sub.title}"?`, type: 'danger', confirmText: 'Удалить', cancelText: 'Отмена' });
+                            const yes = await confirm({ title: t('dissertation.deleteSubchapterTitle'), message: `${t('dissertation.deleteSubchapterTitle')} "${sub.title}"?`, type: 'danger', confirmText: t('dissertation.confirm'), cancelText: t('dissertation.cancel') });
                             if (yes) deleteSubchapter(chapter.id, sub.id);
                           }}
                           className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover/sub:opacity-100"
-                          title="Удалить подраздел"
+                          title={t('dissertation.deleteSubchapter')}
                           aria-label="Delete subsection"
                         >
                           <Trash2 size={10} className="text-red-400" />
@@ -3609,14 +3571,14 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             className="w-full mt-4 px-3 py-2 rounded-lg border border-dashed border-border-primary hover:border-purple-500 text-text-muted hover:text-purple-400 transition-colors flex items-center justify-center gap-2 text-sm"
           >
             <Plus size={14} />
-            Добавить главу
+            {t('dissertation.addChapter')}
           </button>
         </div>
         
         {/* Quick settings */}
         <div className="p-3 border-t border-border-primary space-y-3">
           <div>
-            <label className="text-xs text-text-muted block mb-1">Научная область</label>
+            <label className="text-xs text-text-muted block mb-1">{t('dissertation.scientificField')}</label>
             <select
               value={dissertation.scienceField}
               onChange={(e) => setDissertation(prev => ({ ...prev, scienceField: e.target.value }))}
@@ -3632,7 +3594,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
           
           {/* Язык написания */}
           <div data-tour="language-select">
-            <label className="text-xs text-text-muted block mb-1">🌍 Язык написания</label>
+            <label className="text-xs text-text-muted block mb-1">🌍 {t('dissertation.writingLanguage')}</label>
             <select
               value={writingLanguage}
               onChange={(e) => setWritingLanguage(e.target.value as typeof writingLanguage)}
@@ -3657,10 +3619,10 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               <GraduationCap className="text-white" size={22} />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm md:text-lg font-bold text-text-primary truncate">AI Редактор диссертации</h1>
+              <h1 className="text-sm md:text-lg font-bold text-text-primary truncate">{t('dissertation.aiEditor')}</h1>
               <p className="text-xs text-text-muted truncate">
-                {saveStatus === 'saved' ? '✓ Сохранено' : saveStatus === 'saving' ? '⏳ Сохранение...' : '• Не сохранено'}
-                {' • '}{wordCount.toLocaleString()} слов
+                {saveStatus === 'saved' ? `✓ ${t('dissertation.savedStatus')}` : saveStatus === 'saving' ? `⏳ ${t('dissertation.savingStatus')}` : `• ${t('dissertation.unsavedStatus')}`}
+                {' • '}{wordCount.toLocaleString()} {t('dissertation.words')}
               </p>
             </div>
           </div>
@@ -3682,7 +3644,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             }
           >
             <Search size={16} />
-            <span className="hidden sm:inline">Антиплагиат</span>
+            <span className="hidden sm:inline">{t('dissertation.antiPlagiarism')}</span>
           </motion.button>
 
           <motion.button
@@ -3700,13 +3662,13 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
             }
           >
             <Brain size={16} />
-            <span className="hidden sm:inline">AI Помощник</span>
+            <span className="hidden sm:inline">{t('dissertation.aiHelper')}</span>
           </motion.button>
           
           <button 
             onClick={handleExportToPDF}
             className="p-2 hover:bg-white/[0.04] rounded-xl transition-colors text-white/30 hover:text-white/70"
-            title="Экспорт в PDF"
+            title={t('dissertation.exportToPdf')}
           >
             <FileDown size={18} />
           </button>
@@ -3736,7 +3698,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
           <div className="flex-1 overflow-y-auto p-4 md:p-8">
             {selectedChapter === 'abstract' ? (
               <div className="max-w-3xl mx-auto">
-                <h2 className="text-2xl font-bold text-text-primary mb-4">Аннотация</h2>
+                <h2 className="text-2xl font-bold text-text-primary mb-4">{t('dissertation.annotation')}</h2>
                 <textarea
                   ref={abstractTextareaRef}
                   value={dissertation.abstract}
@@ -3744,14 +3706,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     setDissertation(prev => ({ ...prev, abstract: e.target.value, updatedAt: new Date() }));
                     setSaveStatus('unsaved');
                   }}
-                  placeholder="Введите аннотацию диссертации (обычно 150-300 слов)...
-
-Аннотация должна содержать:
-• Актуальность темы
-• Цель исследования
-• Основные методы
-• Ключевые результаты
-• Практическая значимость"
+                  placeholder={t('dissertation.abstractPlaceholder')}
                   className="w-full min-h-[250px] sm:min-h-[350px] md:min-h-[400px] bg-bg-tertiary border border-border-primary rounded-xl p-3 sm:p-4 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed"
                 />
               </div>
@@ -3787,38 +3742,26 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   ref={textareaRef}
                   value={getSelectedContent().content}
                   onChange={(e) => updateContent(e.target.value)}
-                  placeholder="Начните писать или используйте AI Помощник для генерации текста...
-
-Советы для научного текста:
-• Используйте научный стиль изложения
-• Добавляйте ссылки на источники [Автор, год]
-• Структурируйте текст на абзацы
-• Формулируйте чёткие тезисы
-
-Горячие клавиши форматирования:
-• **жирный** — выделите текст и нажмите B в toolbar
-• *курсив* — выделите текст и нажмите I в toolbar  
-• # Заголовок — для заголовков разных уровней
-• > Цитата — для блочных цитат"
+                  placeholder={t('dissertation.editorPlaceholder')}
                   className="w-full min-h-[350px] sm:min-h-[450px] md:min-h-[600px] bg-bg-tertiary border border-border-primary rounded-xl p-3 sm:p-4 md:p-6 focus:outline-none focus:border-purple-500 text-text-primary resize-none leading-relaxed text-sm sm:text-base font-mono"
                 />
                 <div className="mt-2 text-xs text-text-muted text-right">
-                  {getSelectedContent().content.split(/\s+/).filter(w => w).length} слов в этом разделе
+                  {getSelectedContent().content.split(/\s+/).filter(w => w).length} {t('dissertation.wordsInSection')}
                 </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-center">
                 <div>
                   <GraduationCap size={48} className="mx-auto mb-4 text-purple-400/50 sm:w-16 sm:h-16" />
-                  <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-2">Выберите раздел</h2>
-                  <p className="text-text-muted mb-4">Выберите главу или подраздел в боковой панели для редактирования</p>
+                  <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-2">{t('dissertation.selectSection')}</h2>
+                  <p className="text-text-muted mb-4">{t('dissertation.selectSectionHint')}</p>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setShowAIPanel(true)}
                     className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl text-white font-medium"
                   >
-                    Открыть AI Помощник
+                    {t('dissertation.openAiHelper')}
                   </motion.button>
                 </div>
               </div>
@@ -3848,18 +3791,18 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   <div className="p-4 border-b border-border-primary">
                     <h3 className="font-semibold text-text-primary flex items-center gap-2">
                       <Search size={20} className="text-cyan-400" />
-                      Антиплагиат & AI-детекция
+                      {t('dissertation.plagiarismTitle')}
                     </h3>
                     <p className="text-xs text-text-muted mt-1">
-                      Проверка уникальности и обход AI-детекторов
+                      {t('dissertation.plagiarismDesc')}
                     </p>
                     
                     {/* Tabs */}
                     <div className="flex gap-1 mt-3">
                       {[
-                        { id: 'check' as const, label: '🔍 Плагиат', title: 'Проверка уникальности' },
-                        { id: 'detect' as const, label: '🤖 AI-детекция', title: 'Проверка на AI' },
-                        { id: 'humanize' as const, label: '✍️ Гуманизация', title: 'Обход детекторов' },
+                        { id: 'check' as const, label: t('dissertation.plagiarismTab'), title: t('dissertation.plagiarismTab') },
+                        { id: 'detect' as const, label: t('dissertation.aiDetectionTab'), title: t('dissertation.aiDetectionTab') },
+                        { id: 'humanize' as const, label: t('dissertation.humanizeTab'), title: t('dissertation.humanizeTab') },
                       ].map(tab => (
                         <button
                           key={tab.id}
@@ -3912,13 +3855,13 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     )}
                     
                     {plagiarismPanelTab === 'detect' && (
-                      <Suspense fallback={<div className="text-center py-8 text-text-muted"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />Загрузка...</div>}>
+                      <Suspense fallback={<div className="text-center py-8 text-text-muted"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />{t('dissertation.loading')}</div>}>
                         <AIDetectionChecker text={getAllContent()} />
                       </Suspense>
                     )}
                     
                     {plagiarismPanelTab === 'humanize' && (
-                      <Suspense fallback={<div className="text-center py-8 text-text-muted"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />Загрузка...</div>}>
+                      <Suspense fallback={<div className="text-center py-8 text-text-muted"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />{t('dissertation.loading')}</div>}>
                         <AntiAIDetectionLazy 
                           initialText={getSelectedContent().content}
                           onTextChange={(newText: string) => {
@@ -3978,10 +3921,10 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   <div className="p-4 border-b border-border-primary flex-shrink-0">
                     <h3 className="font-semibold text-text-primary flex items-center gap-2">
                       <Brain size={20} className="text-purple-400" />
-                      AI Помощник для диссертации
+                      {t('dissertation.aiPanelTitle')}
                     </h3>
                     <p className="text-xs text-text-muted mt-1">
-                      Пишет максимально человеческим стилем
+                      {t('dissertation.aiPanelDesc')}
                     </p>
                   </div>
                   
@@ -3993,7 +3936,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     >
                       <h4 className="text-xs font-medium text-text-muted uppercase tracking-wider flex items-center gap-2">
                         <Sparkles size={14} className="text-purple-400" />
-                        Быстрые действия
+                        {t('dissertation.quickActions')}
                       </h4>
                       <ChevronDown 
                         size={16} 
@@ -4037,10 +3980,10 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     >
                       <h4 className="text-xs font-medium text-fuchsia-400 uppercase tracking-wider flex items-center gap-2">
                         <Rocket size={14} />
-                        Генерация большого объёма
+                        {t('dissertation.largeGeneration')}
                         {remainingLimits.largeChapters < Infinity && (
                           <span className="text-[10px] bg-fuchsia-500/20 px-2 py-0.5 rounded-full">
-                            {remainingLimits.largeChapters} глав
+                            {remainingLimits.largeChapters} {t('dissertation.chaptersCount')}
                           </span>
                         )}
                       </h4>
@@ -4088,7 +4031,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                             ))}
                             {!selectedChapter && (
                               <p className="text-xs text-text-muted text-center">
-                                💡 Выберите главу в структуре слева
+                                {t('dissertation.selectChapterHint')}
                               </p>
                             )}
                           </div>
@@ -4102,7 +4045,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     <div className="px-4 py-3 flex-shrink-0" style={{ background: 'rgba(139,92,246,0.06)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                       <div className="flex items-center gap-2 mb-2">
                         <RefreshCw size={14} className="animate-spin text-violet-400" />
-                        <span className="text-sm text-violet-400">Генерация текста...</span>
+                        <span className="text-sm text-violet-400">{t('dissertation.generatingText')}</span>
                       </div>
                       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
                         <motion.div
@@ -4128,8 +4071,8 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                             <Brain size={28} className="text-violet-400/80" />
                           </div>
                         </div>
-                        <p className="text-white/40 text-sm">AI готов помочь с диссертацией</p>
-                        <p className="text-xs text-white/20 mt-1">Просто напишите запрос или используйте быстрые действия</p>
+                        <p className="text-white/40 text-sm">{t('dissertation.aiReady')}</p>
+                        <p className="text-xs text-white/20 mt-1">{t('dissertation.aiReadyHint')}</p>
                       </div>
                     ) : (
                       aiMessages.map((msg, index) => (
@@ -4159,12 +4102,12 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                                   <CheckCircle size={16} className="text-green-400 shrink-0" />
                                 )}
                                 <span className="text-xs text-white/60 flex-1 text-left truncate">
-                                  {msg.thinkingActive ? 'Думаю...' : 'Процесс завершён'}
+                                  {msg.thinkingActive ? t('dissertation.thinking') : t('dissertation.processComplete')}
                                   {msg.thinkingSteps && msg.thinkingSteps.length > 0 && (
                                     <span className="text-white/30 ml-2">
                                       {(() => {
                                         const lastStep = msg.thinkingSteps[msg.thinkingSteps.length - 1];
-                                        return `${lastStep.percentComplete}% · ${lastStep.wordsGenerated.toLocaleString()} слов`;
+                                        return `${lastStep.percentComplete}% · ${lastStep.wordsGenerated.toLocaleString()} ${t('dissertation.words')}`;
                                       })()}
                                     </span>
                                   )}
@@ -4199,7 +4142,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                                             )}
                                             {step.wordsGenerated > 0 && (
                                               <span className="ml-1 text-purple-400">
-                                                ({step.wordsGenerated.toLocaleString()} слов, ~{step.pagesGenerated} стр.)
+                                                ({step.wordsGenerated.toLocaleString()} {t('dissertation.words')}, ~{step.pagesGenerated} {t('dissertation.pages')})
                                               </span>
                                             )}
                                             {step.percentComplete > 0 && step.phase !== 'done' && (
@@ -4216,7 +4159,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                                       {msg.thinkingActive && (
                                         <div className="flex items-center gap-2">
                                           <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse shrink-0" />
-                                          <span className="text-xs text-purple-400 animate-pulse">Обработка...</span>
+                                          <span className="text-xs text-purple-400 animate-pulse">{t('dissertation.processing')}</span>
                                         </div>
                                       )}
                                     </div>
@@ -4241,7 +4184,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                                 <button
                                   onClick={() => copyToClipboard(msg.content, msg.id)}
                                   className="p-1 hover:bg-white/[0.06] rounded transition-colors"
-                                  title="Копировать"
+                                  title={t('dissertation.copyTooltip')}
                                 >
                                   {copiedId === msg.id ? (
                                     <Check size={12} className="text-green-400" />
@@ -4252,7 +4195,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                                 <button
                                   onClick={() => insertToContent(msg.content)}
                                   className="p-1 hover:bg-white/[0.06] rounded transition-colors"
-                                  title="Вставить в документ"
+                                  title={t('dissertation.insertToDoc')}
                                 >
                                   <Plus size={12} className="text-text-muted" />
                                 </button>
@@ -4319,7 +4262,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                             handleAIGenerate();
                           }
                         }}
-                        placeholder={attachedFiles.length > 0 ? "Комментарий к файлам..." : "Напишите запрос..."}
+                        placeholder={attachedFiles.length > 0 ? t('dissertation.fileComment') : t('dissertation.writePrompt')}
                         rows={1}
                         disabled={isGenerating}
                         className="w-full resize-none min-h-[52px] p-4 pl-12 pr-14 rounded-2xl text-sm leading-relaxed text-white/90 placeholder-white/25 focus:outline-none"
@@ -4332,7 +4275,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isGenerating || isParsingFile}
                         className="absolute bottom-3 left-3 p-2 rounded-lg hover:bg-white/[0.04] text-white/30 hover:text-violet-400 transition-colors disabled:opacity-50"
-                        title="Прикрепить файл (PDF, DOCX, TXT и др.)"
+                        title={t('dissertation.attachFileTooltip')}
                       >
                         {isParsingFile ? (
                           <RefreshCw size={16} className="animate-spin" />
@@ -4357,7 +4300,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                       </motion.button>
                     </div>
                     <p className="text-xs text-white/25 mt-2 text-center">
-                      📎 PDF, DOCX, TXT и др. · 💡 AI пишет в академическом стиле
+                      {t('dissertation.aiFooter')}
                     </p>
                   </div>
                 </div>
@@ -4387,7 +4330,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               >
                 <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                   <FileText size={24} />
-                  Выберите тип научной работы
+                  {t('dissertation.selectDocType')}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {(Object.keys(DOCUMENT_TYPES) as DocumentType[]).map((docType) => {
@@ -4454,7 +4397,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-white/90 flex items-center gap-2">
                     <BookOpen size={24} className="text-violet-400" />
-                    Управление источниками
+                    {t('dissertation.citationManagerTitle')}
                   </h2>
                   <div className="flex gap-2">
                     <button
@@ -4462,14 +4405,14 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                       className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm flex items-center gap-1"
                     >
                       <Plus size={14} />
-                      Добавить
+                      {t('dissertation.addCitation')}
                     </button>
                     <button
                       onClick={generateBibliographySection}
                       className="px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 text-sm flex items-center gap-1"
                     >
                       <FileText size={14} />
-                      Создать список
+                      {t('dissertation.generateList')}
                     </button>
                   </div>
                 </div>
@@ -4487,10 +4430,10 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                           <p className="text-sm text-text-primary">{formatCitationGOST(citation)}</p>
                           <div className="flex gap-2 mt-1">
                             <span className="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">
-                              {citation.type === 'book' ? '📚 Книга' : 
-                               citation.type === 'article' ? '📄 Статья' : 
-                               citation.type === 'conference' ? '🎤 Конференция' :
-                               citation.type === 'dissertation' ? '🎓 Диссертация' : '🌐 Веб-сайт'}
+                              {citation.type === 'book' ? `📚 ${t('dissertation.citBook')}` : 
+                               citation.type === 'article' ? `📄 ${t('dissertation.citArticle')}` : 
+                               citation.type === 'conference' ? `🎤 ${t('dissertation.citConference')}` :
+                               citation.type === 'dissertation' ? `🎓 ${t('dissertation.citDissertation')}` : `🌐 ${t('dissertation.citWebsite')}`}
                             </span>
                             {citation.doi && (
                               <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
@@ -4511,8 +4454,8 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 ) : (
                   <div className="text-center py-8 text-white/40">
                     <BookOpen size={48} className="mx-auto mb-2 opacity-30" />
-                    <p>Источники не добавлены</p>
-                    <p className="text-xs">Нажмите "Добавить" для добавления нового источника</p>
+                    <p>{t('dissertation.noSources')}</p>
+                    <p className="text-xs">{t('dissertation.noSourcesHint')}</p>
                   </div>
                 )}
               </motion.div>
@@ -4540,60 +4483,60 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
               >
                 <h2 className="text-lg font-bold text-white/90 mb-4 flex items-center gap-2">
                   <Plus size={20} className="text-violet-400" />
-                  Добавить источник
+                  {t('dissertation.addSourceTitle')}
                 </h2>
                 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-white/40 mb-1 block">Тип источника</label>
+                    <label className="text-xs text-white/40 mb-1 block">{t('dissertation.sourceType')}</label>
                     <select
                       value={newCitation.type}
                       onChange={(e) => setNewCitation(prev => ({ ...prev, type: e.target.value as 'book' | 'article' | 'website' | 'dissertation' | 'conference' }))}
                       className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                     >
-                      <option value="book">📚 Книга</option>
-                      <option value="article">📄 Статья</option>
-                      <option value="conference">🎤 Материалы конференции</option>
-                      <option value="thesis">🎓 Диссертация</option>
-                      <option value="website">🌐 Веб-сайт</option>
+                      <option value="book">📚 {t('dissertation.citBook')}</option>
+                      <option value="article">📄 {t('dissertation.citArticle')}</option>
+                      <option value="conference">🎤 {t('dissertation.citConferenceMaterials')}</option>
+                      <option value="thesis">🎓 {t('dissertation.citDissertation')}</option>
+                      <option value="website">🌐 {t('dissertation.citWebsite')}</option>
                     </select>
                   </div>
                   
                   <div>
-                    <label className="text-xs text-white/40 mb-1 block">Авторы (через запятую)</label>
+                    <label className="text-xs text-white/40 mb-1 block">{t('dissertation.authors')}</label>
                     <input
                       type="text"
                       value={newCitation.authors.join(', ')}
                       onChange={(e) => setNewCitation(prev => ({ ...prev, authors: e.target.value.split(',').map(a => a.trim()) }))}
-                      placeholder="Иванов И.И., Петров П.П."
+                      placeholder={t('dissertation.authorsPlaceholder')}
                       className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                     />
                   </div>
                   
                   <div>
-                    <label className="text-xs text-white/40 mb-1 block">Название</label>
+                    <label className="text-xs text-white/40 mb-1 block">{t('dissertation.citationName')}</label>
                     <input
                       type="text"
                       value={newCitation.title}
                       onChange={(e) => setNewCitation(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Название работы"
+                      placeholder={t('dissertation.citationNamePlaceholder')}
                       className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-white/40 mb-1 block">Издание/Журнал</label>
+                      <label className="text-xs text-white/40 mb-1 block">{t('dissertation.publication')}</label>
                       <input
                         type="text"
                         value={newCitation.source}
                         onChange={(e) => setNewCitation(prev => ({ ...prev, source: e.target.value }))}
-                        placeholder="Название издания"
+                        placeholder={t('dissertation.publicationPlaceholder')}
                         className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-white/40 mb-1 block">Год</label>
+                      <label className="text-xs text-white/40 mb-1 block">{t('dissertation.year')}</label>
                       <input
                         type="number"
                         value={newCitation.year}
@@ -4606,7 +4549,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-white/40 mb-1 block">Страницы</label>
+                      <label className="text-xs text-white/40 mb-1 block">{t('dissertation.pagesLabel')}</label>
                       <input
                         type="text"
                         value={newCitation.pages || ''}
@@ -4616,7 +4559,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-white/40 mb-1 block">DOI (опционально)</label>
+                      <label className="text-xs text-white/40 mb-1 block">{t('dissertation.doiOptional')}</label>
                       <input
                         type="text"
                         value={newCitation.doi || ''}
@@ -4628,7 +4571,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                   </div>
                   
                   <div>
-                    <label className="text-xs text-white/40 mb-1 block">URL (опционально)</label>
+                    <label className="text-xs text-white/40 mb-1 block">{t('dissertation.urlOptional')}</label>
                     <input
                       type="text"
                       value={newCitation.url || ''}
@@ -4645,7 +4588,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     className="flex-1 py-2 rounded-lg text-white/50 text-sm transition-colors hover:text-white/70"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                   >
-                    Отмена
+                    {t('dissertation.cancel')}
                   </button>
                   <button
                     onClick={addCitationToList}
@@ -4653,7 +4596,7 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     className="flex-1 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-sm disabled:opacity-50"
                     style={{ boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}
                   >
-                    Добавить
+                    {t('dissertation.addCitation')}
                   </button>
                 </div>
               </motion.div>
@@ -4682,32 +4625,32 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center mx-auto mb-4">
                   <Lock size={32} className="text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-white/90 mb-2">Лимит исчерпан</h2>
+                <h2 className="text-xl font-bold text-white/90 mb-2">{t('dissertation.limitExhausted')}</h2>
                 <p className="text-white/50 mb-4">
                   {(() => {
                     const limits = PLAN_LIMITS[subscription.currentPlan] || PLAN_LIMITS.starter;
                     const remaining = subscription.getRemainingLimits();
                     
                     if (remaining.largeChapters <= 0) {
-                      return `Вы использовали все ${limits.largeChapterGenerations} генераций глав. Оформите Pro для большего лимита.`;
+                      return t('dissertation.limitChaptersUsed');
                     }
                     if (!limits.fullDissertationGeneration) {
-                      return 'Генерация полной диссертации доступна только в Pro подписке.';
+                      return t('dissertation.limitFullDissProOnly');
                     }
                     if (remaining.dissertationGenerations <= 0) {
-                      return `Вы использовали все ${limits.dissertationGenerations} AI-генераций. Оформите подписку для продолжения.`;
+                      return t('dissertation.limitGenerationsUsed');
                     }
-                    return 'Ресурсы текущего плана исчерпаны.';
+                    return t('dissertation.resourcesExhausted');
                   })()}
                 </p>
                 <div className="rounded-xl p-4 mb-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <h3 className="font-semibold text-white/90 mb-2">🎓 План Pro</h3>
+                  <h3 className="font-semibold text-white/90 mb-2">{t('dissertation.proPlanTitle')}</h3>
                   <ul className="text-sm text-white/60 text-left space-y-1">
-                    <li>✓ 90 эссе + 35 рефератов + 15 курсовых/мес</li>
-                    <li>✓ 20 генераций глав (25+ стр)</li>
-                    <li>✓ Генерация полной диссертации</li>
-                    <li>✓ Все типы документов</li>
-                    <li>✓ Экспорт в DOCX/PDF</li>
+                    <li>{t('dissertation.proPlanFeature1')}</li>
+                    <li>{t('dissertation.proPlanFeature2')}</li>
+                    <li>{t('dissertation.proPlanFeature3')}</li>
+                    <li>{t('dissertation.proPlanFeature4')}</li>
+                    <li>{t('dissertation.proPlanFeature5')}</li>
                   </ul>
                   <p className="text-lg font-bold text-purple-400 mt-3">$12.99/мес</p>
                 </div>
@@ -4717,14 +4660,14 @@ ${result.matches.length > 0 ? '\n**Найденные совпадения:**\n'
                     className="flex-1 py-2 rounded-lg text-white/50 transition-colors hover:text-white/70"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                   >
-                    Позже
+                    {t('dissertation.later')}
                   </button>
                   <button
                     onClick={() => navigate('/settings')}
                     className="flex-1 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-medium"
                     style={{ boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}
                   >
-                    Оформить
+                    {t('dissertation.subscribe')}
                   </button>
                 </div>
               </motion.div>

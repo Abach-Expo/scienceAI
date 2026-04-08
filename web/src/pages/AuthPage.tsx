@@ -199,6 +199,8 @@ const AuthPage = () => {
       newErrors.password = t('auth.validationPasswordUppercase');
     } else if (mode === 'register' && !/[0-9]/.test(formData.password)) {
       newErrors.password = t('auth.validationPasswordNumber');
+    } else if (mode === 'register' && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password)) {
+      newErrors.password = t('auth.validationPasswordSpecial');
     }
     
     if (mode === 'register' && formData.password !== formData.confirmPassword) {

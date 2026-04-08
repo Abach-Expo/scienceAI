@@ -32,6 +32,222 @@ import {
   Monitor,
 } from 'lucide-react';
 
+// ═══════════════════════════════════════════
+// Animated Demo Component
+// ═══════════════════════════════════════════
+const DEMO_SCENARIOS = [
+  {
+    userMsg: 'Напиши введение для курсовой по машинному обучению',
+    aiResponse: `**Введение**\n\nМашинное обучение — одно из наиболее динамично развивающихся направлений современной информатики, которое находит применение в самых разных областях...\n\n**Актуальность** данного исследования обусловлена растущей потребностью в автоматизации процессов анализа данных.\n\n**Цель работы** — изучить основные алгоритмы ML и их применимость в задачах классификации.`,
+  },
+  {
+    userMsg: 'Помоги оформить список литературы по ГОСТ',
+    aiResponse: `**Список литературы (ГОСТ Р 7.0.5-2008)**\n\n1. Иванов, А.П. Основы программирования / А.П. Иванов. — М.: Наука, 2023. — 256 с.\n\n2. Петров, В.С. Алгоритмы и структуры данных : учебное пособие / В.С. Петров, Д.И. Козлов. — СПб.: БХВ-Петербург, 2022. — 384 с.\n\n3. Smith, J. Machine Learning Fundamentals // Nature. — 2023. — Vol. 15. — P. 112–128.`,
+  },
+  {
+    userMsg: 'Сгенерируй план дипломной работы по нейросетям',
+    aiResponse: `**План дипломной работы**\n\n**Глава 1.** Теоретические основы нейронных сетей\n- 1.1 История развития нейросетевых технологий\n- 1.2 Архитектуры нейронных сетей\n\n**Глава 2.** Практическое применение\n- 2.1 Выбор инструментов и датасета\n- 2.2 Обучение и валидация модели\n\n**Глава 3.** Результаты и анализ`,
+  },
+];
+
+const DemoAnimation = ({ onTryNow }: { onTryNow: () => void }) => {
+  const [phase, setPhase] = useState<'idle' | 'typing-user' | 'thinking' | 'typing-ai' | 'done'>('idle');
+  const [scenarioIdx, setScenarioIdx] = useState(0);
+  const [userText, setUserText] = useState('');
+  const [aiText, setAiText] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { once: false, amount: 0.5 });
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isInView && !isPlaying && phase === 'idle') {
+      const t = setTimeout(() => startDemo(), 800);
+      return () => clearTimeout(t);
+    }
+  }, [isInView]);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+
+  const runTypewriter = (
+    getText: () => string,
+    setText: (v: string) => void,
+    speed: number,
+    step: number,
+    onDone: () => void
+  ) => {
+    const tick = (idx: number) => {
+      const full = getText();
+      if (idx <= full.length) {
+        setText(full.slice(0, idx));
+        timerRef.current = setTimeout(() => tick(idx + step), speed + Math.random() * speed * 0.6);
+      } else {
+        onDone();
+      }
+    };
+    tick(0);
+  };
+
+  const startDemo = () => {
+    setIsPlaying(true);
+    setUserText('');
+    setAiText('');
+    setPhase('typing-user');
+    runTypewriter(
+      () => DEMO_SCENARIOS[scenarioIdx].userMsg,
+      setUserText,
+      30, 1,
+      () => {
+        timerRef.current = setTimeout(() => {
+          setPhase('thinking');
+          timerRef.current = setTimeout(() => {
+            setPhase('typing-ai');
+            runTypewriter(
+              () => DEMO_SCENARIOS[scenarioIdx].aiResponse,
+              setAiText,
+              8, 2,
+              () => {
+                setPhase('done');
+                timerRef.current = setTimeout(() => {
+                  setScenarioIdx(prev => {
+                    const next = (prev + 1) % DEMO_SCENARIOS.length;
+                    return next;
+                  });
+                  setPhase('idle');
+                  setIsPlaying(false);
+                  setUserText('');
+                  setAiText('');
+                }, 3000);
+              }
+            );
+          }, 1200);
+        }, 400);
+      }
+    );
+  };
+
+  const renderFormattedText = (text: string) => {
+    const lines = text.split('\n');
+    return lines.map((line, i) => {
+      const formatted = line
+        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text-primary font-semibold">$1</strong>')
+        .replace(/^- (.+)/, '<span class="text-text-secondary/70">•</span> $1');
+      return (
+        <span key={i} className="block" dangerouslySetInnerHTML={{ __html: formatted || '&nbsp;' }} />
+      );
+    });
+  };
+
+  return (
+    <div ref={containerRef} className="relative bg-bg-primary/50">
+      {/* Fake window chrome */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border-primary/50 bg-bg-secondary/30">
+        <div className="flex gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-red-500/60" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+          <div className="w-3 h-3 rounded-full bg-green-500/60" />
+        </div>
+        <div className="flex-1 flex justify-center">
+          <div className="flex items-center gap-2 px-4 py-1 rounded-lg bg-bg-primary/50 border border-border-primary/30">
+            <Sparkles size={12} className="text-purple-400" />
+            <span className="text-text-secondary text-xs">Science AI — Чат</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat area */}
+      <div className="p-4 sm:p-6 min-h-[320px] sm:min-h-[380px] flex flex-col gap-4 overflow-hidden">
+        {/* User message */}
+        <AnimatePresence>
+          {(phase !== 'idle') && userText && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex justify-end">
+              <div className="max-w-[80%] px-4 py-3 rounded-2xl rounded-br-md text-white text-sm leading-relaxed"
+                style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.9), rgba(168,85,247,0.85))' }}>
+                {userText}
+                {phase === 'typing-user' && (
+                  <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }} className="inline-block w-0.5 h-4 bg-white/80 ml-0.5 align-middle" />
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* AI thinking */}
+        <AnimatePresence>
+          {phase === 'thinking' && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-border-primary/30 flex items-center justify-center shrink-0">
+                <Sparkles size={14} className="text-violet-400 animate-pulse" />
+              </div>
+              <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-text-primary/[0.03] border border-text-primary/[0.05]">
+                <div className="flex gap-1.5">
+                  {[0, 1, 2].map(i => (
+                    <motion.div key={i} animate={{ scale: [0.7, 1.2, 0.7], opacity: [0.3, 0.9, 0.3] }}
+                      transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }}
+                      className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* AI response */}
+        <AnimatePresence>
+          {(phase === 'typing-ai' || phase === 'done') && aiText && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 border border-border-primary/30 flex items-center justify-center shrink-0">
+                <Sparkles size={14} className={`text-violet-400 ${phase === 'typing-ai' ? 'animate-pulse' : ''}`} />
+              </div>
+              <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-bl-md text-text-primary/80 text-sm leading-relaxed bg-text-primary/[0.025] border border-text-primary/[0.05]"
+                style={{ backdropFilter: 'blur(12px)' }}>
+                {renderFormattedText(aiText)}
+                {phase === 'typing-ai' && (
+                  <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }} className="inline-block w-0.5 h-4 bg-violet-400/80 ml-0.5 align-middle" />
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Idle state */}
+        {phase === 'idle' && !isPlaying && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center border border-purple-500/20">
+              <Play size={28} className="text-purple-400 ml-1" />
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Bottom bar */}
+      <div className="px-4 sm:px-6 py-3 border-t border-border-primary/50 bg-bg-secondary/20 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {DEMO_SCENARIOS.map((_, i) => (
+              <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === scenarioIdx ? 'bg-purple-400' : 'bg-text-primary/10'}`} />
+            ))}
+          </div>
+          <span className="text-text-secondary/50 text-xs hidden sm:inline">
+            {scenarioIdx + 1}/{DEMO_SCENARIOS.length}
+          </span>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onTryNow}
+          className="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm font-medium shadow-lg shadow-purple-500/20 flex items-center gap-2"
+        >
+          <Sparkles size={14} />
+          Попробовать
+        </motion.button>
+      </div>
+    </div>
+  );
+};
+
 const HomePage = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('home.pageTitle'));
@@ -536,28 +752,14 @@ const HomePage = () => {
             ))}
           </div>
 
-          {/* Video Placeholder */}
+          {/* Interactive Animated Demo */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="relative aspect-video rounded-2xl overflow-hidden border border-border-primary glass"
+            className="relative rounded-2xl overflow-hidden border border-border-primary glass"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/new-project')}
-                className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/30"
-                title={t('home.watchDemo')}
-              >
-                <Play size={32} className="text-white ml-1" />
-              </motion.button>
-            </div>
-            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <span className="text-text-secondary text-sm">{t('home.demoCaption')}</span>
-              <span className="text-text-muted text-sm">4:32</span>
-            </div>
+            <DemoAnimation onTryNow={() => navigate('/auth')} />
           </motion.div>
         </div>
       </section>

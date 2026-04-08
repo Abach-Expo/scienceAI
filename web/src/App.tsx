@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
-import { useEffect, lazy, Suspense } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import { getTranslation, Language } from './i18n/translations';
 
@@ -47,6 +47,54 @@ const NotFoundPage = lazy(() => lazyRetry(() => import('./pages/NotFoundPage')))
 import { NotificationProvider } from './components/NotificationSystem';
 import { OnboardingTour, useOnboarding } from './components/Onboarding';
 import ErrorBoundary from './components/ErrorBoundary';
+import { initStorageManager } from './utils/storageManager';
+
+// Offline/Online Banner
+const OfflineBanner = () => {
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [showOnline, setShowOnline] = useState(false);
+  const lang = (localStorage.getItem('app_language') || 'ru') as Language;
+
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true);
+    const goOnline = () => {
+      setIsOffline(false);
+      setShowOnline(true);
+      setTimeout(() => setShowOnline(false), 3000);
+    };
+    window.addEventListener('offline', goOffline);
+    window.addEventListener('online', goOnline);
+    return () => {
+      window.removeEventListener('offline', goOffline);
+      window.removeEventListener('online', goOnline);
+    };
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {isOffline && (
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -50, opacity: 0 }}
+          className="fixed top-0 left-0 right-0 z-[9999] bg-red-500/95 text-white text-center py-2 text-sm font-medium backdrop-blur-sm"
+        >
+          {getTranslation(lang, 'common.offline')}
+        </motion.div>
+      )}
+      {showOnline && !isOffline && (
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -50, opacity: 0 }}
+          className="fixed top-0 left-0 right-0 z-[9999] bg-green-500/95 text-white text-center py-2 text-sm font-medium backdrop-blur-sm"
+        >
+          {getTranslation(lang, 'common.online')}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 // Loading fallback for lazy-loaded pages
 const PageLoader = () => {
@@ -73,6 +121,25 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
 // Inner App with Onboarding
 const AppContent = () => {
   const { showOnboarding, completeOnboarding } = useOnboarding();
+  const { isAuthenticated, logout } = useAuthStore();
+
+  // Session inactivity timeout — 30 min
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const INACTIVITY_MS = 30 * 60 * 1000;
+    let timer: ReturnType<typeof setTimeout>;
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { logout(); }, INACTIVITY_MS);
+    };
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const;
+    events.forEach(e => window.addEventListener(e, resetTimer, { passive: true }));
+    resetTimer();
+    return () => {
+      clearTimeout(timer);
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+    };
+  }, [isAuthenticated, logout]);
   
   return (
     <>
@@ -131,6 +198,7 @@ const AppContent = () => {
 function App() {
   // Apply saved theme on mount — respect system preference if no saved choice
   useEffect(() => {
+    initStorageManager();
     const savedTheme = localStorage.getItem('app_theme');
     if (savedTheme) {
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -142,6 +210,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <OfflineBanner />
       <NotificationProvider>
         <BrowserRouter>
           <AppContent />

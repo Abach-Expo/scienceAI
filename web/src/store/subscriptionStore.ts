@@ -1329,23 +1329,20 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           
           if (response.success && response.data) {
             const backendData = response.data;
-            const localUsage = get().usage;
             
-
-            
-            // Используем максимум из локальных и серверных значений
-            // (на случай если юзер что-то сделал оффлайн)
+            // Бэкенд — источник правды для аккаунта.
+            // Используем серверные значения напрямую, чтобы не тянуть лимиты чужого аккаунта.
             set((state) => ({
               usage: {
                 ...state.usage,
-                presentationsCreated: Math.max(localUsage.presentationsCreated, backendData.presentationsCreated || 0),
-                academicWorksCreated: Math.max(localUsage.academicWorksCreated, backendData.academicWorksCreated || 0),
-                academicGenerationsToday: Math.max(localUsage.academicGenerationsToday, backendData.academicGenerationsToday || 0),
-                chatMessagesToday: Math.max(localUsage.chatMessagesToday, backendData.chatMessagesToday || 0),
-                dalleImagesUsed: Math.max(localUsage.dalleImagesUsed, backendData.dalleImagesUsed || 0),
-                plagiarismChecksUsed: Math.max(localUsage.plagiarismChecksUsed, backendData.plagiarismChecksUsed || 0),
-                dissertationGenerationsUsed: Math.max(localUsage.dissertationGenerationsUsed, backendData.dissertationGenerationsUsed || 0),
-                largeChapterGenerationsUsed: Math.max(localUsage.largeChapterGenerationsUsed, backendData.largeChapterGenerationsUsed || 0),
+                presentationsCreated: backendData.presentationsCreated || 0,
+                academicWorksCreated: backendData.academicWorksCreated || 0,
+                academicGenerationsToday: backendData.academicGenerationsToday || 0,
+                chatMessagesToday: backendData.chatMessagesToday || 0,
+                dalleImagesUsed: backendData.dalleImagesUsed || 0,
+                plagiarismChecksUsed: backendData.plagiarismChecksUsed || 0,
+                dissertationGenerationsUsed: backendData.dissertationGenerationsUsed || 0,
+                largeChapterGenerationsUsed: backendData.largeChapterGenerationsUsed || 0,
               },
             }));
             

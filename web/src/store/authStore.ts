@@ -6,6 +6,56 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// ================== HELPERS ==================
+
+/** Decode JWT payload without external libs */
+function decodeJwtPayload(token: string): { exp?: number } | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/** Returns ms until token expires, or 0 if expired/invalid */
+function getTokenTTL(token: string | null): number {
+  if (!token) return 0;
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return 0;
+  return Math.max(0, payload.exp * 1000 - Date.now());
+}
+
+// Proactive refresh timer
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleTokenRefresh(token: string | null) {
+  if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
+  const ttl = getTokenTTL(token);
+  if (ttl <= 0) return;
+  // Refresh 60s before expiry (min 5s)
+  const delay = Math.max(5000, ttl - 60_000);
+  refreshTimer = setTimeout(async () => {
+    try {
+      const { API_URL } = await import('../config');
+      const refreshToken = useAuthStore.getState().getRefreshToken();
+      if (!refreshToken) return;
+      const res = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success && data.data?.token && data.data?.refreshToken) {
+        useAuthStore.getState().setTokens(data.data.token, data.data.refreshToken);
+      }
+    } catch { /* silent — reactive refresh on 401 is fallback */ }
+  }, delay);
+}
+
 // ================== TYPES ==================
 
 export interface UserData {
@@ -52,15 +102,18 @@ export const useAuthStore = create<AuthState>()(
       login: (token: string, userData: Omit<UserData, 'isLoggedIn'>, refreshToken?: string) => {
         const user: UserData = { ...userData, isLoggedIn: true };
         set({ token, refreshToken: refreshToken || null, user, isAuthenticated: true });
-        // Zustand persist handles storage — no manual localStorage needed
+        scheduleTokenRefresh(token);
       },
 
       logout: () => {
+        if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
         set({ token: null, refreshToken: null, user: null, isAuthenticated: false });
         // Clean up any legacy keys
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('profile_completed');
+        // Clear subscription/usage data so it doesn't leak to the next account
+        localStorage.removeItem('subscription-storage');
       },
 
       updateUser: (updates: Partial<UserData>) => {
@@ -73,6 +126,7 @@ export const useAuthStore = create<AuthState>()(
 
       setTokens: (token: string, refreshToken: string) => {
         set({ token, refreshToken });
+        scheduleTokenRefresh(token);
       },
 
       getToken: () => get().token,
@@ -98,6 +152,12 @@ export const useAuthStore = create<AuthState>()(
           }
         }
         return persistedState;
+      },
+      onRehydrateStorage: () => (state) => {
+        // Schedule proactive token refresh on app load
+        if (state?.token) {
+          scheduleTokenRefresh(state.token);
+        }
       },
     }
   )
