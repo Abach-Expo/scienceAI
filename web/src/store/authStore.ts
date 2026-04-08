@@ -100,6 +100,26 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: (token: string, userData: Omit<UserData, 'isLoggedIn'>, refreshToken?: string) => {
+        // If logging into a different account, clear previous user's data
+        const prevUser = get().user;
+        if (prevUser && prevUser.id !== userData.id) {
+          const userDataKeys = [
+            'subscription-storage', 'user-style-storage', 'chats',
+            'dissertations', 'academic-documents', 'science-ai-presentations',
+            'science-ai-brand-kits', 'science-ai-polls', 'science-ai-analytics',
+            'achievements', 'onboarding_completed', 'dismissed_tips',
+          ];
+          userDataKeys.forEach(key => localStorage.removeItem(key));
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('chat-draft-') || key.startsWith('chat-feedback-') ||
+                key.startsWith('onboarding_') || key.startsWith('science-ai-published-'))) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => localStorage.removeItem(key));
+        }
         const user: UserData = { ...userData, isLoggedIn: true };
         set({ token, refreshToken: refreshToken || null, user, isAuthenticated: true });
         scheduleTokenRefresh(token);
@@ -112,8 +132,36 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('profile_completed');
-        // Clear subscription/usage data so it doesn't leak to the next account
-        localStorage.removeItem('subscription-storage');
+        // Clear ALL user-specific data to prevent leaking to next account
+        const userDataKeys = [
+          'subscription-storage',
+          'user-style-storage',
+          'chats',
+          'dissertations',
+          'academic-documents',
+          'science-ai-presentations',
+          'science-ai-brand-kits',
+          'science-ai-polls',
+          'science-ai-analytics',
+          'achievements',
+          'onboarding_completed',
+          'dismissed_tips',
+        ];
+        userDataKeys.forEach(key => localStorage.removeItem(key));
+        // Clear dynamic keys (chat drafts, feedback, onboarding tours, published sites)
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (
+            key.startsWith('chat-draft-') ||
+            key.startsWith('chat-feedback-') ||
+            key.startsWith('onboarding_') ||
+            key.startsWith('science-ai-published-')
+          )) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
       },
 
       updateUser: (updates: Partial<UserData>) => {
