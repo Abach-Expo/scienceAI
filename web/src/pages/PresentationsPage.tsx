@@ -1688,6 +1688,78 @@ quoteAuthor: "Стив Джобс, основатель Apple"
   };
   
   // ==================== ЭКСПОРТ В PPTX ====================
+  // Маппинг переходов слайдов → PowerPoint OOXML transition XML
+  const getTransitionXml = (transition: SlideTransition): string => {
+    const dur = transition.duration * 1000;
+    const spd = dur <= 300 ? 'fast' : dur >= 700 ? 'slow' : 'med';
+    const dirMap: Record<string, string> = {
+      left: 'l',
+      right: 'r',
+      up: 'u',
+      down: 'd',
+    };
+    const dir = dirMap[transition.direction || 'left'] || 'l';
+
+    switch (transition.type) {
+      case 'fade':
+        return `<p:transition spd="${spd}" advClick="1"><p:fade/></p:transition>`;
+      case 'slide':
+      case 'push':
+        return `<p:transition spd="${spd}" advClick="1"><p:push dir="${dir}"/></p:transition>`;
+      case 'cover':
+        return `<p:transition spd="${spd}" advClick="1"><p:cover dir="${dir}"/></p:transition>`;
+      case 'zoom':
+        return `<p:transition spd="${spd}" advClick="1"><p:zoom dir="in"/></p:transition>`;
+      case 'flip':
+        return `<p:transition spd="${spd}" advClick="1"><p:fade/></p:transition>`;
+      case 'cube':
+        return `<p:transition spd="${spd}" advClick="1"><p:cube dir="${dir}"/></p:transition>`;
+      case 'morph':
+        // Morph requires Office 365. Fallback to fade for older versions.
+        return `<p:transition spd="${spd}" advClick="1"><p:fade/></p:transition>`;
+      case 'none':
+      default:
+        return '';
+    }
+  };
+
+  // Генерация PowerPoint animation XML для элементов слайда
+  const getElementAnimationsXml = (_slide: Slide, shapeCount: number): string => {
+    // Добавляем entrance-анимации для всех основных текстовых элементов
+    // shapeCount = количество фигур на слайде (Title, Subtitle, Content, BulletPoints, etc.)
+    if (shapeCount <= 0) return '';
+
+    const seqAnims: string[] = [];
+    let delay = 0;
+
+    for (let i = 0; i < shapeCount; i++) {
+      const spId = i + 2; // PowerPoint shape IDs start from 2 in slides
+      const dur = 500;
+      delay = i * 200; // stagger each element by 200ms
+
+      // Fade + fly-in from bottom entrance animation
+      seqAnims.push(`
+        <p:par>
+          <p:cTn id="${i * 2 + 2}" presetID="10" presetClass="entr" presetSubtype="0" fill="hold" nodeType="withEffect">
+            <p:stCondLst><p:cond delay="${delay}"/></p:stCondLst>
+            <p:childTnLst>
+              <p:set>
+                <p:cBhvr><p:cTn id="${i * 2 + 3}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn><p:tgtEl><p:spTgt spid="${spId}"/></p:tgtEl><p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr>
+                <p:to><p:strVal val="visible"/></p:to>
+              </p:set>
+              <p:animEffect transition="in" filter="fade">
+                <p:cBhvr><p:cTn id="${i * 2 + 4}" dur="${dur}"/><p:tgtEl><p:spTgt spid="${spId}"/></p:tgtEl></p:cBhvr>
+              </p:animEffect>
+            </p:childTnLst>
+          </p:cTn>
+        </p:par>`);
+    }
+
+    if (seqAnims.length === 0) return '';
+
+    return `<p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"><p:childTnLst><p:seq concurrent="1" nextAc="seek"><p:cTn id="2" dur="indefinite" nodeType="mainSeq"><p:childTnLst><p:par><p:cTn id="3" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>${seqAnims.join('')}</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn><p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst><p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst></p:seq></p:childTnLst></p:cTn></p:par></p:tnLst></p:timing>`;
+  };
+
   const exportToPPTX = async () => {
     if (!currentPresentation) return;
     
@@ -1695,8 +1767,9 @@ quoteAuthor: "Стив Джобс, основатель Apple"
     setExportProgress('Подготовка PowerPoint...');
     
     try {
-      // Динамический импорт pptxgenjs
+      // Динамический импорт pptxgenjs + JSZip
       const PptxGenJS = (await import('pptxgenjs')).default;
+      const JSZip = (await import('jszip')).default;
       const pptx = new PptxGenJS();
       
       const theme = currentPresentation.theme;
@@ -1903,10 +1976,59 @@ quoteAuthor: "Стив Джобс, основатель Apple"
         });
       }
       
-      // Сохранение
+      // Сохранение с анимациями и переходами
+      setExportProgress('Добавление анимаций и переходов...');
+      
+      // Генерируем PPTX как arraybuffer для пост-обработки
+      const pptxBuffer = await pptx.write({ outputType: 'arraybuffer' }) as ArrayBuffer;
+      const zip = await JSZip.loadAsync(pptxBuffer);
+      
+      // Внедряем переходы и анимации в XML каждого слайда
+      for (let i = 0; i < currentPresentation.slides.length; i++) {
+        const slide = currentPresentation.slides[i];
+        const slideFile = zip.file(`ppt/slides/slide${i + 1}.xml`);
+        if (!slideFile) continue;
+        
+        let xml = await slideFile.async('string');
+        
+        // Добавляем переход слайда (перед закрывающим </p:sld>)
+        const transitionXml = getTransitionXml(slide.transition);
+        if (transitionXml) {
+          xml = xml.replace('</p:sld>', `${transitionXml}</p:sld>`);
+        }
+        
+        // Подсчитываем количество текстовых элементов для анимации
+        let elementCount = 0;
+        if (slide.title) elementCount++;
+        if (slide.subtitle) elementCount++;
+        if (slide.content) elementCount++;
+        if (slide.bulletPoints && slide.bulletPoints.length > 0) elementCount++;
+        if (slide.quote) elementCount++;
+        if (slide.stats && slide.stats.length > 0) elementCount += slide.stats.length;
+        
+        // Добавляем entrance-анимации (перед закрывающим </p:sld>)
+        const animXml = getElementAnimationsXml(slide, Math.min(elementCount, 6));
+        if (animXml) {
+          xml = xml.replace('</p:sld>', `${animXml}</p:sld>`);
+        }
+        
+        zip.file(`ppt/slides/slide${i + 1}.xml`, xml);
+      }
+      
+      // Генерируем финальный файл
       setExportProgress('Сохранение файла...');
+      const finalBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+      
+      // Скачиваем
       const fileName = `${currentPresentation.title}.pptx`;
-      await pptx.writeFile({ fileName });
+      const url = URL.createObjectURL(finalBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
       setExportProgress('');
       setIsExporting(false);

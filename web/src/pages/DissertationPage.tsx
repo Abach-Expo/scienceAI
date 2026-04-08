@@ -101,24 +101,38 @@ const DissertationPage = () => {
   const [expandedThinking, setExpandedThinking] = useState<Set<string>>(new Set());
 
   // Auto-scroll — только контейнер сообщений скроллится, экран стоит на месте
+  const userHasScrolledUp = useRef(false);
+
+  // Отслеживаем ручной скролл пользователя
   useEffect(() => {
     const container = aiMessagesContainerRef.current;
-    const endElement = messagesEndRef.current;
+    if (!container) return;
 
-    if (!container || !endElement) return;
+    const handleScroll = () => {
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+      userHasScrolledUp.current = !isNearBottom;
+    };
 
-    // Во время стриминга — всегда следим за концом (внутри контейнера)
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const container = aiMessagesContainerRef.current;
+    if (!container) return;
+
+    // Если пользователь ушёл наверх — НЕ автоскроллить (не вырывать чтение)
+    if (userHasScrolledUp.current && !isGenerating) return;
+
+    // Во время генерации — всегда следим за концом
     if (isGenerating) {
-      container.scrollTop = container.scrollHeight;
-    } 
-    // Когда генерация закончена — плавно, только если пользователь был внизу
-    else {
-      const isNearBottom = 
-        container.scrollHeight - container.scrollTop - container.clientHeight < 150;
-
-      if (isNearBottom) {
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-      }
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+      });
+    } else {
+      // Новое сообщение — плавно скроллим вниз
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      userHasScrolledUp.current = false;
     }
   }, [aiMessages, isGenerating]);
 
@@ -4105,15 +4119,40 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                     className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-border-primary scrollbar-track-transparent"
                   >
                     {aiMessages.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center">
-                        <div className="relative w-16 h-16 mb-4">
-                          <div className="absolute inset-0 rounded-2xl bg-violet-500/10 blur-lg" />
-                          <div className="relative w-full h-full rounded-2xl flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.1)' }}>
-                            <Brain size={28} className="text-violet-400/80" />
+                      <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                        <div className="relative w-20 h-20 mb-5">
+                          <div className="absolute inset-0 rounded-2xl bg-violet-500/10 blur-xl animate-pulse" />
+                          <div className="relative w-full h-full rounded-2xl flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.12)' }}>
+                            <Brain size={34} className="text-violet-400/80" />
                           </div>
                         </div>
-                        <p className="text-white/40 text-sm">{t('dissertation.aiReady')}</p>
-                        <p className="text-xs text-white/20 mt-1">{t('dissertation.aiReadyHint')}</p>
+                        <p className="text-white/50 text-sm font-medium mb-1">{t('dissertation.aiReady')}</p>
+                        <p className="text-xs text-white/25 mb-6 max-w-[240px]">{t('dissertation.aiReadyHint')}</p>
+                        
+                        {/* Quick suggestion chips */}
+                        <div className="flex flex-wrap justify-center gap-2 max-w-[320px]">
+                          {[
+                            { text: t('dissertation.writeSection'), icon: Wand2, action: generateSection },
+                            { text: t('dissertation.expandText'), icon: TrendingUp, action: expandText },
+                            { text: t('dissertation.improveStyle'), icon: PenTool, action: improveText },
+                            { text: t('dissertation.addCitations'), icon: BookOpen, action: addCitations },
+                          ].map((chip, i) => (
+                            <motion.button
+                              key={i}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.15 + i * 0.07 }}
+                              onClick={chip.action}
+                              disabled={isGenerating}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-white/50 hover:text-violet-300 transition-all disabled:opacity-30"
+                              style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.1)' }}
+                              whileHover={{ scale: 1.04, borderColor: 'rgba(139,92,246,0.25)' }}
+                            >
+                              <chip.icon size={12} />
+                              {chip.text}
+                            </motion.button>
+                          ))}
+                        </div>
                       </div>
                     ) : (
                       aiMessages.map((msg, index) => (
