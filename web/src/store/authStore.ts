@@ -89,6 +89,85 @@ interface AuthState {
   getUserEmail: () => string;
 }
 
+// ================== USER DATA ISOLATION ==================
+
+const USER_SCOPED_KEYS = [
+  'subscription-storage',
+  'user-style-storage',
+  'chats',
+  'dissertations',
+  'academic-documents',
+  'science-ai-presentations',
+  'science-ai-brand-kits',
+  'science-ai-polls',
+  'science-ai-analytics',
+  'achievements',
+  'onboarding_completed',
+  'dismissed_tips',
+];
+
+const DYNAMIC_KEY_PREFIXES = ['chat-draft-', 'chat-feedback-', 'onboarding_', 'science-ai-published-'];
+
+function _getDynamicKeys(): string[] {
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && DYNAMIC_KEY_PREFIXES.some(p => key.startsWith(p))) {
+      keys.push(key);
+    }
+  }
+  return keys;
+}
+
+function _clearDynamicKeys() {
+  _getDynamicKeys().forEach(key => localStorage.removeItem(key));
+}
+
+function _saveUserData(userId: string) {
+  const prefix = `__uid_${userId}__`;
+  // Save static keys
+  USER_SCOPED_KEYS.forEach(key => {
+    const value = localStorage.getItem(key);
+    if (value !== null) {
+      localStorage.setItem(prefix + key, value);
+    }
+  });
+  // Save dynamic keys
+  _getDynamicKeys().forEach(key => {
+    const value = localStorage.getItem(key);
+    if (value !== null) {
+      localStorage.setItem(prefix + key, value);
+    }
+  });
+}
+
+function _restoreUserData(userId: string) {
+  const prefix = `__uid_${userId}__`;
+  // Clear current generic keys first
+  USER_SCOPED_KEYS.forEach(key => localStorage.removeItem(key));
+  _clearDynamicKeys();
+  // Restore from user-scoped keys
+  const keysToRestore: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(prefix)) {
+      keysToRestore.push(key);
+    }
+  }
+  keysToRestore.forEach(scopedKey => {
+    const genericKey = scopedKey.slice(prefix.length);
+    const value = localStorage.getItem(scopedKey);
+    if (value !== null) {
+      localStorage.setItem(genericKey, value);
+    }
+  });
+}
+
+function _swapUserData(prevUserId: string, newUserId: string) {
+  _saveUserData(prevUserId);
+  _restoreUserData(newUserId);
+}
+
 // ================== STORE ==================
 
 export const useAuthStore = create<AuthState>()(
@@ -100,25 +179,13 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: (token: string, userData: Omit<UserData, 'isLoggedIn'>, refreshToken?: string) => {
-        // If logging into a different account, clear previous user's data
         const prevUser = get().user;
+        // Switch user data isolation: save prev user's data, restore new user's data
         if (prevUser && prevUser.id !== userData.id) {
-          const userDataKeys = [
-            'subscription-storage', 'user-style-storage', 'chats',
-            'dissertations', 'academic-documents', 'science-ai-presentations',
-            'science-ai-brand-kits', 'science-ai-polls', 'science-ai-analytics',
-            'achievements', 'onboarding_completed', 'dismissed_tips',
-          ];
-          userDataKeys.forEach(key => localStorage.removeItem(key));
-          const keysToRemove: string[] = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (key.startsWith('chat-draft-') || key.startsWith('chat-feedback-') ||
-                key.startsWith('onboarding_') || key.startsWith('science-ai-published-'))) {
-              keysToRemove.push(key);
-            }
-          }
-          keysToRemove.forEach(key => localStorage.removeItem(key));
+          _swapUserData(prevUser.id, userData.id);
+        } else if (!prevUser) {
+          // Fresh login (no prev user) — restore this user's saved data if any
+          _restoreUserData(userData.id);
         }
         const user: UserData = { ...userData, isLoggedIn: true };
         set({ token, refreshToken: refreshToken || null, user, isAuthenticated: true });
@@ -127,41 +194,19 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
+        const currentUser = get().user;
+        // Save current user's data before clearing
+        if (currentUser) {
+          _saveUserData(currentUser.id);
+        }
         set({ token: null, refreshToken: null, user: null, isAuthenticated: false });
-        // Clean up any legacy keys
+        // Clean up legacy keys
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('profile_completed');
-        // Clear ALL user-specific data to prevent leaking to next account
-        const userDataKeys = [
-          'subscription-storage',
-          'user-style-storage',
-          'chats',
-          'dissertations',
-          'academic-documents',
-          'science-ai-presentations',
-          'science-ai-brand-kits',
-          'science-ai-polls',
-          'science-ai-analytics',
-          'achievements',
-          'onboarding_completed',
-          'dismissed_tips',
-        ];
-        userDataKeys.forEach(key => localStorage.removeItem(key));
-        // Clear dynamic keys (chat drafts, feedback, onboarding tours, published sites)
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (
-            key.startsWith('chat-draft-') ||
-            key.startsWith('chat-feedback-') ||
-            key.startsWith('onboarding_') ||
-            key.startsWith('science-ai-published-')
-          )) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        // Clear generic keys (data is already saved under user-scoped keys)
+        USER_SCOPED_KEYS.forEach(key => localStorage.removeItem(key));
+        _clearDynamicKeys();
       },
 
       updateUser: (updates: Partial<UserData>) => {
