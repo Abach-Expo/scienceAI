@@ -75,6 +75,11 @@ const CHARS_PER_PAGE = 1800;
 // Параллельная генерация: макс. одновременных запросов (ограничение Rate Limits)
 const PARALLEL_BATCH_SIZE = 3;
 
+// Алгоритм «дописывания» — если ИИ выдал меньше целевого объёма
+const MAX_CONTINUATIONS_PER_PART = 5;   // макс. попыток продолжить часть
+const MAX_EXPANSIONS_PER_CHAPTER = 3;   // макс. раундов расширения главы
+const MIN_VOLUME_RATIO = 0.70;          // 70 % от целевого = допустимый минимум
+
 // Лимиты моделей по выходным токенам
 const MODEL_LIMITS = {
   'claude-sonnet-4-20250514': { maxOutputTokens: 64000, wordsPerRequest: 12000, pagesPerRequest: 40 },
@@ -277,11 +282,8 @@ export class DissertationService {
     for (let batchStart = 0; batchStart < chapters.length; batchStart += batchSize) {
       const batch = chapters.slice(batchStart, batchStart + batchSize);
 
-      // Контекст из последних завершённых глав (краткое содержание)
-      const previousContext = generatedChapters
-        .slice(-3)
-        .map(ch => `### ${ch.title}\n${ch.content.substring(0, 600)}...`)
-        .join('\n\n');
+      // Контекст: AI-суммаризация всех предыдущих глав (вместо сырого обрезания)
+      const previousContext = await this.summarizeContext(generatedChapters, topic, language);
 
       // Отправляем прогресс для начала батча
       const pct = 10 + Math.round((batchStart / totalChapters) * 80);
@@ -390,6 +392,59 @@ export class DissertationService {
     };
   }
 
+  // ==================== СУММАРИЗАЦИЯ КОНТЕКСТА ====================
+
+  /**
+   * AI-суммаризация всех написанных глав → сжатый контекст для следующей главы.
+   * Обеспечивает связность и последовательность даже при 10+ главах.
+   */
+  private async summarizeContext(
+    generatedChapters: DissertationResult['chapters'],
+    topic: string,
+    language: string
+  ): Promise<string> {
+    if (generatedChapters.length === 0) return '';
+
+    // Для 1-2 глав — достаточно просто усечённого текста
+    if (generatedChapters.length <= 2) {
+      return generatedChapters
+        .map(ch => `### ${ch.title}\n${ch.content.substring(0, 1500)}`)
+        .join('\n\n');
+    }
+
+    // Для 3+ глав: просим AI создать связный конспект
+    const chaptersText = generatedChapters
+      .map(ch => `### ${ch.title} (${ch.wordCount} слов)\n${ch.content.substring(0, 2000)}`)
+      .join('\n\n');
+
+    const lang = language === 'ru' ? 'русском' : 'английском';
+
+    const systemPrompt = `Ты — помощник академического писателя. Создай краткий, но информативный конспект всех написанных глав.`;
+
+    const userPrompt = `Тема работы: "${topic}"
+
+Уже написанные главы (сокращённо):
+${chaptersText}
+
+Создай конспект (400-600 слов) на ${lang} языке:
+- Ключевые тезисы и аргументы каждой главы
+- Логика перехода между главами
+- Основные определения и выводы
+
+Этот конспект будет передан как контекст при написании следующих глав, чтобы сохранить связность и не противоречить ранее изложенному.`;
+
+    try {
+      return await this.generate(systemPrompt, userPrompt, 2000, 0.3);
+    } catch (error) {
+      logger.warn('Context summarization failed, using fallback:', error);
+      // Фолбэк: усечённый текст последних 3 глав
+      return generatedChapters
+        .slice(-3)
+        .map(ch => `### ${ch.title}\n${ch.content.substring(0, 600)}...`)
+        .join('\n\n');
+    }
+  }
+
   /**
    * Уточнить план работы через AI — адаптировать шаблон под конкретную тему
    */
@@ -455,41 +510,72 @@ ${instructions ? `Дополнительные требования: ${instructi
     const maxWordsPerRequest = this.anthropic ? 12000 : 5000;
     const needsSplit = chapter.targetWords > maxWordsPerRequest;
 
+    let fullText: string;
+
     if (!needsSplit) {
-      // Одним запросом
-      return await this.generateChapterPart(
+      // Одним запросом (с автоматическим дописыванием)
+      fullText = await this.generateChapterPart(
         topic, typeLabel, chapter, lang, styleDesc, previousContext, instructions, chapter.targetWords
       );
+    } else {
+      // Разбиваем на части
+      const parts: string[] = [];
+      const partsCount = Math.ceil(chapter.targetWords / maxWordsPerRequest);
+      const wordsPerPart = Math.ceil(chapter.targetWords / partsCount);
+
+      for (let p = 0; p < partsCount; p++) {
+        const isFirst = p === 0;
+        const isLast = p === partsCount - 1;
+        
+        const partContext = isFirst
+          ? previousContext
+          : `${previousContext}\n\n--- Уже написано в этой главе ---\n${parts[parts.length - 1]?.slice(-800) || ''}`;
+
+        const partInstructions = [
+          instructions,
+          !isFirst ? 'Продолжай текст естественно, без повторения вступления главы.' : '',
+          !isLast ? 'Не пиши заключение главы, текст будет продолжен.' : '',
+          `Это часть ${p + 1} из ${partsCount} для данной главы.`,
+        ].filter(Boolean).join(' ');
+
+        const partText = await this.generateChapterPart(
+          topic, typeLabel, chapter, lang, styleDesc, partContext, partInstructions, wordsPerPart
+        );
+
+        parts.push(partText);
+      }
+
+      fullText = parts.join('\n\n');
     }
 
-    // Разбиваем на части
-    const parts: string[] = [];
-    const partsCount = Math.ceil(chapter.targetWords / maxWordsPerRequest);
-    const wordsPerPart = Math.ceil(chapter.targetWords / partsCount);
+    // ====== ВАЛИДАЦИЯ ОБЪЁМА ГЛАВЫ ======
+    let wordCount = fullText.split(/\s+/).filter(Boolean).length;
+    const minChapterWords = Math.floor(chapter.targetWords * MIN_VOLUME_RATIO);
+    let expansions = 0;
 
-    for (let p = 0; p < partsCount; p++) {
-      const isFirst = p === 0;
-      const isLast = p === partsCount - 1;
-      
-      const partContext = isFirst
-        ? previousContext
-        : `${previousContext}\n\n--- Уже написано в этой главе ---\n${parts[parts.length - 1]?.slice(-800) || ''}`;
-
-      const partInstructions = [
-        instructions,
-        !isFirst ? 'Продолжай текст естественно, без повторения вступления главы.' : '',
-        !isLast ? 'Не пиши заключение главы, текст будет продолжен.' : '',
-        `Это часть ${p + 1} из ${partsCount} для данной главы.`,
-      ].filter(Boolean).join(' ');
-
-      const partText = await this.generateChapterPart(
-        topic, typeLabel, chapter, lang, styleDesc, partContext, partInstructions, wordsPerPart
+    while (wordCount < minChapterWords && expansions < MAX_EXPANSIONS_PER_CHAPTER) {
+      expansions++;
+      const deficit = chapter.targetWords - wordCount;
+      logger.info(
+        `[Dissertation] Volume validation: chapter "${chapter.title}" has ${wordCount}/${chapter.targetWords} words (${Math.round(wordCount / chapter.targetWords * 100)}%). ` +
+        `Expansion #${expansions}, need ~${deficit} more words`
       );
 
-      parts.push(partText);
+      const expansionText = await this.expandChapterContent(
+        topic, typeLabel, chapter, fullText, deficit, lang, styleDesc
+      );
+
+      fullText += '\n\n' + expansionText;
+      wordCount = fullText.split(/\s+/).filter(Boolean).length;
     }
 
-    return parts.join('\n\n');
+    if (expansions > 0) {
+      logger.info(
+        `[Dissertation] Chapter "${chapter.title}" final: ${wordCount} words after ${expansions} expansion(s)`
+      );
+    }
+
+    return fullText;
   }
 
   /**
@@ -505,11 +591,16 @@ ${instructions ? `Дополнительные требования: ${instructi
     instructions: string | undefined,
     targetWords: number
   ): Promise<string> {
+    const targetPages = Math.round(targetWords / WORDS_PER_PAGE);
     const systemPrompt = `Ты — опытный академический писатель с 20+ годами стажа. Пишешь ${typeLabel} в ${style} стиле.
 
-КРИТИЧЕСКИ ВАЖНО:
+### ТРЕБОВАНИЕ К ОБЪЁМУ (САМОЕ ВАЖНОЕ) ###
+Ты ОБЯЗАН написать текст объёмом НЕ МЕНЕЕ ${targetWords} слов (${targetPages} страниц).
+Это НЕ рекомендация, а ЖЁСТКОЕ ТРЕБОВАНИЕ. Текст короче ${Math.round(targetWords * 0.8)} слов — НЕПРИЕМЛЕМ.
+Если сомневаешься — пиши БОЛЬШЕ, а не меньше.
+
+### СТИЛЬ ПИСЬМА ###
 - Пиши строго на ${lang} языке
-- Объём текста: МИНИМУМ ${targetWords} слов. Пиши ПОДРОБНО И РАЗВЁРНУТО
 - Стиль: естественный, человеческий, НЕ робот
 - Используй авторские обороты: "мы полагаем", "на наш взгляд", "представляется целесообразным"
 - Варьируй длину предложений (от 5 до 35 слов)
@@ -518,7 +609,15 @@ ${instructions ? `Дополнительные требования: ${instructi
 - Добавляй критический анализ, не просто описание
 - Делай плавные переходы между абзацами
 
-ЗАПРЕЩЕНО (маркеры ИИ):
+### КАК НАБРАТЬ НУЖНЫЙ ОБЪЁМ ###
+- Каждый подраздел раскрывай на 2-4 абзаца (по 150-250 слов каждый)
+- Приводи конкретные примеры, исследования, статистику
+- Сравнивай разные точки зрения (минимум 2-3 позиции)
+- Добавляй контраргументы и их разбор
+- Описывай методологические подходы подробно
+- Включай исторический контекст и эволюцию идей
+
+### ЗАПРЕЩЕНО (маркеры ИИ) ###
 - "В современном мире...", "Данная тема актуальна..."
 - Одинаковые начала абзацев
 - Слишком гладкий текст без авторской позиции
@@ -526,7 +625,7 @@ ${instructions ? `Дополнительные требования: ${instructi
 - Выводы после каждого абзаца`;
 
     const subsectionsInfo = chapter.subsections?.length
-      ? `\nПодразделы: ${chapter.subsections.join(', ')}`
+      ? `\nПодразделы для раскрытия: ${chapter.subsections.join(', ')}`
       : '';
 
     const userPrompt = `Тема работы: "${topic}"
@@ -535,7 +634,9 @@ ${instructions ? `Дополнительные требования: ${instructi
 Пиши главу: "${chapter.title}"
 Описание: ${chapter.description}${subsectionsInfo}
 
-ЦЕЛЕВОЙ ОБЪЁМ: НЕ МЕНЕЕ ${Math.round(targetWords * 1.05)} слов (это примерно ${Math.round(targetWords / WORDS_PER_PAGE)} страниц). Минимум ${targetWords} слов, желательно ${Math.round(targetWords * 1.1)}.
+⚠️ ЦЕЛЕВОЙ ОБЪЁМ: ${targetWords}–${Math.round(targetWords * 1.15)} слов (${targetPages} страниц).
+Абсолютный минимум: ${Math.round(targetWords * 0.8)} слов. Желательно: ${Math.round(targetWords * 1.1)} слов.
+Каждый подраздел — минимум 2-3 страницы развёрнутого текста.
 
 ${previousContext ? `\n--- Контекст предыдущих глав ---\n${previousContext}\n---` : ''}
 ${instructions ? `\nДополнительно: ${instructions}` : ''}
@@ -545,6 +646,85 @@ ${instructions ? `\nДополнительно: ${instructions}` : ''}
     // Рассчитываем токены (~1 токен = ~0.75 слова на русском)
     const estimatedTokens = Math.ceil(targetWords / 0.6); // С запасом
     const maxTokens = Math.min(estimatedTokens, this.anthropic ? 64000 : 16384);
+
+    let result = await this.generate(systemPrompt, userPrompt, maxTokens, 0.85);
+
+    // ====== RETRY-WITH-CONTINUATION ======
+    // Если ИИ написал меньше 70% целевого объёма — дописываем
+    let totalWords = result.split(/\s+/).filter(Boolean).length;
+    const minWords = Math.floor(targetWords * MIN_VOLUME_RATIO);
+    let continuations = 0;
+
+    while (totalWords < minWords && continuations < MAX_CONTINUATIONS_PER_PART) {
+      continuations++;
+      const remaining = targetWords - totalWords;
+
+      logger.info(
+        `[Dissertation] Continuation #${continuations}: got ${totalWords}/${targetWords} words (${Math.round(totalWords / targetWords * 100)}%), need ~${remaining} more`
+      );
+
+      const continuationPrompt = `ПРОДОЛЖИ текст. Уже написано ${totalWords} слов, нужно ещё минимум ${remaining} слов.
+
+Последний фрагмент написанного текста:
+---
+${result.slice(-1200)}
+---
+
+Продолжай ЕСТЕСТВЕННО с того места, где остановился. НЕ повторяй уже написанное, НЕ пиши заново начало.
+Напиши ещё минимум ${remaining} слов, развивая ту же тему и стиль. Раскрывай подробности, добавляй аргументацию, примеры, анализ.`;
+
+      const continuation = await this.generate(systemPrompt, continuationPrompt, maxTokens, 0.85);
+      result += '\n\n' + continuation;
+      totalWords = result.split(/\s+/).filter(Boolean).length;
+    }
+
+    if (continuations > 0) {
+      logger.info(`[Dissertation] Part done: ${totalWords} words after ${continuations} continuation(s)`);
+    }
+
+    return result;
+  }
+
+  // ==================== РАСШИРЕНИЕ ГЛАВЫ ====================
+
+  /**
+   * Расширить недостаточно полную главу — дописать новые абзацы по теме
+   */
+  private async expandChapterContent(
+    topic: string,
+    typeLabel: string,
+    chapter: ChapterPlan,
+    existingText: string,
+    deficitWords: number,
+    lang: string,
+    style: string
+  ): Promise<string> {
+    const systemPrompt = `Ты — опытный академический писатель. Дополни главу ${typeLabel} новым содержанием в ${style} стиле.
+
+КРИТИЧЕСКИ ВАЖНО:
+- Пиши строго на ${lang} языке
+- Объём дополнения: МИНИМУМ ${deficitWords} слов
+- НЕ повторяй уже написанный текст
+- Добавляй НОВЫЕ аргументы, примеры, анализ, детали
+- Стиль должен совпадать с уже написанным текстом
+- Начинай с нового абзаца, плавно продолжая изложение`;
+
+    const userPrompt = `Тема работы: "${topic}"
+Глава: "${chapter.title}"
+Описание: ${chapter.description}
+
+Уже написанный текст главы (последние 2000 символов):
+---
+${existingText.slice(-2000)}
+---
+
+Дополни главу НОВЫМ текстом объёмом минимум ${deficitWords} слов.
+Раскрой дополнительные аспекты: детализируй аргументы, приведи больше примеров, углуби анализ, добавь критическое осмысление.`;
+
+    const maxTokens = Math.min(
+      Math.ceil(deficitWords / 0.6),
+      this.anthropic ? 64000 : 16384
+    );
 
     return await this.generate(systemPrompt, userPrompt, maxTokens, 0.85);
   }
@@ -603,7 +783,9 @@ ${instructions ? `\nДополнительно: ${instructions}` : ''}
   } {
     const totalWords = targetPages * WORDS_PER_PAGE;
     const wordsPerRequest = this.anthropic ? 12000 : 5000;
-    const requests = Math.ceil(totalWords / wordsPerRequest) + 2; // +2 для плана и сборки
+    const baseRequests = Math.ceil(totalWords / wordsPerRequest) + 2; // +2 для плана и сборки
+    // ~30% дополнительных запросов на continuation + expansion + суммаризацию
+    const requests = Math.ceil(baseRequests * 1.4);
     const timePerRequest = 15; // секунд в среднем
 
     // Стоимость: ~$0.003 за запрос Claude, ~$0.01 за запрос GPT-4o
