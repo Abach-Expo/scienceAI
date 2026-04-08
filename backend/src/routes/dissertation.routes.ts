@@ -21,7 +21,7 @@ router.post(
   [
     body('topic').trim().notEmpty().withMessage('Тема обязательна'),
     body('type').isIn(['essay', 'referat', 'coursework', 'diploma', 'dissertation']).withMessage('Неверный тип работы'),
-    body('targetPages').isInt({ min: 3, max: 200 }).withMessage('Количество страниц: 3-200'),
+    body('targetPages').isInt({ min: 3, max: 300 }).withMessage('Количество страниц: 3-300'),
     body('language').optional().isIn(['ru', 'en', 'uk', 'kk', 'uz', 'de', 'fr', 'es', 'zh', 'ar']),
     body('additionalInstructions').optional().trim(),
     body('style').optional().isIn(['academic', 'scientific', 'popular']),
@@ -64,6 +64,12 @@ router.post(
         res.write(`data: ${JSON.stringify({ type: 'progress', ...progress })}\n\n`);
       };
 
+      // Отправка готовой главы через SSE (стрим по мере генерации)
+      const sendChapter = (chapter: { number: number; title: string; content: string; wordCount: number }) => {
+        if (clientDisconnected) throw new Error('Client disconnected');
+        res.write(`data: ${JSON.stringify({ type: 'chapter_complete', chapter })}\n\n`);
+      };
+
       // Генерация
       const result = await getDissertationService().generateFullDissertation(
         {
@@ -76,7 +82,8 @@ router.post(
           includeTableOfContents,
           style,
         },
-        sendProgress
+        sendProgress,
+        sendChapter
       );
 
       // Отправляем финальный результат

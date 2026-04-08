@@ -10,16 +10,18 @@ let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 export type PlanType = 'free' | 'starter' | 'pro' | 'premium';
 
 // ================== РЕАЛЬНЫЕ ЗАТРАТЫ НА API ==================
-// Модельный роутинг: AI Text (тексты) + AI Analysis (анализ) + AI Chat (чат)
-// Формула: 40% прибыль, 37% API, 15% реферал, 5% сервер, 3% Stripe
+// Claude Sonnet 4: Input $3/1M, Output $15/1M tokens
+// GPT-4o: Input $2.5/1M, Output $10/1M tokens
+// GPT-4o-mini: Input $0.15/1M, Output $0.6/1M tokens
+// Формула: 60% API, 40% маржа
 export const API_COSTS = {
-  // AI Text Model — тексты
+  // Claude Sonnet 4 — тексты
   text_model_input_per_1k: 0.003,
   text_model_output_per_1k: 0.015,
-  // AI Analysis Model — анализ
+  // GPT-4o — анализ
   analysis_model_input_per_1k: 0.0025,
   analysis_model_output_per_1k: 0.01,
-  // AI Chat Model — чат/быстрые задачи
+  // GPT-4o-mini — чат
   chat_model_input_per_1k: 0.00015,
   chat_model_output_per_1k: 0.0006,
   // Изображения и аудио
@@ -27,21 +29,21 @@ export const API_COSTS = {
   dalle3_hd_per_image: 0.08,
   whisper_per_minute: 0.006,
   
-  // Средние затраты на действие (input + output)
-  // Тексты -> AI Text Model
-  essay_generation: 0.042,
-  referat_generation: 0.080,
-  coursework_generation: 0.126,
-  dissertation_section: 0.042,
-  dissertation_chapter: 0.126,
-  full_dissertation: 0.80,
-  academic_work: 0.042,
-  // Анализ -> AI Analysis Model
-  presentation_generation: 0.033,
-  slide_ai_edit: 0.008,
-  document_analysis: 0.020,
-  // Быстрые задачи -> AI Chat Model
-  chat_message: 0.0002,
+  // Средние затраты на действие (реальные, input + output)
+  essay_generation: 0.036,          // ~5 стр, Claude
+  referat_generation: 0.105,        // ~15 стр, Claude
+  coursework_generation: 0.21,      // ~30 стр, Claude
+  dissertation_section: 0.053,      // ~5 стр, Claude
+  dissertation_chapter: 0.35,       // ~20 стр, Claude
+  full_dissertation_150p: 1.50,     // ~150 стр, Claude (разбито на главы)
+  full_dissertation_300p: 3.00,     // ~300 стр, Claude (батчами по 3 главы)
+  academic_work: 0.036,
+  // GPT-4o задачи
+  presentation_generation: 0.02,
+  slide_ai_edit: 0.005,
+  document_analysis: 0.015,
+  // Быстрые задачи
+  chat_message: 0.0004,
   plagiarism_check: 0.005,
   image_analysis: 0.01,
 } as const;
@@ -68,41 +70,67 @@ export const PLAN_LIMITS = {
     dissertationGenerations: 0,
     largeChapterGenerations: 0,
     fullDissertationGeneration: false,
+    maxDissertationPages: 0,
     
     exportFormats: ['pdf'] as string[],
     maxEstimatedCost: 5,
   },
   starter: {
-    essaysPerMonth: 40,
-    referatsPerMonth: 15,
+    essaysPerMonth: 15,
+    referatsPerMonth: 5,
+    courseworksPerMonth: 2,
+    
+    analysisPerMonth: 20,
+    presentationsPerMonth: 15,
+    slidesPerPresentation: 30,
+    dalleImages: 3,
+    
+    chatMessagesPerDay: 50,
+    plagiarismChecks: 0,
+    
+    antiAIDetection: false,
+    prioritySupport: false,
+    
+    dissertationGenerations: 10,
+    largeChapterGenerations: 3,
+    fullDissertationGeneration: false,
+    maxDissertationPages: 0,
+    
+    exportFormats: ['pdf', 'pptx', 'docx'] as string[],
+    maxEstimatedCost: 20,
+  },
+  pro: {
+    essaysPerMonth: 30,
+    referatsPerMonth: 12,
     courseworksPerMonth: 5,
     
     analysisPerMonth: 50,
     presentationsPerMonth: 30,
-    slidesPerPresentation: 30,
+    slidesPerPresentation: 60,
     dalleImages: 10,
     
-    chatMessagesPerDay: 500,
+    chatMessagesPerDay: -1,
     plagiarismChecks: 10,
     
     antiAIDetection: true,
-    prioritySupport: false,
+    prioritySupport: true,
     
-    dissertationGenerations: 30,
-    largeChapterGenerations: 10,
-    fullDissertationGeneration: false,
+    dissertationGenerations: 40,
+    largeChapterGenerations: 15,
+    fullDissertationGeneration: true,
+    maxDissertationPages: 150,
     
     exportFormats: ['pdf', 'pptx', 'docx'] as string[],
-    maxEstimatedCost: 50,
+    maxEstimatedCost: 80,
   },
-  pro: {
-    essaysPerMonth: 90,
-    referatsPerMonth: 35,
-    courseworksPerMonth: 15,
+  premium: {
+    essaysPerMonth: 60,
+    referatsPerMonth: 25,
+    courseworksPerMonth: 10,
     
-    analysisPerMonth: 120,
-    presentationsPerMonth: 70,
-    slidesPerPresentation: 60,
+    analysisPerMonth: 100,
+    presentationsPerMonth: 60,
+    slidesPerPresentation: 100,
     dalleImages: 25,
     
     chatMessagesPerDay: -1,
@@ -112,34 +140,12 @@ export const PLAN_LIMITS = {
     prioritySupport: true,
     
     dissertationGenerations: 100,
-    largeChapterGenerations: 30,
+    largeChapterGenerations: 40,
     fullDissertationGeneration: true,
+    maxDissertationPages: 300,
     
     exportFormats: ['pdf', 'pptx', 'docx'] as string[],
-    maxEstimatedCost: 150,
-  },
-  premium: {
-    essaysPerMonth: 200,
-    referatsPerMonth: 80,
-    courseworksPerMonth: 30,
-    
-    analysisPerMonth: 200,
-    presentationsPerMonth: 150,
-    slidesPerPresentation: 100,
-    dalleImages: 50,
-    
-    chatMessagesPerDay: -1,
-    plagiarismChecks: 100,
-    
-    antiAIDetection: true,
-    prioritySupport: true,
-    
-    dissertationGenerations: 300,
-    largeChapterGenerations: 100,
-    fullDissertationGeneration: true,
-    
-    exportFormats: ['pdf', 'pptx', 'docx'] as string[],
-    maxEstimatedCost: 500,
+    maxEstimatedCost: 200,
   },
 } as const;
 
@@ -234,23 +240,21 @@ export const SUBSCRIPTION_PLANS = {
     price: 5.99,
     tokens: 2000,
     features: [
-      '40 эссе + 15 рефератов + 5 курсовых/мес',
-      '50 AI-анализов',
-      '30 презентаций/мес',
-      '30 генераций диссертаций',
-      '10 AI-изображений',
-      '500 сообщений/день',
-      'Anti-AI Detection',
+      '15 эссе + 5 рефератов + 2 курсовых/мес',
+      '20 AI-анализов',
+      '15 презентаций/мес',
+      '10 генераций диссертаций',
+      '3 AI-изображения',
+      '50 сообщений/день',
       'Экспорт PDF/PPTX/DOCX',
     ],
     featuresEn: [
-      '40 essays + 15 term papers + 5 courseworks/mo',
-      '50 AI analyses',
-      '30 presentations/mo',
-      '30 dissertation generations',
-      '10 AI images',
-      '500 messages/day',
-      'Anti-AI Detection',
+      '15 essays + 5 term papers + 2 courseworks/mo',
+      '20 AI analyses',
+      '15 presentations/mo',
+      '10 dissertation generations',
+      '3 AI images',
+      '50 messages/day',
       'PDF/PPTX/DOCX export',
     ],
     isUnlimited: false,
@@ -264,26 +268,26 @@ export const SUBSCRIPTION_PLANS = {
     price: 12.99,
     tokens: 5000,
     features: [
-      '90 эссе + 35 рефератов + 15 курсовых/мес',
-      '120 AI-анализов',
-      '70 презентаций/мес',
-      '100 генераций диссертаций',
-      '1 полная диссертация/мес',
-      '25 AI-изображений',
+      '30 эссе + 12 рефератов + 5 курсовых/мес',
+      '50 AI-анализов',
+      '30 презентаций/мес',
+      '40 генераций диссертаций',
+      'Полная диссертация до 150 стр.',
+      '10 AI-изображений',
       'Безлимит чат',
-      'Anti-AI Detection v3',
+      'Anti-AI Detection',
       'Проверка на плагиат',
       'Приоритетная поддержка',
     ],
     featuresEn: [
-      '90 essays + 35 term papers + 15 courseworks/mo',
-      '120 AI analyses',
-      '70 presentations/mo',
-      '100 dissertation generations',
-      '1 full dissertation/mo',
-      '25 AI images',
+      '30 essays + 12 term papers + 5 courseworks/mo',
+      '50 AI analyses',
+      '30 presentations/mo',
+      '40 dissertation generations',
+      'Full dissertation up to 150 pages',
+      '10 AI images',
       'Unlimited chat',
-      'Anti-AI Detection v3',
+      'Anti-AI Detection',
       'Plagiarism check',
       'Priority support',
     ],
@@ -298,24 +302,24 @@ export const SUBSCRIPTION_PLANS = {
     price: 24.99,
     tokens: 15000,
     features: [
-      '200 эссе + 80 рефератов + 30 курсовых/мес',
-      '200 AI-анализов',
-      '150 презентаций/мес',
-      '300 генераций диссертаций',
-      '3 полных диссертации/мес',
-      '50 AI-изображений',
+      '60 эссе + 25 рефератов + 10 курсовых/мес',
+      '100 AI-анализов',
+      '60 презентаций/мес',
+      '100 генераций диссертаций',
+      '3 полных диссертации до 300 стр.',
+      '25 AI-изображений',
       'Безлимит чат',
       'Anti-AI Detection v3',
       'Проверка на плагиат',
       'Приоритетная поддержка',
     ],
     featuresEn: [
-      '200 essays + 80 term papers + 30 courseworks/mo',
-      '200 AI analyses',
-      '150 presentations/mo',
-      '300 dissertation generations',
-      '3 full dissertations/mo',
-      '50 AI images',
+      '60 essays + 25 term papers + 10 courseworks/mo',
+      '100 AI analyses',
+      '60 presentations/mo',
+      '100 dissertation generations',
+      '3 full dissertations up to 300 pages',
+      '25 AI images',
       'Unlimited chat',
       'Anti-AI Detection v3',
       'Plagiarism check',
@@ -338,27 +342,27 @@ export const ANNUAL_PLANS = {
     savings: 14.38,
     tokensPerMonth: 2000,
     limits: {
-      essaysPerYear: 480,            // 40 × 12
-      referatsPerYear: 180,          // 15 × 12
-      courseworksPerYear: 60,        // 5 × 12
-      analysisPerYear: 600,          // 50 × 12
-      presentationsPerYear: 360,     // 30 × 12
-      dalleImages: 120,              // 10 × 12
+      essaysPerYear: 180,            // 15 × 12
+      referatsPerYear: 60,           // 5 × 12
+      courseworksPerYear: 24,        // 2 × 12
+      analysisPerYear: 240,          // 20 × 12
+      presentationsPerYear: 180,     // 15 × 12
+      dalleImages: 36,               // 3 × 12
     },
     features: [
-      '480 эссе/год',
-      '180 рефератов/год',
-      '60 курсовых/год',
-      '360 презентаций/год',
-      '120 AI-изображений',
+      '180 эссе/год',
+      '60 рефератов/год',
+      '24 курсовых/год',
+      '180 презентаций/год',
+      '36 AI-изображений',
       'Экономия $14.38/год',
     ],
     featuresEn: [
-      '480 essays/year',
-      '180 term papers/year',
-      '60 courseworks/year',
-      '360 presentations/year',
-      '120 AI images',
+      '180 essays/year',
+      '60 term papers/year',
+      '24 courseworks/year',
+      '180 presentations/year',
+      '36 AI images',
       'Save $14.38/year',
     ],
   },
@@ -371,27 +375,27 @@ export const ANNUAL_PLANS = {
     savings: 31.18,
     tokensPerMonth: 5000,
     limits: {
-      essaysPerYear: 1080,           // 90 × 12
-      referatsPerYear: 420,          // 35 × 12
-      courseworksPerYear: 180,       // 15 × 12
-      analysisPerYear: 1440,         // 120 × 12
-      presentationsPerYear: 840,     // 70 × 12
-      dalleImages: 300,              // 25 × 12
+      essaysPerYear: 360,            // 30 × 12
+      referatsPerYear: 144,          // 12 × 12
+      courseworksPerYear: 60,        // 5 × 12
+      analysisPerYear: 600,          // 50 × 12
+      presentationsPerYear: 360,     // 30 × 12
+      dalleImages: 120,              // 10 × 12
     },
     features: [
-      '1080 эссе/год',
-      '420 рефератов/год',
-      '180 курсовых/год',
-      '840 презентаций/год',
-      '300 AI-изображений',
+      '360 эссе/год',
+      '144 рефератов/год',
+      '60 курсовых/год',
+      '360 презентаций/год',
+      '120 AI-изображений',
       'Экономия $31.18/год',
     ],
     featuresEn: [
-      '1080 essays/year',
-      '420 term papers/year',
-      '180 courseworks/year',
-      '840 presentations/year',
-      '300 AI images',
+      '360 essays/year',
+      '144 term papers/year',
+      '60 courseworks/year',
+      '360 presentations/year',
+      '120 AI images',
       'Save $31.18/year',
     ],
     popular: true,
@@ -405,27 +409,27 @@ export const ANNUAL_PLANS = {
     savings: 59.98,
     tokensPerMonth: 15000,
     limits: {
-      essaysPerYear: 2400,           // 200 × 12
-      referatsPerYear: 960,          // 80 × 12
-      courseworksPerYear: 360,       // 30 × 12
-      analysisPerYear: 2400,         // 200 × 12
-      presentationsPerYear: 1800,    // 150 × 12
-      dalleImages: 600,              // 50 × 12
+      essaysPerYear: 720,            // 60 × 12
+      referatsPerYear: 300,          // 25 × 12
+      courseworksPerYear: 120,       // 10 × 12
+      analysisPerYear: 1200,         // 100 × 12
+      presentationsPerYear: 720,     // 60 × 12
+      dalleImages: 300,              // 25 × 12
     },
     features: [
-      '2400 эссе/год',
-      '960 рефератов/год',
-      '360 курсовых/год',
-      '1800 презентаций/год',
-      '600 AI-изображений',
+      '720 эссе/год',
+      '300 рефератов/год',
+      '120 курсовых/год',
+      '720 презентаций/год',
+      '300 AI-изображений',
       'Экономия $59.98/год',
     ],
     featuresEn: [
-      '2400 essays/year',
-      '960 term papers/year',
-      '360 courseworks/year',
-      '1800 presentations/year',
-      '600 AI images',
+      '720 essays/year',
+      '300 term papers/year',
+      '120 courseworks/year',
+      '720 presentations/year',
+      '300 AI images',
       'Save $59.98/year',
     ],
     popular: false,

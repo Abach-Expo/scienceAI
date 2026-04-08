@@ -1280,6 +1280,29 @@ ${fullContent.slice(-4000)}
           ));
         }
 
+        // Стрим готовых глав по мере генерации — сразу вставляем в редактор
+        if (data.type === 'chapter_complete') {
+          const ch = data.chapter as { title: string; content: string; number: number; wordCount: number };
+          if (ch) {
+            setDissertation(prev => {
+              const newChapters = [...prev.chapters];
+              const matchIdx = newChapters.findIndex(existing => {
+                const eLower = existing.title.toLowerCase();
+                const rLower = ch.title.toLowerCase();
+                return eLower.includes(rLower) || rLower.includes(eLower) ||
+                  eLower.replace(/глава \d+\.?\s*/i, '') === rLower.replace(/глава \d+\.?\s*/i, '');
+              });
+              if (matchIdx >= 0) {
+                newChapters[matchIdx] = { ...newChapters[matchIdx], content: ch.content };
+              } else if (ch.number > 0 && ch.number - 1 < newChapters.length) {
+                newChapters[ch.number - 1] = { ...newChapters[ch.number - 1], content: ch.content };
+              }
+              return { ...prev, chapters: newChapters, updatedAt: new Date() };
+            });
+            setSaveStatus('unsaved');
+          }
+        }
+
         if (data.type === 'result') {
           const resultChapters = (data.chapters as Array<{ title: string; content: string; number: number }>) || [];
           

@@ -72,6 +72,9 @@ interface DissertationResult {
 const WORDS_PER_PAGE = 280;
 const CHARS_PER_PAGE = 1800;
 
+// Параллельная генерация: макс. одновременных запросов (ограничение Rate Limits)
+const PARALLEL_BATCH_SIZE = 3;
+
 // Лимиты моделей по выходным токенам
 const MODEL_LIMITS = {
   'claude-sonnet-4-20250514': { maxOutputTokens: 64000, wordsPerRequest: 12000, pagesPerRequest: 40 },
@@ -231,11 +234,12 @@ export class DissertationService {
 
   /**
    * Главный метод: Генерация полной работы по главам
-   * Использует SSE callback для отправки прогресса
+   * Использует параллельную генерацию батчами + SSE для прогресса
    */
   async generateFullDissertation(
     config: DissertationConfig,
-    onProgress?: (progress: GenerationProgress) => void
+    onProgress?: (progress: GenerationProgress) => void,
+    onChapterComplete?: (chapter: DissertationResult['chapters'][number]) => void,
   ): Promise<DissertationResult> {
     const startTime = Date.now();
     const { topic, type, targetPages, language, additionalInstructions, style } = config;
@@ -251,61 +255,86 @@ export class DissertationService {
       percentComplete: 5,
       wordsGenerated: 0,
       pagesGenerated: 0,
-      estimatedTimeRemaining: targetPages * 3, // ~3 сек/страница
+      estimatedTimeRemaining: targetPages * 3,
     });
 
-    // Получаем шаблон структуры
     const templateFn = STRUCTURE_TEMPLATES[type] || STRUCTURE_TEMPLATES.coursework;
     let chapters = templateFn(targetPages);
 
-    // Уточняем план через AI (адаптируем под конкретную тему)
     chapters = await this.refinePlan(topic, type, chapters, language, additionalInstructions);
 
     const totalChapters = chapters.length;
 
     logger.info(`[Dissertation] Plan ready: ${totalChapters} chapters for ${targetPages} pages`);
 
-    // ====== ФАЗА 2: Генерация по главам ======
+    // ====== ФАЗА 2: Параллельная генерация батчами ======
     const generatedChapters: DissertationResult['chapters'] = [];
     let totalWordsGenerated = 0;
 
-    for (let i = 0; i < chapters.length; i++) {
-      const chapter = chapters[i];
-      const pct = 10 + Math.round((i / totalChapters) * 80);
+    // Определяем размер батча: для больших работ (100+ стр) используем параллелизацию
+    const batchSize = targetPages >= 50 ? PARALLEL_BATCH_SIZE : 1;
 
+    for (let batchStart = 0; batchStart < chapters.length; batchStart += batchSize) {
+      const batch = chapters.slice(batchStart, batchStart + batchSize);
+
+      // Контекст из последних завершённых глав (краткое содержание)
+      const previousContext = generatedChapters
+        .slice(-3)
+        .map(ch => `### ${ch.title}\n${ch.content.substring(0, 600)}...`)
+        .join('\n\n');
+
+      // Отправляем прогресс для начала батча
+      const pct = 10 + Math.round((batchStart / totalChapters) * 80);
       onProgress?.({
         phase: 'generating',
-        currentChapter: i + 1,
+        currentChapter: batchStart + 1,
         totalChapters,
-        chapterTitle: chapter.title,
+        chapterTitle: batch.map(ch => ch.title).join(' + '),
         percentComplete: pct,
         wordsGenerated: totalWordsGenerated,
         pagesGenerated: Math.round(totalWordsGenerated / WORDS_PER_PAGE),
-        estimatedTimeRemaining: (totalChapters - i) * 15,
+        estimatedTimeRemaining: Math.ceil((totalChapters - batchStart) / batchSize) * 20,
       });
 
-      // Контекст из предыдущих глав (краткое содержание)
-      const previousContext = generatedChapters
-        .slice(-2) // Последние 2 главы для контекста
-        .map(ch => `### ${ch.title}\n${ch.content.substring(0, 500)}...`)
-        .join('\n\n');
-
-      // Генерируем главу (может потребоваться несколько запросов для длинных глав)
-      const chapterContent = await this.generateChapter(
-        topic, type, chapter, language, previousContext, additionalInstructions, style
+      // Генерируем батч параллельно
+      const batchPromises = batch.map(chapter =>
+        this.generateChapter(
+          topic, type, chapter, language, previousContext, additionalInstructions, style
+        ).then(content => {
+          const wordCount = content.split(/\s+/).filter(Boolean).length;
+          return {
+            number: chapter.number,
+            title: chapter.title,
+            content,
+            wordCount,
+          };
+        })
       );
 
-      const wordCount = chapterContent.split(/\s+/).filter(Boolean).length;
-      totalWordsGenerated += wordCount;
+      const batchResults = await Promise.all(batchPromises);
 
-      generatedChapters.push({
-        number: chapter.number,
-        title: chapter.title,
-        content: chapterContent,
-        wordCount,
-      });
+      // Добавляем результаты и стримим каждую готовую главу
+      for (const result of batchResults) {
+        totalWordsGenerated += result.wordCount;
+        generatedChapters.push(result);
 
-      logger.info(`[Dissertation] Chapter ${i + 1}/${totalChapters} done: "${chapter.title}" — ${wordCount} words`);
+        // Стримим завершённую главу на фронтенд
+        onChapterComplete?.(result);
+
+        const completedPct = 10 + Math.round((generatedChapters.length / totalChapters) * 80);
+        onProgress?.({
+          phase: 'generating',
+          currentChapter: generatedChapters.length,
+          totalChapters,
+          chapterTitle: result.title,
+          percentComplete: completedPct,
+          wordsGenerated: totalWordsGenerated,
+          pagesGenerated: Math.round(totalWordsGenerated / WORDS_PER_PAGE),
+          estimatedTimeRemaining: Math.ceil((totalChapters - generatedChapters.length) / batchSize) * 20,
+        });
+
+        logger.info(`[Dissertation] Chapter ${generatedChapters.length}/${totalChapters} done: "${result.title}" — ${result.wordCount} words`);
+      }
     }
 
     // ====== ФАЗА 3: Сборка документа ======
