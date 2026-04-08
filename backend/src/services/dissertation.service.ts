@@ -34,7 +34,7 @@ interface ChapterPlan {
 }
 
 export interface GenerationProgress {
-  phase: 'planning' | 'generating' | 'assembling' | 'done' | 'error';
+  phase: 'planning' | 'generating' | 'assembling' | 'expanding' | 'continuing' | 'done' | 'error';
   currentChapter: number;
   totalChapters: number;
   chapterTitle: string;
@@ -42,6 +42,7 @@ export interface GenerationProgress {
   wordsGenerated: number;
   pagesGenerated: number;
   estimatedTimeRemaining: number; // секунды
+  detail?: string; // доп. информация (continuation #2, expansion #1, etc.)
 }
 
 interface DissertationResult {
@@ -245,11 +246,17 @@ export class DissertationService {
     config: DissertationConfig,
     onProgress?: (progress: GenerationProgress) => void,
     onChapterComplete?: (chapter: DissertationResult['chapters'][number]) => void,
+    abortSignal?: { aborted: boolean },
   ): Promise<DissertationResult> {
     const startTime = Date.now();
     const { topic, type, targetPages, language, additionalInstructions, style } = config;
 
     logger.info(`[Dissertation] Starting generation: "${topic}", ${targetPages} pages, type=${type}`);
+
+    // Проверка отмены
+    const checkAbort = () => {
+      if (abortSignal?.aborted) throw new Error('Generation aborted by client');
+    };
 
     // ====== ФАЗА 1: Планирование структуры ======
     onProgress?.({
@@ -263,29 +270,37 @@ export class DissertationService {
       estimatedTimeRemaining: targetPages * 3,
     });
 
+    checkAbort();
+
     const templateFn = STRUCTURE_TEMPLATES[type] || STRUCTURE_TEMPLATES.coursework;
     let chapters = templateFn(targetPages);
 
-    chapters = await this.refinePlan(topic, type, chapters, language, additionalInstructions);
+    chapters = await this.refinePlan(topic, type, chapters, language, additionalInstructions, targetPages);
 
     const totalChapters = chapters.length;
 
     logger.info(`[Dissertation] Plan ready: ${totalChapters} chapters for ${targetPages} pages`);
 
-    // ====== ФАЗА 2: Параллельная генерация батчами ======
+    // ====== ФАЗА 2: Генерация глав ======
+    // Для больших работ (100+стр) нужна последовательная генерация с контекстом,
+    // иначе главы в одном батче получают одинаковый контекст и теряют связность.
+    // Параллелизация используется только для коротких работ (< 50 стр).
     const generatedChapters: DissertationResult['chapters'] = [];
     let totalWordsGenerated = 0;
 
-    // Определяем размер батча: для больших работ (100+ стр) используем параллелизацию
-    const batchSize = targetPages >= 50 ? PARALLEL_BATCH_SIZE : 1;
+    // Для 50+ стр: последовательная генерация (лучший контекст)
+    // Для < 50 стр: параллельные батчи (быстрее)
+    const batchSize = targetPages < 50 ? PARALLEL_BATCH_SIZE : 1;
 
     for (let batchStart = 0; batchStart < chapters.length; batchStart += batchSize) {
+      checkAbort();
+
       const batch = chapters.slice(batchStart, batchStart + batchSize);
 
-      // Контекст: AI-суммаризация всех предыдущих глав (вместо сырого обрезания)
+      // AI-суммаризация всех предыдущих глав
       const previousContext = await this.summarizeContext(generatedChapters, topic, language);
 
-      // Отправляем прогресс для начала батча
+      // Прогресс
       const pct = 10 + Math.round((batchStart / totalChapters) * 80);
       onProgress?.({
         phase: 'generating',
@@ -295,32 +310,45 @@ export class DissertationService {
         percentComplete: pct,
         wordsGenerated: totalWordsGenerated,
         pagesGenerated: Math.round(totalWordsGenerated / WORDS_PER_PAGE),
-        estimatedTimeRemaining: Math.ceil((totalChapters - batchStart) / batchSize) * 20,
+        estimatedTimeRemaining: Math.ceil((totalChapters - batchStart) / Math.max(batchSize, 1)) * 25,
       });
 
-      // Генерируем батч параллельно
-      const batchPromises = batch.map(chapter =>
-        this.generateChapter(
-          topic, type, chapter, language, previousContext, additionalInstructions, style
-        ).then(content => {
-          const wordCount = content.split(/\s+/).filter(Boolean).length;
-          return {
-            number: chapter.number,
-            title: chapter.title,
-            content,
-            wordCount,
-          };
-        })
-      );
+      // Генерируем батч (параллельно или последовательно)
+      const generateOne = async (chapter: ChapterPlan) => {
+        // Спец. обработка для «Список литературы»
+        const content = chapter.type === 'references'
+          ? await this.generateReferences(topic, type, generatedChapters, language, chapter.targetWords)
+          : await this.generateChapter(
+              topic, type, chapter, language, previousContext, additionalInstructions, style, onProgress, totalChapters, generatedChapters.length
+            );
+        
+        const wordCount = content.split(/\s+/).filter(Boolean).length;
+        return { number: chapter.number, title: chapter.title, content, wordCount };
+      };
 
-      const batchResults = await Promise.all(batchPromises);
+      // С retry при ошибке (до 2 попыток)
+      const generateWithRetry = async (chapter: ChapterPlan, retries = 2): Promise<DissertationResult['chapters'][number]> => {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+          try {
+            return await generateOne(chapter);
+          } catch (error) {
+            if (abortSignal?.aborted) throw error;
+            logger.warn(`[Dissertation] Chapter "${chapter.title}" attempt ${attempt}/${retries} failed:`, error);
+            if (attempt === retries) throw error;
+          }
+        }
+        throw new Error('Unreachable');
+      };
 
-      // Добавляем результаты и стримим каждую готовую главу
+      const batchResults = batchSize > 1
+        ? await Promise.all(batch.map(ch => generateWithRetry(ch)))
+        : [await generateWithRetry(batch[0])];
+
+      // Добавляем результаты и стримим
       for (const result of batchResults) {
         totalWordsGenerated += result.wordCount;
         generatedChapters.push(result);
 
-        // Стримим завершённую главу на фронтенд
         onChapterComplete?.(result);
 
         const completedPct = 10 + Math.round((generatedChapters.length / totalChapters) * 80);
@@ -332,7 +360,7 @@ export class DissertationService {
           percentComplete: completedPct,
           wordsGenerated: totalWordsGenerated,
           pagesGenerated: Math.round(totalWordsGenerated / WORDS_PER_PAGE),
-          estimatedTimeRemaining: Math.ceil((totalChapters - generatedChapters.length) / batchSize) * 20,
+          estimatedTimeRemaining: Math.ceil((totalChapters - generatedChapters.length) / Math.max(batchSize, 1)) * 25,
         });
 
         logger.info(`[Dissertation] Chapter ${generatedChapters.length}/${totalChapters} done: "${result.title}" — ${result.wordCount} words`);
@@ -453,24 +481,30 @@ ${chaptersText}
     type: string,
     chapters: ChapterPlan[],
     language: string,
-    instructions?: string
+    instructions?: string,
+    targetPages: number = 30
   ): Promise<ChapterPlan[]> {
     const typeLabel = getTypeLabel(type);
+    const minSubsections = targetPages >= 100 ? 5 : targetPages >= 50 ? 4 : 3;
 
     const systemPrompt = `Ты — эксперт по академическому письму. Уточни план ${typeLabel} по указанной теме.
-Верни JSON массив глав. Каждая глава: { "number", "title", "description", "targetWords", "targetPages", "subsections": ["подраздел1", "подраздел2"], "type": "introduction|chapter|conclusion|references|abstract" }
+Верни JSON массив глав. Каждая глава: { "number", "title", "description", "targetWords", "targetPages", "subsections": ["подраздел1", "подраздел2", ...], "type": "introduction|chapter|conclusion|references|abstract" }
 Названия глав должны быть на ${language === 'ru' ? 'русском' : 'английском'} языке и относиться к указанной теме.
-Сохрани распределение страниц из шаблона. НЕ меняй общее количество страниц.`;
+Сохрани распределение страниц из шаблона. НЕ меняй общее количество страниц.
+
+ВАЖНО: Для каждой главы типа "chapter" укажи от ${minSubsections} до ${minSubsections + 3} подразделов (subsections).
+Подразделы должны быть конкретными и раскрывать тему главы с разных сторон.`;
 
     const userPrompt = `Тема: "${topic}"
 Тип работы: ${typeLabel}
+Общий объём: ~${targetPages} страниц
 
 Шаблон плана:
 ${JSON.stringify(chapters, null, 2)}
 
 ${instructions ? `Дополнительные требования: ${instructions}` : ''}
 
-Адаптируй названия глав и подразделы под конкретную тему. Верни только JSON массив.`;
+Адаптируй названия глав и подразделы под конкретную тему. Каждая основная глава должна иметь ${minSubsections}–${minSubsections + 3} подразделов. Верни только JSON массив.`;
 
     try {
       const result = await this.generate(systemPrompt, userPrompt, 4000, 0.5);
@@ -500,7 +534,10 @@ ${instructions ? `Дополнительные требования: ${instructi
     language: string,
     previousContext: string,
     instructions?: string,
-    style?: string
+    style?: string,
+    onProgress?: (progress: GenerationProgress) => void,
+    totalChapters: number = 0,
+    currentChapterIdx: number = 0
   ): Promise<string> {
     const typeLabel = getTypeLabel(type);
     const lang = language === 'ru' ? 'русском' : 'английском';
@@ -560,6 +597,19 @@ ${instructions ? `Дополнительные требования: ${instructi
         `[Dissertation] Volume validation: chapter "${chapter.title}" has ${wordCount}/${chapter.targetWords} words (${Math.round(wordCount / chapter.targetWords * 100)}%). ` +
         `Expansion #${expansions}, need ~${deficit} more words`
       );
+
+      // Уведомляем фронтенд о расширении
+      onProgress?.({
+        phase: 'expanding',
+        currentChapter: currentChapterIdx + 1,
+        totalChapters,
+        chapterTitle: chapter.title,
+        percentComplete: 10 + Math.round(((currentChapterIdx + 0.5) / Math.max(totalChapters, 1)) * 80),
+        wordsGenerated: wordCount,
+        pagesGenerated: Math.round(wordCount / WORDS_PER_PAGE),
+        estimatedTimeRemaining: 30,
+        detail: `Расширение #${expansions}: +${deficit} слов`,
+      });
 
       const expansionText = await this.expandChapterContent(
         topic, typeLabel, chapter, fullText, deficit, lang, styleDesc
@@ -667,11 +717,20 @@ ${instructions ? `\nДополнительно: ${instructions}` : ''}
 
 Последний фрагмент написанного текста:
 ---
-${result.slice(-1200)}
+${result.slice(-1500)}
 ---
 
 Продолжай ЕСТЕСТВЕННО с того места, где остановился. НЕ повторяй уже написанное, НЕ пиши заново начало.
-Напиши ещё минимум ${remaining} слов, развивая ту же тему и стиль. Раскрывай подробности, добавляй аргументацию, примеры, анализ.`;
+Напиши ещё минимум ${remaining} слов, развивая ту же тему и стиль.
+
+Что писать:
+- Углуби анализ незавершённых аспектов
+- Добавь новые примеры и case-study
+- Сравни альтернативные подходы
+- Обсуди ограничения и перспективы
+- Приведи данные исследований
+
+НЕ пиши заключение или выводы раньше времени.`;
 
       const continuation = await this.generate(systemPrompt, continuationPrompt, maxTokens, 0.85);
       result += '\n\n' + continuation;
@@ -727,6 +786,54 @@ ${existingText.slice(-2000)}
     );
 
     return await this.generate(systemPrompt, userPrompt, maxTokens, 0.85);
+  }
+
+  // ==================== ГЕНЕРАЦИЯ СПИСКА ЛИТЕРАТУРЫ ====================
+
+  /**
+   * Генерация академического списка литературы на основе содержания работы.
+   * Создаёт реалистичные ссылки в формате ГОСТ / APA.
+   */
+  private async generateReferences(
+    topic: string,
+    type: string,
+    chapters: DissertationResult['chapters'],
+    language: string,
+    targetWords: number
+  ): Promise<string> {
+    const typeLabel = getTypeLabel(type);
+    const lang = language === 'ru' ? 'русском' : 'английском';
+    const minRefs = type === 'dissertation' ? 100 : type === 'diploma' ? 50 : type === 'coursework' ? 20 : 10;
+
+    // Собираем ключевые темы из глав
+    const chapterSummary = chapters
+      .filter(ch => ch.wordCount > 100)
+      .map(ch => `- ${ch.title}: ${ch.content.substring(0, 400)}`)
+      .join('\n');
+
+    const systemPrompt = `Ты — эксперт по академическому цитированию. Создай список литературы для ${typeLabel} на ${lang} языке.
+
+ФОРМАТ: ${language === 'ru' ? 'ГОСТ Р 7.0.5-2008' : 'APA 7th edition'}
+Минимум: ${minRefs} источников.
+
+ТРЕБОВАНИЯ:
+- Источники должны быть РЕАЛИСТИЧНЫМИ (настоящие авторы, журналы, издательства)
+- Включить: монографии, статьи в журналах, сборники конференций, диссертации
+- 70% на ${lang} языке, 30% на английском
+- Годы публикаций: преимущественно последние 10 лет
+- Сортировка по алфавиту
+- Нумерация через точку (1. 2. 3. ...)`;
+
+    const userPrompt = `Тема работы: "${topic}"
+Тип: ${typeLabel}
+
+Ключевые темы из глав:
+${chapterSummary}
+
+Создай список из ${minRefs}+ источников, соответствующих содержанию работы.`;
+
+    const maxTokens = Math.min(Math.ceil(targetWords / 0.5), this.anthropic ? 64000 : 16384);
+    return await this.generate(systemPrompt, userPrompt, maxTokens, 0.6);
   }
 
   /**

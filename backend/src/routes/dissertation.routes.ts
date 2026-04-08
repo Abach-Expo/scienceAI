@@ -55,18 +55,18 @@ router.post(
       res.setHeader('X-Accel-Buffering', 'no'); // Для nginx
 
       // Обработка отключения клиента — прекращаем генерацию
-      let clientDisconnected = false;
-      req.on('close', () => { clientDisconnected = true; });
+      const abortSignal = { aborted: false };
+      req.on('close', () => { abortSignal.aborted = true; });
 
       // Отправка прогресса через SSE
       const sendProgress = (progress: GenerationProgress) => {
-        if (clientDisconnected) throw new Error('Client disconnected');
+        if (abortSignal.aborted) throw new Error('Client disconnected');
         res.write(`data: ${JSON.stringify({ type: 'progress', ...progress })}\n\n`);
       };
 
       // Отправка готовой главы через SSE (стрим по мере генерации)
       const sendChapter = (chapter: { number: number; title: string; content: string; wordCount: number }) => {
-        if (clientDisconnected) throw new Error('Client disconnected');
+        if (abortSignal.aborted) throw new Error('Client disconnected');
         res.write(`data: ${JSON.stringify({ type: 'chapter_complete', chapter })}\n\n`);
       };
 
@@ -83,7 +83,8 @@ router.post(
           style,
         },
         sendProgress,
-        sendChapter
+        sendChapter,
+        abortSignal
       );
 
       // Отправляем финальный результат
@@ -115,7 +116,7 @@ router.post(
   '/estimate',
   authMiddleware,
   [
-    body('targetPages').isInt({ min: 3, max: 200 }),
+    body('targetPages').isInt({ min: 3, max: 300 }),
     body('type').isIn(['essay', 'referat', 'coursework', 'diploma', 'dissertation']),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {

@@ -1253,8 +1253,12 @@ ${fullContent.slice(-4000)}
           // Обновляем thinking-шаги
           const phaseLabel = data.phase === 'planning' ? t('dissertation.planningStructure') 
             : data.phase === 'generating' ? t('dissertation.writingText') 
-            : data.phase === 'assembling' ? t('dissertation.assemblingDoc') 
+            : data.phase === 'assembling' ? t('dissertation.assemblingDoc')
+            : data.phase === 'expanding' ? 'Расширение главы...'
+            : data.phase === 'continuing' ? 'Дописывание...'
             : t('dissertation.done');
+
+          const detailInfo = (data.detail as string) ? ` · ${data.detail}` : '';
 
           const newStep: ThinkingStep = {
             phase: data.phase as ThinkingStep['phase'],
@@ -1267,13 +1271,14 @@ ${fullContent.slice(-4000)}
             percentComplete: data.percentComplete as number,
             estimatedTimeRemaining: data.estimatedTimeRemaining as number,
             timestamp: new Date(),
+            detail: data.detail as string | undefined,
           };
 
           setAiMessages(prev => prev.map(msg => 
             msg.id === thinkingMsgId 
               ? { 
                   ...msg, 
-                  content: `Генерация: ${data.percentComplete}% · ${(data.wordsGenerated as number).toLocaleString()} слов · ~${data.pagesGenerated} стр.`,
+                  content: `Генерация: ${data.percentComplete}% · ${(data.wordsGenerated as number).toLocaleString()} слов · ~${data.pagesGenerated} стр.${detailInfo}`,
                   thinkingSteps: [...(msg.thinkingSteps || []), newStep],
                 }
               : msg
@@ -4073,10 +4078,16 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                   {/* Progress */}
                   {isGenerating && (
                     <div className="px-4 py-3 flex-shrink-0" style={{ background: 'rgba(139,92,246,0.06)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-1">
                         <RefreshCw size={14} className="animate-spin text-violet-400" />
                         <span className="text-sm text-violet-400">{t('dissertation.generatingText')}</span>
+                        {largeGenerationProgress.total > 0 && (
+                          <span className="text-xs text-text-muted ml-auto">{largeGenerationProgress.current}/{largeGenerationProgress.total}</span>
+                        )}
                       </div>
+                      {largeGenerationProgress.section && (
+                        <div className="text-[11px] text-text-muted mb-1.5 truncate">{largeGenerationProgress.section}</div>
+                      )}
                       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
                         <motion.div
                           initial={{ width: 0 }}

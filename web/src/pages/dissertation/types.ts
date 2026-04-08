@@ -57,7 +57,7 @@ export interface Citation {
 }
 
 export interface ThinkingStep {
-  phase: 'planning' | 'generating' | 'assembling' | 'done';
+  phase: 'planning' | 'generating' | 'assembling' | 'expanding' | 'continuing' | 'done';
   phaseLabel: string;
   currentChapter: number;
   totalChapters: number;
@@ -67,6 +67,7 @@ export interface ThinkingStep {
   percentComplete: number;
   estimatedTimeRemaining: number;
   timestamp: Date;
+  detail?: string;
 }
 
 export interface AIMessage {
