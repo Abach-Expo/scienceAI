@@ -1188,11 +1188,11 @@ ${fullContent.slice(-4000)}
     setIsGenerating(true);
 
     // Создаём thinking-сообщение (как у Grok)
-    const thinkingMsgId = `thinking-${Date.now()}`;
+    const thinkingMsgId = `thinking-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setAiMessages(prev => [...prev, {
       id: thinkingMsgId,
       role: 'assistant',
-      content: `Генерация: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || 'Диссертация'} · ~${targetPages} стр.`,
+      content: `${t('dissertation.generationStats')}: ${DOCUMENT_TYPES[dissertation.documentType || 'dissertation']?.nameRu || t('dissertation.newDissertation')} · ~${targetPages} ${t('dissertation.pages')}`,
       timestamp: new Date(),
       isThinking: true,
       thinkingActive: true,
@@ -1252,7 +1252,7 @@ ${fullContent.slice(-4000)}
 
         // Обработка ошибки сервера — НЕ внутри catch
         if (data.type === 'error') {
-          reader.cancel();
+          void reader.cancel();
           throw new Error((data.message as string) || 'Ошибка генерации на сервере');
         }
 
@@ -1268,8 +1268,8 @@ ${fullContent.slice(-4000)}
           const phaseLabel = data.phase === 'planning' ? t('dissertation.planningStructure') 
             : data.phase === 'generating' ? t('dissertation.writingText') 
             : data.phase === 'assembling' ? t('dissertation.assemblingDoc')
-            : data.phase === 'expanding' ? 'Расширение главы...'
-            : data.phase === 'continuing' ? 'Дописывание...'
+            : data.phase === 'expanding' ? t('dissertation.expandingChapter')
+            : data.phase === 'continuing' ? t('dissertation.continuing')
             : t('dissertation.done');
 
           const detailInfo = (data.detail as string) ? ` · ${data.detail}` : '';
@@ -1372,7 +1372,7 @@ ${fullContent.slice(-4000)}
                   thinkingActive: false,
                   thinkingSteps: [...(msg.thinkingSteps || []), {
                     phase: 'done' as const,
-                    phaseLabel: 'Готово!',
+                    phaseLabel: t('dissertation.done'),
                     currentChapter: resultChapters.length,
                     totalChapters: resultChapters.length,
                     chapterTitle: t('dissertation.allChaptersWritten'),
@@ -1435,10 +1435,15 @@ ${fullContent.slice(-4000)}
       setAiMessages(prev => prev.map(msg => 
         msg.id === thinkingMsgId ? { ...msg, thinkingActive: false } : msg
       ));
+      
+      // Отмена пользователем — не показываем ошибку
+      const isAbort = error instanceof DOMException && error.name === 'AbortError';
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         role: 'assistant',
-        content: `❌ **${t('dissertation.fullGenerationError')}:**\n\n${error instanceof Error ? error.message : 'Unknown error'}\n\n💡 ${t('dissertation.tryAgainOrSeparate')}`,
+        content: isAbort
+          ? `⏹️ **${t('dissertation.generationCancelled')}**`
+          : `❌ **${t('dissertation.fullGenerationError')}:**\n\n${error instanceof Error ? error.message : 'Unknown error'}\n\n💡 ${t('dissertation.tryAgainOrSeparate')}`,
         timestamp: new Date(),
       }]);
     } finally {

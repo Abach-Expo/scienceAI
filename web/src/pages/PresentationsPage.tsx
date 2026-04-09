@@ -1738,17 +1738,19 @@ quoteAuthor: "Стив Джобс, основатель Apple"
       delay = i * 200; // stagger each element by 200ms
 
       // Fade + fly-in from bottom entrance animation
+      // IDs 1,2,3 are used by wrapper nodes, so inner IDs start at i*3+4
+      const baseId = i * 3 + 4;
       seqAnims.push(`
         <p:par>
-          <p:cTn id="${i * 2 + 2}" presetID="10" presetClass="entr" presetSubtype="0" fill="hold" nodeType="withEffect">
+          <p:cTn id="${baseId}" presetID="10" presetClass="entr" presetSubtype="0" fill="hold" nodeType="withEffect">
             <p:stCondLst><p:cond delay="${delay}"/></p:stCondLst>
             <p:childTnLst>
               <p:set>
-                <p:cBhvr><p:cTn id="${i * 2 + 3}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn><p:tgtEl><p:spTgt spid="${spId}"/></p:tgtEl><p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr>
+                <p:cBhvr><p:cTn id="${baseId + 1}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn><p:tgtEl><p:spTgt spid="${spId}"/></p:tgtEl><p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr>
                 <p:to><p:strVal val="visible"/></p:to>
               </p:set>
               <p:animEffect transition="in" filter="fade">
-                <p:cBhvr><p:cTn id="${i * 2 + 4}" dur="${dur}"/><p:tgtEl><p:spTgt spid="${spId}"/></p:tgtEl></p:cBhvr>
+                <p:cBhvr><p:cTn id="${baseId + 2}" dur="${dur}"/><p:tgtEl><p:spTgt spid="${spId}"/></p:tgtEl></p:cBhvr>
               </p:animEffect>
             </p:childTnLst>
           </p:cTn>
@@ -2239,7 +2241,7 @@ quoteAuthor: "Стив Джобс, основатель Apple"
       }
       
       // Удаляем временный контейнер
-      document.body.removeChild(container);
+      if (document.body.contains(container)) document.body.removeChild(container);
       
       // Сохраняем PDF
       setExportProgress('Сохранение PDF...');
@@ -2249,6 +2251,10 @@ quoteAuthor: "Стив Джобс, основатель Apple"
       setIsExporting(false);
       
     } catch (error) {
+      // Гарантированно удаляем временный контейнер при ошибке
+      const leftover = document.querySelector('div[style*="-9999px"]');
+      if (leftover?.parentNode) leftover.parentNode.removeChild(leftover);
+      
       setChatMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',

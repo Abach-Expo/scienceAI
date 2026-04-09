@@ -23,7 +23,7 @@ router.post(
     body('type').isIn(['essay', 'referat', 'coursework', 'diploma', 'dissertation']).withMessage('Неверный тип работы'),
     body('targetPages').isInt({ min: 3, max: 300 }).withMessage('Количество страниц: 3-300'),
     body('language').optional().isIn(['ru', 'en', 'uk', 'kk', 'uz', 'de', 'fr', 'es', 'zh', 'ar']),
-    body('additionalInstructions').optional().trim(),
+    body('additionalInstructions').optional().trim().isLength({ max: 2000 }).withMessage('Инструкции: максимум 2000 символов'),
     body('style').optional().isIn(['academic', 'scientific', 'popular']),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
