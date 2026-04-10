@@ -107,6 +107,7 @@ const DissertationPage = () => {
 
   // Auto-scroll — только контейнер сообщений скроллится, экран стоит на месте
   const userHasScrolledUp = useRef(false);
+  const prevMessageCount = useRef(0);
 
   // Отслеживаем ручной скролл пользователя
   useEffect(() => {
@@ -126,7 +127,11 @@ const DissertationPage = () => {
     const container = aiMessagesContainerRef.current;
     if (!container) return;
 
-    // Если пользователь ушёл наверх — НЕ автоскроллить (не вырывать чтение)
+    const currentCount = aiMessages.length;
+    const isNewMessage = currentCount > prevMessageCount.current;
+    prevMessageCount.current = currentCount;
+
+    // Если пользователь ушёл наверх и нет генерации — НЕ автоскроллить
     if (userHasScrolledUp.current && !isGenerating) return;
 
     // Во время генерации — всегда следим за концом
@@ -134,10 +139,9 @@ const DissertationPage = () => {
       requestAnimationFrame(() => {
         container.scrollTop = container.scrollHeight;
       });
-    } else {
+    } else if (isNewMessage) {
       // Новое сообщение — плавно скроллим вниз
       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-      userHasScrolledUp.current = false;
     }
   }, [aiMessages, isGenerating]);
 
@@ -3425,6 +3429,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
               const limits = subscription.getLimits();
               const remaining = subscription.getRemainingLimits();
               const planColors: Record<string, { bg: string; text: string; light: string }> = {
+                free: { bg: 'gray-500', text: 'gray-400', light: 'gray-300' },
                 starter: { bg: 'blue-500', text: 'blue-400', light: 'blue-300' },
                 pro: { bg: 'violet-500', text: 'violet-400', light: 'violet-300' },
                 premium: { bg: 'amber-500', text: 'amber-400', light: 'amber-300' },

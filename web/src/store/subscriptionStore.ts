@@ -67,10 +67,10 @@ export const PLAN_LIMITS = {
     antiAIDetection: false,
     prioritySupport: false,
     
-    dissertationGenerations: 0,
-    largeChapterGenerations: 0,
+    dissertationGenerations: 5,
+    largeChapterGenerations: 2,
     fullDissertationGeneration: false,
-    maxDissertationPages: 0,
+    maxDissertationPages: 30,
     
     exportFormats: ['pdf'] as string[],
     maxEstimatedCost: 5,
@@ -218,6 +218,7 @@ export const SUBSCRIPTION_PLANS = {
     features: [
       '3 эссе + 1 реферат/мес',
       '5 AI-анализов',
+      '5 генераций диссертаций',
       '2 презентации/мес',
       '10 сообщений/день',
       'Экспорт PDF',
@@ -225,6 +226,7 @@ export const SUBSCRIPTION_PLANS = {
     featuresEn: [
       '3 essays + 1 term paper/mo',
       '5 AI analyses',
+      '5 dissertation generations',
       '2 presentations/mo',
       '10 messages/day',
       'PDF export',
