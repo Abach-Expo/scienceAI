@@ -1335,10 +1335,15 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           
           if (response.success && response.data) {
             const backendData = response.data;
+            const backendPlan = (backendData as Record<string, unknown>).subscriptionPlan as string | undefined;
             
             // Бэкенд — источник правды для аккаунта.
-            // Используем серверные значения напрямую, чтобы не тянуть лимиты чужого аккаунта.
+            // Синхронизируем и план, и каунтеры.
+            const validPlans = ['free', 'starter', 'pro', 'premium'];
+            const syncPlan = backendPlan && validPlans.includes(backendPlan) ? backendPlan as PlanType : undefined;
+            
             set((state) => ({
+              ...(syncPlan ? { currentPlan: syncPlan } : {}),
               usage: {
                 ...state.usage,
                 presentationsCreated: backendData.presentationsCreated || 0,
@@ -1361,16 +1366,16 @@ export const useSubscriptionStore = create<SubscriptionState>()(
     },
     {
       name: 'subscription-storage',
-      version: 3,
+      version: 4,
       migrate: (persistedState: unknown, version: number) => {
         if (!persistedState) return persistedState;
         const state = persistedState as Record<string, unknown>;
         // Миграция: удалённый план 'unlimited' -> 'premium'
-        const validPlans: string[] = ['starter', 'pro', 'premium'];
+        const validPlans: string[] = ['free', 'starter', 'pro', 'premium'];
         if (state.currentPlan === 'unlimited') {
           state.currentPlan = 'premium';
         } else if (state.currentPlan && !validPlans.includes(String(state.currentPlan))) {
-          state.currentPlan = 'starter';
+          state.currentPlan = 'free';
         }
         return state;
       },
