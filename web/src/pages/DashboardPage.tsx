@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useAuthStore } from '../store/authStore';
+import { getAllDissertations, deleteDissertationFromDB, updateDissertationField, migrateFromLocalStorage } from '../utils/dissertationStorage';
 import {
   MessageSquare,
   Layers,
@@ -89,7 +90,7 @@ const DashboardPage = () => {
     
     localStorage.removeItem('dashboard_items');
 
-    const loadItems = () => {
+    const loadItems = async () => {
       const allItems: ChatItem[] = [];
       
       const savedChats = localStorage.getItem('chats');
@@ -129,22 +130,22 @@ const DashboardPage = () => {
         } catch { /* localStorage parse may fail - skip gracefully */ }
       }
       
-      const savedDissertations = localStorage.getItem('dissertations');
-      if (savedDissertations) {
-        try {
-          const dissertations = JSON.parse(savedDissertations);
-          dissertations.forEach((diss: { id: string; title?: string; wordCount?: number; updatedAt?: string; createdAt?: string; starred?: boolean }) => {
-            allItems.push({
-              id: diss.id,
-              title: diss.title || t('dashboard.newDissertation'),
-              lastMessage: `${diss.wordCount || 0} ${t('academicWorks.words')}`,
-              timestamp: new Date(diss.updatedAt || diss.createdAt || Date.now()),
-              type: 'dissertation',
-              starred: diss.starred || false,
-            });
-          });
-        } catch { /* localStorage parse may fail - skip gracefully */ }
-      }
+      // Dissertations: IndexedDB (with migration from localStorage)
+      await migrateFromLocalStorage();
+      let dissertations: { id: string; title?: string; wordCount?: number; updatedAt?: string; createdAt?: string; starred?: boolean }[] = [];
+      try {
+        dissertations = await getAllDissertations() as unknown as typeof dissertations;
+      } catch { /* IndexedDB may fail — skip gracefully */ }
+      dissertations.forEach((diss) => {
+        allItems.push({
+          id: diss.id,
+          title: diss.title || t('dashboard.newDissertation'),
+          lastMessage: `${diss.wordCount || 0} ${t('academicWorks.words')}`,
+          timestamp: new Date(diss.updatedAt || diss.createdAt || Date.now()),
+          type: 'dissertation',
+          starred: diss.starred || false,
+        });
+      });
       
       allItems.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
       setItems(allItems);
@@ -154,14 +155,9 @@ const DashboardPage = () => {
       const thisWeekItems = allItems.filter(item => item.timestamp >= weekAgo);
       
       let totalWords = 0;
-      if (savedDissertations) {
-        try {
-          const dissertations = JSON.parse(savedDissertations);
-          dissertations.forEach((d: { wordCount?: number }) => {
-            totalWords += d.wordCount || 0;
-          });
-        } catch { /* localStorage parse may fail - skip gracefully */ }
-      }
+      dissertations.forEach((d) => {
+        totalWords += d.wordCount || 0;
+      });
       
       const aiRequests = parseInt(localStorage.getItem('ai_requests_count') || '0');
       
@@ -227,33 +223,34 @@ const DashboardPage = () => {
           localStorage.setItem('science-ai-presentations', JSON.stringify(list));
         }
       } else if (type === 'dissertation') {
-        const saved = localStorage.getItem('dissertations');
-        if (saved) {
-          const list = JSON.parse(saved).filter((item: { id: string }) => item.id !== id);
-          localStorage.setItem('dissertations', JSON.stringify(list));
-        }
+        deleteDissertationFromDB(id).catch(() => {});
       }
-    } catch { /* localStorage parse may fail - skip gracefully */ }
+    } catch { /* storage operation may fail - skip gracefully */ }
     
     setItems(prev => prev.filter(item => item.id !== id));
   }, []);
 
   const handleToggleStar = useCallback((id: string, type: string) => {
-    try {
-      const storageKey = type === 'chat' ? 'chats' : type === 'presentation' ? 'science-ai-presentations' : 'dissertations';
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const list = JSON.parse(saved).map((item: { id: string; starred?: boolean }) => 
-          item.id === id ? { ...item, starred: !item.starred } : item
-        );
-        localStorage.setItem(storageKey, JSON.stringify(list));
-      }
-    } catch { /* localStorage parse may fail - skip gracefully */ }
+    if (type === 'dissertation') {
+      const item = items.find(i => i.id === id);
+      updateDissertationField(id, 'starred', !(item?.starred)).catch(() => {});
+    } else {
+      try {
+        const storageKey = type === 'chat' ? 'chats' : 'science-ai-presentations';
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const list = JSON.parse(saved).map((item: { id: string; starred?: boolean }) => 
+            item.id === id ? { ...item, starred: !item.starred } : item
+          );
+          localStorage.setItem(storageKey, JSON.stringify(list));
+        }
+      } catch { /* localStorage parse may fail - skip gracefully */ }
+    }
     
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, starred: !item.starred } : item
     ));
-  }, []);
+  }, [items]);
 
   const filteredItems = useMemo(() => items.filter(item => {
     if (item.type === 'chat') return false;

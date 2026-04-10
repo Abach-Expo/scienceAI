@@ -63,6 +63,7 @@ const AIDetectionChecker = lazy(() => import('../components/AIDetectionChecker')
 const AntiAIDetectionLazy = lazy(() => import('../components/AntiAIDetection').then(m => ({ default: m.AntiAIDetection })));
 
 import { parseFile, formatFileForPrompt, ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, formatFileSize, type ParsedFile } from '../utils/fileParser';
+import { getDissertation, saveDissertationToDB, migrateFromLocalStorage } from '../utils/dissertationStorage';
 
 // Extracted dissertation modules
 import type { Chapter, DocumentType, DocumentTypeConfig, Dissertation, Citation, AIMessage, ThinkingStep } from './dissertation';
@@ -202,100 +203,109 @@ const DissertationPage = () => {
     year: new Date().getFullYear(),
   });
 
-  // Load or create dissertation
-  const [dissertation, setDissertation] = useState<Dissertation>(() => {
-    if (id) {
+  // Default dissertation for new documents (reused for init & fallback)
+  const makeDefaultDissertation = useCallback((): Dissertation => ({
+    id: id || `diss-${Date.now()}`,
+    title: t('dissertation.newDissertation'),
+    topic: '',
+    abstract: '',
+    chapters: [
+      {
+        id: 'ch-1',
+        title: t('dissertation.chIntroduction'),
+        content: '',
+        subchapters: [
+          { id: 'sub-1-1', title: t('dissertation.subResearchRelevance'), content: '' },
+          { id: 'sub-1-2', title: t('dissertation.subGoalsAndObjectives'), content: '' },
+          { id: 'sub-1-3', title: t('dissertation.subObjectAndSubject'), content: '' },
+          { id: 'sub-1-4', title: t('dissertation.subNovelty'), content: '' },
+          { id: 'sub-1-5', title: t('dissertation.subPracticalSignificance'), content: '' },
+        ]
+      },
+      {
+        id: 'ch-2',
+        title: t('dissertation.chTheory'),
+        content: '',
+        subchapters: [
+          { id: 'sub-2-1', title: t('dissertation.subLitReview'), content: '' },
+          { id: 'sub-2-2', title: t('dissertation.subConcepts'), content: '' },
+          { id: 'sub-2-3', title: t('dissertation.subApproaches'), content: '' },
+        ]
+      },
+      {
+        id: 'ch-3',
+        title: t('dissertation.chMethodology'),
+        content: '',
+        subchapters: [
+          { id: 'sub-3-1', title: t('dissertation.subMethods'), content: '' },
+          { id: 'sub-3-2', title: t('dissertation.subStages'), content: '' },
+          { id: 'sub-3-3', title: t('dissertation.subResearchBase'), content: '' },
+        ]
+      },
+      {
+        id: 'ch-4',
+        title: t('dissertation.chResults'),
+        content: '',
+        subchapters: [
+          { id: 'sub-4-1', title: t('dissertation.subDataAnalysis'), content: '' },
+          { id: 'sub-4-2', title: t('dissertation.subInterpretation'), content: '' },
+          { id: 'sub-4-3', title: t('dissertation.subDiscussion'), content: '' },
+        ]
+      },
+      {
+        id: 'ch-5',
+        title: t('dissertation.chConclusion'),
+        content: '',
+        subchapters: []
+      },
+      {
+        id: 'ch-6',
+        title: t('dissertation.chReferences'),
+        content: '',
+        subchapters: []
+      },
+      {
+        id: 'ch-7',
+        title: t('dissertation.chAppendices'),
+        content: '',
+        subchapters: []
+      }
+    ],
+    starred: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    wordCount: 0,
+    targetWordCount: 80000,
+    scienceField: 'pedagogy',
+    degreeType: 'master',
+    documentType: 'dissertation' as DocumentType,
+    citations: [],
+    plagiarismScore: undefined,
+    uniquenessScore: undefined,
+  }), [id, t]);
+
+  // Load or create dissertation (IndexedDB — no 5MB localStorage limit)
+  const [dissertation, setDissertation] = useState<Dissertation>(makeDefaultDissertation);
+  const [isLoadingDissertation, setIsLoadingDissertation] = useState(!!id);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
       try {
-        const saved = localStorage.getItem('dissertations');
-        if (saved) {
-          const list = JSON.parse(saved);
-          const found = list.find((d: Dissertation) => d.id === id);
-          if (found) return { ...found, createdAt: new Date(found.createdAt), updatedAt: new Date(found.updatedAt) };
+        await migrateFromLocalStorage();
+        const found = await getDissertation(id);
+        if (!cancelled && found) {
+          setDissertation({ ...found, createdAt: new Date(found.createdAt), updatedAt: new Date(found.updatedAt) });
         }
       } catch (e) {
-        console.error('Error loading dissertation:', e);
+        console.error('Error loading dissertation from IndexedDB:', e);
+      } finally {
+        if (!cancelled) setIsLoadingDissertation(false);
       }
-    }
-    return {
-      id: id || `diss-${Date.now()}`,
-      title: t('dissertation.newDissertation'),
-      topic: '',
-      abstract: '',
-      chapters: [
-        {
-          id: 'ch-1',
-          title: t('dissertation.chIntroduction'),
-          content: '',
-          subchapters: [
-            { id: 'sub-1-1', title: t('dissertation.subResearchRelevance'), content: '' },
-            { id: 'sub-1-2', title: t('dissertation.subGoalsAndObjectives'), content: '' },
-            { id: 'sub-1-3', title: t('dissertation.subObjectAndSubject'), content: '' },
-            { id: 'sub-1-4', title: t('dissertation.subNovelty'), content: '' },
-            { id: 'sub-1-5', title: t('dissertation.subPracticalSignificance'), content: '' },
-          ]
-        },
-        {
-          id: 'ch-2',
-          title: t('dissertation.chTheory'),
-          content: '',
-          subchapters: [
-            { id: 'sub-2-1', title: t('dissertation.subLitReview'), content: '' },
-            { id: 'sub-2-2', title: t('dissertation.subConcepts'), content: '' },
-            { id: 'sub-2-3', title: t('dissertation.subApproaches'), content: '' },
-          ]
-        },
-        {
-          id: 'ch-3',
-          title: t('dissertation.chMethodology'),
-          content: '',
-          subchapters: [
-            { id: 'sub-3-1', title: t('dissertation.subMethods'), content: '' },
-            { id: 'sub-3-2', title: t('dissertation.subStages'), content: '' },
-            { id: 'sub-3-3', title: t('dissertation.subResearchBase'), content: '' },
-          ]
-        },
-        {
-          id: 'ch-4',
-          title: t('dissertation.chResults'),
-          content: '',
-          subchapters: [
-            { id: 'sub-4-1', title: t('dissertation.subDataAnalysis'), content: '' },
-            { id: 'sub-4-2', title: t('dissertation.subInterpretation'), content: '' },
-            { id: 'sub-4-3', title: t('dissertation.subDiscussion'), content: '' },
-          ]
-        },
-        {
-          id: 'ch-5',
-          title: t('dissertation.chConclusion'),
-          content: '',
-          subchapters: []
-        },
-        {
-          id: 'ch-6',
-          title: t('dissertation.chReferences'),
-          content: '',
-          subchapters: []
-        },
-        {
-          id: 'ch-7',
-          title: t('dissertation.chAppendices'),
-          content: '',
-          subchapters: []
-        }
-      ],
-      starred: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      wordCount: 0,
-      targetWordCount: 80000,
-      scienceField: 'pedagogy',
-      degreeType: 'master',
-      documentType: 'dissertation' as DocumentType,
-      citations: [],
-      plagiarismScore: undefined,
-      uniquenessScore: undefined,
-    };
-  });
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
 
   // Word count calculation using useMemo to avoid infinite loops
   const wordCount = useMemo(() => {
@@ -314,26 +324,12 @@ const DissertationPage = () => {
   
   const saveDissertation = useCallback((dissToSave: Dissertation) => {
     setSaveStatus('saving');
-    try {
-      const saved = localStorage.getItem('dissertations');
-      let list: Dissertation[] = [];
-      try {
-        list = saved ? JSON.parse(saved) : [];
-      } catch (e) {
-        list = [];
-      }
-      const index = list.findIndex((d: Dissertation) => d.id === dissToSave.id);
-      if (index >= 0) {
-        list[index] = dissToSave;
-      } else {
-        list.push(dissToSave);
-      }
-      localStorage.setItem('dissertations', JSON.stringify(list));
-      setTimeout(() => setSaveStatus('saved'), 300);
-    } catch (e) {
-      console.error('Error saving dissertation:', e);
-      setSaveStatus('unsaved');
-    }
+    saveDissertationToDB(dissToSave)
+      .then(() => setTimeout(() => setSaveStatus('saved'), 300))
+      .catch((e) => {
+        console.error('Error saving dissertation:', e);
+        setSaveStatus('unsaved');
+      });
   }, []);
 
   // Cleanup abort controller on unmount
@@ -3323,6 +3319,14 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
 
   const progressPercentage = Math.round((wordCount / dissertation.targetWordCount) * 100);
 
+  if (isLoadingDissertation) {
+    return (
+      <div className="h-[100dvh] flex items-center justify-center" style={{ background: '#050508' }}>
+        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+      </div>
+    );
+  }
+
   return (
     <div className="h-[100dvh] flex overflow-hidden" style={{ background: '#050508' }}>
       {/* Subtle animated background */}
@@ -3429,7 +3433,6 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
               const limits = subscription.getLimits();
               const remaining = subscription.getRemainingLimits();
               const planColors: Record<string, { bg: string; text: string; light: string }> = {
-                free: { bg: 'gray-500', text: 'gray-400', light: 'gray-300' },
                 starter: { bg: 'blue-500', text: 'blue-400', light: 'blue-300' },
                 pro: { bg: 'violet-500', text: 'violet-400', light: 'violet-300' },
                 premium: { bg: 'amber-500', text: 'amber-400', light: 'amber-300' },

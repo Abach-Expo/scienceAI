@@ -40,6 +40,7 @@ import {
   PlanType 
 } from '../store/subscriptionStore';
 import { useTranslation } from '../store/languageStore';
+import { getAllDissertations } from '../utils/dissertationStorage';
 import ConfirmModal, { AlertModal } from '../components/ConfirmModal';
 import PaymentModal from '../components/PaymentModal';
 import { API_URL } from '../config';
@@ -158,14 +159,14 @@ const SettingsPage = () => {
     window.location.reload();
   };
 
-  const handleExportData = () => {
-    let chats = [];
-    let presentations = [];
-    let dissertations = [];
+  const handleExportData = async () => {
+    let chats: unknown[] = [];
+    let presentations: unknown[] = [];
+    let dissertations: unknown[] = [];
     
     try { chats = JSON.parse(localStorage.getItem('chats') || '[]'); } catch (e) { chats = []; }
     try { presentations = JSON.parse(localStorage.getItem('presentations') || '[]'); } catch (e) { presentations = []; }
-    try { dissertations = JSON.parse(localStorage.getItem('dissertations') || '[]'); } catch (e) { dissertations = []; }
+    try { dissertations = await getAllDissertations(); } catch (e) { dissertations = []; }
     
     const data = {
       chats,
