@@ -6,6 +6,7 @@
 
 import { API_URL } from '../config';
 import { fetchWithAuth } from './apiClient';
+const __DEV__ = import.meta.env.DEV;
 
 interface GenerateResponse {
   success: boolean;
@@ -42,7 +43,7 @@ export async function generateAI(
 ): Promise<{ content: string; error?: string; model?: string; provider?: string }> {
   try {
     const effectiveTaskType = options?.taskType || 'chat';
-    console.log(`[AI] generateAI: taskType=${effectiveTaskType}, maxTokens=${options?.maxTokens ?? 4000}`);
+    if (__DEV__) console.log(`[AI] generateAI: taskType=${effectiveTaskType}, maxTokens=${options?.maxTokens ?? 4000}`);
     
     const response = await fetchWithAuth(`${API_URL}/llm/generate`, {
       method: 'POST',
@@ -68,7 +69,7 @@ export async function generateAI(
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      console.error(`[AI] Non-JSON response (${response.status}):`, responseText.slice(0, 200));
+      if (__DEV__) console.error(`[AI] Non-JSON response (${response.status}):`, responseText.slice(0, 200));
       return {
         content: '',
         error: `Некорректный JSON от сервера (HTTP ${response.status})`,
@@ -76,7 +77,7 @@ export async function generateAI(
     }
 
     if (!response.ok || !data.success) {
-      console.warn(`[AI] generateAI error: status=${response.status}, error=${data.error}`);
+      if (__DEV__) console.warn(`[AI] generateAI error: status=${response.status}, error=${data.error}`);
       if (response.status === 401) {
         return {
           content: '',
@@ -223,7 +224,7 @@ export function createServerOpenAI(taskType?: string) {
           // Auto-detect taskType from context if not explicitly provided
           const effectiveTaskType = taskType || 'presentation';
           
-          console.log(`[AI] createServerOpenAI: taskType=${effectiveTaskType}, maxTokens=${params.max_tokens}`);
+          if (__DEV__) console.log(`[AI] createServerOpenAI: taskType=${effectiveTaskType}, maxTokens=${params.max_tokens}`);
           
           const result = await generateAI(
             systemMsg?.content || '',
@@ -236,7 +237,7 @@ export function createServerOpenAI(taskType?: string) {
           );
 
           if (result.error) {
-            console.error(`[AI] createServerOpenAI error: ${result.error}`);
+            if (__DEV__) console.error(`[AI] createServerOpenAI error: ${result.error}`);
             throw new Error(result.error);
           }
 

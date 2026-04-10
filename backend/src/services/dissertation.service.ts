@@ -16,11 +16,33 @@ interface DissertationConfig {
   topic: string;
   type: 'essay' | 'referat' | 'coursework' | 'diploma' | 'dissertation';
   targetPages: number;       // Желаемое количество страниц
-  language: 'ru' | 'en';
+  language: 'ru' | 'en' | 'uk' | 'kk' | 'uz' | 'de' | 'fr' | 'es' | 'zh' | 'ar';
   additionalInstructions?: string;
   includeReferences?: boolean;
   includeTableOfContents?: boolean;
   style?: 'academic' | 'scientific' | 'popular';
+}
+
+// Маппинг кодов языков → названий для промптов
+const LANGUAGE_NAMES: Record<string, { inLang: string; citationFormat: string }> = {
+  ru: { inLang: 'русском', citationFormat: 'ГОСТ Р 7.0.5-2008' },
+  en: { inLang: 'английском', citationFormat: 'APA 7th edition' },
+  uk: { inLang: 'украинском', citationFormat: 'ДСТУ 8302:2015' },
+  kk: { inLang: 'казахском', citationFormat: 'ГОСТ Р 7.0.5-2008' },
+  uz: { inLang: 'узбекском', citationFormat: 'ГОСТ Р 7.0.5-2008' },
+  de: { inLang: 'немецком', citationFormat: 'DIN ISO 690' },
+  fr: { inLang: 'французском', citationFormat: 'NF Z44-005' },
+  es: { inLang: 'испанском', citationFormat: 'APA 7th edition' },
+  zh: { inLang: 'китайском', citationFormat: 'GB/T 7714-2015' },
+  ar: { inLang: 'арабском', citationFormat: 'APA 7th edition' },
+};
+
+function getLangName(language: string): string {
+  return LANGUAGE_NAMES[language]?.inLang || 'английском';
+}
+
+function getCitationFormat(language: string): string {
+  return LANGUAGE_NAMES[language]?.citationFormat || 'APA 7th edition';
 }
 
 interface ChapterPlan {
@@ -445,7 +467,7 @@ export class DissertationService {
       .map(ch => `### ${ch.title} (${ch.wordCount} слов)\n${ch.content.substring(0, 2000)}`)
       .join('\n\n');
 
-    const lang = language === 'ru' ? 'русском' : 'английском';
+    const lang = getLangName(language);
 
     const systemPrompt = `Ты — помощник академического писателя. Создай краткий, но информативный конспект всех написанных глав.`;
 
@@ -489,7 +511,7 @@ ${chaptersText}
 
     const systemPrompt = `Ты — эксперт по академическому письму. Уточни план ${typeLabel} по указанной теме.
 Верни JSON массив глав. Каждая глава: { "number", "title", "description", "targetWords", "targetPages", "subsections": ["подраздел1", "подраздел2", ...], "type": "introduction|chapter|conclusion|references|abstract" }
-Названия глав должны быть на ${language === 'ru' ? 'русском' : 'английском'} языке и относиться к указанной теме.
+Названия глав должны быть на ${getLangName(language)} языке и относиться к указанной теме.
 Сохрани распределение страниц из шаблона. НЕ меняй общее количество страниц.
 
 ВАЖНО: Для каждой главы типа "chapter" укажи от ${minSubsections} до ${minSubsections + 3} подразделов (subsections).
@@ -540,7 +562,7 @@ ${instructions ? `Дополнительные требования: ${instructi
     currentChapterIdx: number = 0
   ): Promise<string> {
     const typeLabel = getTypeLabel(type);
-    const lang = language === 'ru' ? 'русском' : 'английском';
+    const lang = getLangName(language);
     const styleDesc = style === 'scientific' ? 'строго научный' : style === 'popular' ? 'научно-популярный' : 'академический';
 
     // Определяем, нужно ли разбивать главу на подзапросы
@@ -802,7 +824,7 @@ ${existingText.slice(-2000)}
     targetWords: number
   ): Promise<string> {
     const typeLabel = getTypeLabel(type);
-    const lang = language === 'ru' ? 'русском' : 'английском';
+    const lang = getLangName(language);
     const minRefs = type === 'dissertation' ? 100 : type === 'diploma' ? 50 : type === 'coursework' ? 20 : 10;
 
     // Собираем ключевые темы из глав
@@ -813,7 +835,7 @@ ${existingText.slice(-2000)}
 
     const systemPrompt = `Ты — эксперт по академическому цитированию. Создай список литературы для ${typeLabel} на ${lang} языке.
 
-ФОРМАТ: ${language === 'ru' ? 'ГОСТ Р 7.0.5-2008' : 'APA 7th edition'}
+ФОРМАТ: ${getCitationFormat(language)}
 Минимум: ${minRefs} источников.
 
 ТРЕБОВАНИЯ:

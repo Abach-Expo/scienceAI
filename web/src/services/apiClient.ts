@@ -5,6 +5,7 @@
 
 import { API_URL } from '../config';
 import { useAuthStore } from '../store/authStore';
+const __DEV__ = import.meta.env.DEV;
 type RequestOptions = Omit<RequestInit, 'headers'> & {
   headers?: Record<string, string>;
   _isRetry?: boolean; // internal flag to prevent infinite retry loops
@@ -35,11 +36,11 @@ async function refreshAccessToken(): Promise<boolean> {
     try {
       const refreshToken = useAuthStore.getState().getRefreshToken();
       if (!refreshToken) {
-        console.warn('[Auth] No refresh token available');
+        if (__DEV__) console.warn('[Auth] No refresh token available');
         return false;
       }
 
-      console.log('[Auth] Refreshing access token...');
+      if (__DEV__) console.log('[Auth] Refreshing access token...');
       const response = await fetch(`${API_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,20 +48,20 @@ async function refreshAccessToken(): Promise<boolean> {
       });
 
       if (!response.ok) {
-        console.warn(`[Auth] Refresh failed: ${response.status}`);
+        if (__DEV__) console.warn(`[Auth] Refresh failed: ${response.status}`);
         return false;
       }
 
       const data = await response.json();
       if (data.success && data.data?.token && data.data?.refreshToken) {
         useAuthStore.getState().setTokens(data.data.token, data.data.refreshToken);
-        console.log('[Auth] Token refreshed successfully');
+        if (__DEV__) console.log('[Auth] Token refreshed successfully');
         return true;
       }
-      console.warn('[Auth] Refresh response missing tokens');
+      if (__DEV__) console.warn('[Auth] Refresh response missing tokens');
       return false;
     } catch (e) {
-      console.warn('[Auth] Refresh error:', e);
+      if (__DEV__) console.warn('[Auth] Refresh error:', e);
       return false;
     } finally {
       refreshPromise = null;
@@ -99,13 +100,13 @@ async function request<T = any>(
       if (!response.ok) {
         // Auto-refresh on 401 (token expired) — retry once
         if (response.status === 401 && !options._isRetry && useAuthStore.getState().isAuthenticated) {
-          console.log(`[Auth] Got 401 on ${endpoint}, attempting refresh...`);
+          if (__DEV__) console.log(`[Auth] Got 401 on ${endpoint}, attempting refresh...`);
           const refreshed = await refreshAccessToken();
           if (refreshed) {
             clearTimeout(timeoutId);
             return request<T>(endpoint, { ...options, _isRetry: true });
           }
-          console.warn(`[Auth] Refresh failed for ${endpoint}, returning error to caller`);
+          if (__DEV__) console.warn(`[Auth] Refresh failed for ${endpoint}, returning error to caller`);
         }
 
         const errorData = await response.json().catch(() => ({}));
@@ -216,7 +217,7 @@ export async function fetchWithAuth(
   let response = await doFetch();
 
   if (response.status === 401 && useAuthStore.getState().isAuthenticated) {
-    console.log(`[Auth] Got 401 on fetchWithAuth ${url}, attempting refresh...`);
+    if (__DEV__) console.log(`[Auth] Got 401 on fetchWithAuth ${url}, attempting refresh...`);
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       // Retry with the fresh token
@@ -224,7 +225,7 @@ export async function fetchWithAuth(
     } else {
       // Refresh failed — do NOT logout here; let the caller handle the 401
       // (logout would trigger ProtectedRoute redirect, hiding error messages)
-      console.warn(`[Auth] Refresh failed on fetchWithAuth, returning 401 to caller`);
+      if (__DEV__) console.warn(`[Auth] Refresh failed on fetchWithAuth, returning 401 to caller`);
     }
   }
 

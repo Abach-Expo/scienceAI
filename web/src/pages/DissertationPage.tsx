@@ -71,6 +71,11 @@ import { DOCUMENT_TYPES, SCIENCE_FIELDS, formatCitationGOST, checkUniqueness, ge
 const DissertationPage = () => {
   const { t } = useTranslation();
   useDocumentTitle(t('dissertation.pageTitle'));
+  
+  // Генератор уникальных ID для сообщений (без коллизий при быстрых вызовах)
+  let _uidCounter = 0;
+  const uid = (prefix = 'msg') => `${prefix}-${Date.now()}-${++_uidCounter}-${Math.random().toString(36).slice(2, 6)}`;
+  
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
@@ -554,7 +559,7 @@ const DissertationPage = () => {
     if (!limitCheck.allowed) {
       setShowLimitModal(true);
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `⚠️ ${limitCheck.reason}`,
         timestamp: new Date(),
@@ -568,7 +573,7 @@ const DissertationPage = () => {
     // Добавляем сообщение пользователя только если не пропускаем
     if (!skipUserMessage) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'user',
         content: prompt,
         timestamp: new Date(),
@@ -730,7 +735,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
       let sseBuffer = '';
 
       // Add a streaming assistant message placeholder
-      const streamMsgId = Date.now().toString();
+      const streamMsgId = uid('stream');
       if (!onEditorChunk) {
         setAiMessages(prev => [...prev, {
           id: streamMsgId,
@@ -839,7 +844,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
         // Retry логика
         if (attempt < retries) {
           setAiMessages(prev => [...prev, {
-            id: Date.now().toString(),
+            id: uid(),
             role: 'assistant',
             content: `${t('dissertation.generationError')} ${attempt + 1}/${retries}`,
             timestamp: new Date(),
@@ -853,7 +858,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
         // Все попытки исчерпаны
         const errorMessage = error instanceof Error ? error.message : 'Попробуйте ещё раз или проверьте соединение с сервером.';
         setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
+          id: uid(),
           role: 'assistant',
           content: `❌ Ошибка: ${errorMessage}
           
@@ -917,7 +922,7 @@ ${context ? `═══ СУЩЕСТВУЮЩИЙ КОНТЕКСТ ═══\n${co
 
     try {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `🚀 **${t('dissertation.generatingChapter')}**\n\n📄 ${t('dissertation.targetVolume')}: ~${targetPages} ${t('dissertation.pages')} (${totalWords.toLocaleString()} ${t('dissertation.words')})\n📑 ${t('dissertation.sections')}: ${subchapters.length}\n⏱️ ${t('dissertation.estimatedTime')}: ${Math.ceil(subchapters.length * 1.5)} ${t('dissertation.minutes')}`,
         timestamp: new Date(),
@@ -1121,7 +1126,7 @@ ${fullContent.slice(-4000)}
       const pageCount = Math.round(wordCount / wordsPerPage);
 
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `✅ **${t('dissertation.chapterGenerated')}**\n\n📊 ${t('dissertation.generationStats')}:\n• ${t('dissertation.words')}: ${wordCount.toLocaleString()}\n• ${t('dissertation.pages')}: ~${pageCount}\n• ${t('dissertation.sections')}: ${subchapters.length}\n\n💡 ${t('dissertation.contentAddedToEditor')}`,
         timestamp: new Date(),
@@ -1133,7 +1138,7 @@ ${fullContent.slice(-4000)}
       console.error('Large content generation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `${t('dissertation.chapterGenerationError')}: ${errorMessage}`,
         timestamp: new Date(),
@@ -1152,7 +1157,7 @@ ${fullContent.slice(-4000)}
     if (!limitCheck.allowed) {
       setShowLimitModal(true);
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `⚠️ ${limitCheck.reason || 'Недостаточно лимитов для генерации.'}\n\nОбновите подписку для доступа к этой функции.`,
         timestamp: new Date(),
@@ -1162,7 +1167,7 @@ ${fullContent.slice(-4000)}
 
     if (!dissertation.title.trim() || dissertation.title === t('dissertation.newDissertation')) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.enterTopicTitle'),
         timestamp: new Date(),
@@ -1388,7 +1393,7 @@ ${fullContent.slice(-4000)}
 
           // Сообщение о завершении — без упоминания моделей
           setAiMessages(prev => [...prev, {
-            id: Date.now().toString(),
+            id: uid(),
             role: 'assistant',
             content: `${t('dissertation.fullGenerationDone')}\n\n📄 ${t('dissertation.words')}: **${(data.totalWords as number)?.toLocaleString() || '?'}** (~${data.totalPages || '?'} ${t('dissertation.pages')})\n📑 ${t('dissertation.chapters')}: ${resultChapters.length}\n⏱️ ${generationTimeSec} sec.\n\n${t('dissertation.selectChapterToView')}`,
             timestamp: new Date(),
@@ -1859,7 +1864,7 @@ ${t('dissertation.exampleRequests')}`;
     for (const file of Array.from(files)) {
       if (file.size > MAX_FILE_SIZE) {
         setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
+          id: uid(),
           role: 'assistant',
           content: `${t('dissertation.fileTooLarge')} "${file.name}" (${formatFileSize(file.size)}). Max: ${formatFileSize(MAX_FILE_SIZE)}`,
           timestamp: new Date(),
@@ -1873,7 +1878,7 @@ ${t('dissertation.exampleRequests')}`;
       } catch (error) {
         const msg = error instanceof Error ? error.message : t('dissertation.fileReadError');
         setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
+          id: uid(),
           role: 'assistant',
           content: `❌ ${file.name}: ${msg}`,
           timestamp: new Date(),
@@ -1916,7 +1921,7 @@ ${t('dissertation.exampleRequests')}`;
 
     // Добавляем сообщение пользователя
     setAiMessages(prev => [...prev, {
-      id: Date.now().toString(),
+      id: uid(),
       role: 'user',
       content: displayMessage,
       timestamp: new Date(),
@@ -1930,7 +1935,7 @@ ${t('dissertation.exampleRequests')}`;
       if (!limitCheck.allowed) {
         setShowLimitModal(true);
         setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
+          id: uid(),
           role: 'assistant',
           content: `⚠️ ${limitCheck.reason}`,
           timestamp: new Date(),
@@ -2001,7 +2006,7 @@ ${dissertationContext}
         const decoder = new TextDecoder();
         let streamContent = '';
         let sseBuffer = '';
-        const fileMsgId = Date.now().toString();
+        const fileMsgId = uid('file');
 
         setAiMessages(prev => [...prev, {
           id: fileMsgId,
@@ -2046,7 +2051,7 @@ ${dissertationContext}
         clearInterval(progressInterval);
         const errorMessage = error instanceof Error ? error.message : t('dissertation.unknownError');
         setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
+          id: uid(),
           role: 'assistant',
           content: `${t('dissertation.fileAnalysisError')}: ${errorMessage}`,
           timestamp: new Date(),
@@ -2128,7 +2133,7 @@ ${dissertationContext}
   const generateSection = async () => {
     if (!selectedChapter) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.selectSectionFirst'),
         timestamp: new Date(),
@@ -2158,7 +2163,7 @@ ${dissertationContext}
     const currentContent = getSelectedContent().content;
     if (!currentContent.trim()) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.noTextToExpand'),
         timestamp: new Date(),
@@ -2210,7 +2215,7 @@ ${dissertationContext}
     if (result) {
       updateContent(result);
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `${t('dissertation.textExpanded')} ${t('dissertation.wasBecame').replace('{was}', String(currentContent.split(/\s+/).length)).replace('{now}', String(result.split(/\s+/).length))}`,
         timestamp: new Date(),
@@ -2261,7 +2266,7 @@ ${dissertationContext}
     if (result) {
       updateContent(result);
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.textImproved'),
         timestamp: new Date(),
@@ -2314,7 +2319,7 @@ ${dissertationContext}
     if (result) {
       updateContent(result);
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.textParaphrased'),
         timestamp: new Date(),
@@ -2364,7 +2369,7 @@ ${dissertationContext}
     if (result) {
       updateContent(result);
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.citationsAdded'),
         timestamp: new Date(),
@@ -2426,7 +2431,7 @@ ${dissertationContext}
     if (result) {
       updateContent((getSelectedContent().content ? getSelectedContent().content + '\n\n' : '') + result);
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.litReviewGenerated'),
         timestamp: new Date(),
@@ -2503,7 +2508,7 @@ ${dissertationContext}
         }));
         setSaveStatus('unsaved');
         setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
+          id: uid(),
           role: 'assistant',
           content: t('dissertation.conclusionGenerated'),
           timestamp: new Date(),
@@ -2712,7 +2717,7 @@ ${dissertationContext}
     const allContent = getAllContent();
     if (!allContent.trim()) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.writeContentFirst'),
         timestamp: new Date(),
@@ -2753,7 +2758,7 @@ ${dissertationContext}
       }));
       setSaveStatus('unsaved');
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.abstractGenerated'),
         timestamp: new Date(),
@@ -2809,7 +2814,7 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
         }));
         setSaveStatus('unsaved');
         setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
+          id: uid(),
           role: 'assistant',
           content: t('dissertation.introGenerated'),
           timestamp: new Date(),
@@ -2822,7 +2827,7 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
   const generateSmartStructure = async () => {
     if (!dissertation.title.trim()) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.enterTopicFirst'),
         timestamp: new Date(),
@@ -2836,7 +2841,7 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
 
     try {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `${t('dissertation.analyzingStructure')}`,
         timestamp: new Date(),
@@ -2913,7 +2918,7 @@ ${introStructure?.subchapters.map(s => `- ${s.title}`).join('\n') || `
         setSaveStatus('unsaved');
 
         setAiMessages(prev => [...prev, {
-          id: Date.now().toString(),
+          id: uid(),
           role: 'assistant',
           content: `${t('dissertation.structureGenerated')}
 
@@ -2937,7 +2942,7 @@ ${structure.researchQuestions ? `\n❓ **${t('dissertation.researchQuestionsLabe
       console.error('Structure generation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `${t('dissertation.structureError')}: ${errorMessage}`,
         timestamp: new Date(),
@@ -2954,7 +2959,7 @@ ${structure.researchQuestions ? `\n❓ **${t('dissertation.researchQuestionsLabe
     const allContent = getAllContent();
     if (!allContent.trim()) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.noTextForCheck'),
         timestamp: new Date(),
@@ -2973,7 +2978,7 @@ ${structure.researchQuestions ? `\n❓ **${t('dissertation.researchQuestionsLabe
       }));
       
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `${t('dissertation.uniquenessComplete')}
 
@@ -2990,7 +2995,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
       setSaveStatus('unsaved');
     } catch (error) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.uniquenessError'),
         timestamp: new Date(),
@@ -3091,7 +3096,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
     const citations = dissertation.citations || [];
     if (citations.length === 0) {
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: t('dissertation.emptySourceList'),
         timestamp: new Date(),
@@ -3118,7 +3123,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
       setSaveStatus('unsaved');
       
       setAiMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: uid(),
         role: 'assistant',
         content: `${t('dissertation.referencesGenerated')}\n\n${t('dissertation.sourcesAdded').replace('{count}', String(citations.length))}`,
         timestamp: new Date(),
@@ -3133,7 +3138,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
   const insertToContent = (text: string) => {
     updateContent((getSelectedContent().content ? getSelectedContent().content + '\n\n' : '') + text);
     setAiMessages(prev => [...prev, {
-      id: Date.now().toString(),
+      id: uid(),
       role: 'assistant',
       content: t('dissertation.textAddedToSection'),
       timestamp: new Date(),
@@ -4149,7 +4154,8 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                               transition={{ delay: 0.15 + i * 0.07 }}
                               onClick={chip.action}
                               disabled={isGenerating}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-white/50 hover:text-violet-300 transition-all disabled:opacity-30"
+                              aria-label={chip.text}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-white/50 hover:text-violet-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                               style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.1)' }}
                               whileHover={{ scale: 1.04, borderColor: 'rgba(139,92,246,0.25)' }}
                             >
@@ -4313,7 +4319,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                             <span className="text-text-primary truncate flex-1">{file.name}</span>
                             <span className="text-text-muted shrink-0">{formatFileSize(file.size)}</span>
                             {file.truncated && (
-                              <span className="text-yellow-400 shrink-0" title="Файл обрезан из-за размера">⚠️</span>
+                              <span className="text-yellow-400 shrink-0" title={t('dissertation.fileTruncated')}>⚠️</span>
                             )}
                             <button
                               onClick={() => removeAttachedFile(index)}
@@ -4350,6 +4356,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                         placeholder={attachedFiles.length > 0 ? t('dissertation.fileComment') : t('dissertation.writePrompt')}
                         rows={1}
                         disabled={isGenerating}
+                        aria-label={t('dissertation.writePrompt')}
                         className="w-full resize-none min-h-[52px] p-4 pl-12 pr-14 rounded-2xl text-sm leading-relaxed text-white/90 placeholder-white/25 focus:outline-none"
                         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', transition: 'border-color 0.2s', height: aiTextareaHeight, maxHeight: 200, lineHeight: '1.6' }}
                         onFocus={(e) => (e.target.style.borderColor = 'rgba(139,92,246,0.3)')}
@@ -4361,6 +4368,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                         disabled={isGenerating || isParsingFile}
                         className="absolute bottom-3 left-3 p-2 rounded-lg hover:bg-white/[0.04] text-white/30 hover:text-violet-400 transition-colors disabled:opacity-50"
                         title={t('dissertation.attachFileTooltip')}
+                        aria-label={t('dissertation.attachFileTooltip')}
                       >
                         {isParsingFile ? (
                           <RefreshCw size={16} className="animate-spin" />
@@ -4376,6 +4384,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                         disabled={(!aiPrompt.trim() && attachedFiles.length === 0) || isGenerating}
                         className="absolute bottom-3 right-3 p-2 rounded-lg text-white disabled:opacity-30 transition-all"
                         style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.85), rgba(236,72,153,0.75))', boxShadow: '0 0 16px rgba(139,92,246,0.2)' }}
+                        aria-label={t('dissertation.sendMessage')}
                       >
                         {isGenerating ? (
                           <RefreshCw size={16} className="animate-spin" />
