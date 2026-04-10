@@ -31,6 +31,7 @@ export const useLanguageStore = create<LanguageState>()(
       
       setLanguage: (lang: Language) => {
         localStorage.setItem('app_language', lang);
+        document.documentElement.lang = lang === 'kz' ? 'kk' : lang;
         set({ language: lang });
       },
       

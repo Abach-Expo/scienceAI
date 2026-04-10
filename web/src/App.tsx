@@ -206,6 +206,9 @@ function App() {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
     }
+    // Sync <html lang> with saved language so browser auto-translate respects it
+    const lang = (localStorage.getItem('app_language') || 'ru') as Language;
+    document.documentElement.lang = lang === 'kz' ? 'kk' : lang;
   }, []);
 
   return (
