@@ -621,6 +621,7 @@ export const translations = {
       uniquenessOk: 'Хороший результат. Рекомендуется перефразировать некоторые участки.',
       uniquenessBad: 'Требуется доработка. Используйте функцию "Перефразировать" для повышения уникальности.',
       describeTask: 'Опишите задачу...',
+      perMonth: 'мес',
       // Doc types
       docTypes: 'Типы работ',
     },
@@ -1721,6 +1722,7 @@ export const translations = {
       uniquenessOk: 'Good result. Consider paraphrasing some sections.',
       uniquenessBad: 'Needs work. Use the "Paraphrase" function to improve uniqueness.',
       describeTask: 'Describe the task...',
+      perMonth: 'mo',
       docTypes: 'Document types',
     },
     
@@ -2815,6 +2817,7 @@ export const translations = {
       uniquenessOk: 'Жақсы нәтиже. Кейбір бөліктерді перифраздау ұсынылады.',
       uniquenessBad: 'Пысықтау қажет. Бірегейлікті арттыру үшін "Перифраздау" функциясын пайдаланыңыз.',
       describeTask: 'Тапсырманы сипаттаңыз...',
+      perMonth: 'ай',
       docTypes: 'Құжат түрлері',
     },
 
@@ -3959,6 +3962,7 @@ export const translations = {
       uniquenessOk: 'Gutes Ergebnis. Es wird empfohlen, einige Abschnitte umzuformulieren.',
       uniquenessBad: 'Überarbeitung erforderlich. Nutzen Sie die Funktion "Paraphrasieren" zur Verbesserung der Einzigartigkeit.',
       describeTask: 'Beschreiben Sie die Aufgabe...',
+      perMonth: 'Mo.',
       docTypes: 'Dokumenttypen',
     },
     // Settings
@@ -4892,6 +4896,7 @@ export const translations = {
       uniquenessOk: 'Buen resultado. Se recomienda parafrasear algunas secciones.',
       uniquenessBad: 'Necesita trabajo. Use la función "Parafrasear" para mejorar la originalidad.',
       describeTask: 'Describa la tarea...',
+      perMonth: 'mes',
       docTypes: 'Tipos de documento',
     },
 
@@ -5890,6 +5895,7 @@ export const translations = {
       uniquenessOk: '良好结果。建议改写部分章节。',
       uniquenessBad: '需要修改。使用"改写"功能提高独创性。',
       describeTask: '描述任务...',
+      perMonth: '月',
       docTypes: '文档类型',
     },
 

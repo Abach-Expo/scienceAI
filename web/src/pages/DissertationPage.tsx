@@ -3433,11 +3433,12 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
               const limits = subscription.getLimits();
               const remaining = subscription.getRemainingLimits();
               const planColors: Record<string, { bg: string; text: string; light: string }> = {
+                free: { bg: 'gray-500', text: 'gray-400', light: 'gray-300' },
                 starter: { bg: 'blue-500', text: 'blue-400', light: 'blue-300' },
                 pro: { bg: 'violet-500', text: 'violet-400', light: 'violet-300' },
                 premium: { bg: 'amber-500', text: 'amber-400', light: 'amber-300' },
               };
-              const colors = planColors[subscription.currentPlan] || planColors.starter;
+              const colors = planColors[subscription.currentPlan] || planColors.free;
               
               return (
                 <div className={`mt-2 px-2 py-1.5 rounded-lg bg-${colors.bg}/10 border border-${colors.bg}/30`}>
@@ -3481,7 +3482,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
           <div className="flex items-center gap-3 text-xs text-text-muted">
             <span className="flex items-center gap-1">
               <Clock size={12} />
-              {saveStatus === 'saved' ? t('dissertation.savedStatus') : saveStatus === 'saving' ? t('dissertation.savingStatus') : t('dissertation.unsavedStatus')}
+              {saveStatus === 'saved' ? t('dissertation.savedStatus') : saveStatus === 'saving' ? t('dissertation.savingStatus') : t('dissertation.notSavedStatus')}
             </span>
             <select
               value={dissertation.degreeType}
@@ -3685,7 +3686,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
             <div className="min-w-0">
               <h1 className="text-sm md:text-lg font-bold text-text-primary truncate">{t('dissertation.aiEditor')}</h1>
               <p className="text-xs text-text-muted truncate">
-                {saveStatus === 'saved' ? `✓ ${t('dissertation.savedStatus')}` : saveStatus === 'saving' ? `⏳ ${t('dissertation.savingStatus')}` : `• ${t('dissertation.unsavedStatus')}`}
+                {saveStatus === 'saved' ? `✓ ${t('dissertation.savedStatus')}` : saveStatus === 'saving' ? `⏳ ${t('dissertation.savingStatus')}` : `• ${t('dissertation.notSavedStatus')}`}
                 {' • '}{wordCount.toLocaleString()} {t('dissertation.words')}
               </p>
             </div>
@@ -4529,10 +4530,10 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                           <p className="text-sm text-text-primary">{formatCitationGOST(citation)}</p>
                           <div className="flex gap-2 mt-1">
                             <span className="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">
-                              {citation.type === 'book' ? `📚 ${t('dissertation.citBook')}` : 
-                               citation.type === 'article' ? `📄 ${t('dissertation.citArticle')}` : 
-                               citation.type === 'conference' ? `🎤 ${t('dissertation.citConference')}` :
-                               citation.type === 'dissertation' ? `🎓 ${t('dissertation.citDissertation')}` : `🌐 ${t('dissertation.citWebsite')}`}
+                              {citation.type === 'book' ? `📚 ${t('dissertation.citationBook')}` : 
+                               citation.type === 'article' ? `📄 ${t('dissertation.citationArticle')}` : 
+                               citation.type === 'conference' ? `🎤 ${t('dissertation.citationConference')}` :
+                               citation.type === 'dissertation' ? `🎓 ${t('dissertation.citationDissertation')}` : `🌐 ${t('dissertation.citationWebsite')}`}
                             </span>
                             {citation.doi && (
                               <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
@@ -4593,11 +4594,11 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                       onChange={(e) => setNewCitation(prev => ({ ...prev, type: e.target.value as 'book' | 'article' | 'website' | 'dissertation' | 'conference' }))}
                       className="w-full p-2 rounded-lg text-sm text-white/90 placeholder-white/25" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                     >
-                      <option value="book">📚 {t('dissertation.citBook')}</option>
-                      <option value="article">📄 {t('dissertation.citArticle')}</option>
-                      <option value="conference">🎤 {t('dissertation.citConferenceMaterials')}</option>
-                      <option value="thesis">🎓 {t('dissertation.citDissertation')}</option>
-                      <option value="website">🌐 {t('dissertation.citWebsite')}</option>
+                      <option value="book">📚 {t('dissertation.citationBook')}</option>
+                      <option value="article">📄 {t('dissertation.citationArticle')}</option>
+                      <option value="conference">🎤 {t('dissertation.conferenceType')}</option>
+                      <option value="thesis">🎓 {t('dissertation.citationDissertation')}</option>
+                      <option value="website">🌐 {t('dissertation.citationWebsite')}</option>
                     </select>
                   </div>
                   
@@ -4731,27 +4732,25 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                     const remaining = subscription.getRemainingLimits();
                     
                     if (remaining.largeChapters <= 0) {
-                      return t('dissertation.limitChaptersUsed');
+                      return t('dissertation.chapterLimitUsed').replace('{count}', String(limits.largeChapterGenerations));
                     }
                     if (!limits.fullDissertationGeneration) {
-                      return t('dissertation.limitFullDissProOnly');
+                      return t('dissertation.fullDissProOnly');
                     }
                     if (remaining.dissertationGenerations <= 0) {
-                      return t('dissertation.limitGenerationsUsed');
+                      return t('dissertation.aiLimitUsed').replace('{count}', String(limits.dissertationGenerations));
                     }
                     return t('dissertation.resourcesExhausted');
                   })()}
                 </p>
                 <div className="rounded-xl p-4 mb-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <h3 className="font-semibold text-white/90 mb-2">{t('dissertation.proPlanTitle')}</h3>
+                  <h3 className="font-semibold text-white/90 mb-2">✨ {SUBSCRIPTION_PLANS.pro.name}</h3>
                   <ul className="text-sm text-white/60 text-left space-y-1">
-                    <li>{t('dissertation.proPlanFeature1')}</li>
-                    <li>{t('dissertation.proPlanFeature2')}</li>
-                    <li>{t('dissertation.proPlanFeature3')}</li>
-                    <li>{t('dissertation.proPlanFeature4')}</li>
-                    <li>{t('dissertation.proPlanFeature5')}</li>
+                    {SUBSCRIPTION_PLANS.pro.features.slice(0, 5).map((f, i) => (
+                      <li key={i}>• {f}</li>
+                    ))}
                   </ul>
-                  <p className="text-lg font-bold text-purple-400 mt-3">$12.99/мес</p>
+                  <p className="text-lg font-bold text-purple-400 mt-3">${SUBSCRIPTION_PLANS.pro.price}/{t('dissertation.perMonth')}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
