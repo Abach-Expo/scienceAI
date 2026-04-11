@@ -4871,18 +4871,20 @@ Layout: ${slide.layout}`
           {(() => {
             const limits = subscription.getLimits();
             const remaining = subscription.getRemainingLimits();
-            const planColors: Record<string, { bg: string; border: string }> = {
-              starter: { bg: 'blue-500', border: 'blue-500' },
-              pro: { bg: 'purple-500', border: 'purple-500' },
-              premium: { bg: 'orange-500', border: 'orange-500' },
+            // Static class maps — dynamic interpolation breaks Tailwind CSS purging
+            const planColorClasses: Record<string, { container: string; planText: string; bar: string }> = {
+              free: { container: 'bg-gray-500/10 border-gray-500/30', planText: 'text-gray-500', bar: 'bg-gray-500' },
+              starter: { container: 'bg-blue-500/10 border-blue-500/30', planText: 'text-blue-500', bar: 'bg-blue-500' },
+              pro: { container: 'bg-purple-500/10 border-purple-500/30', planText: 'text-purple-500', bar: 'bg-purple-500' },
+              premium: { container: 'bg-orange-500/10 border-orange-500/30', planText: 'text-orange-500', bar: 'bg-orange-500' },
             };
-            const colors = planColors[subscription.currentPlan] || planColors.starter;
+            const cls = planColorClasses[subscription.currentPlan] || planColorClasses.starter;
             const planName = (SUBSCRIPTION_PLANS[subscription.currentPlan] || SUBSCRIPTION_PLANS.starter).name;
             
             return (
-              <div className={`mt-3 p-2 rounded-lg bg-${colors.bg}/10 border border-${colors.border}/30`}>
+              <div className={`mt-3 p-2 rounded-lg border ${cls.container}`}>
                 <div className="flex items-center justify-between text-xs mb-2">
-                  <span className={`text-${colors.bg}`}>{planName}</span>
+                  <span className={cls.planText}>{planName}</span>
                   <span className="text-text-muted">
                     {subscription.usage.presentationsCreated}/{limits.presentationsPerMonth}
                   </span>
@@ -4890,7 +4892,7 @@ Layout: ${slide.layout}`
                 
                 <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden mb-2">
                   <div 
-                    className={`h-full bg-${colors.bg} rounded-full transition-all`}
+                    className={`h-full ${cls.bar} rounded-full transition-all`}
                     style={{ width: `${Math.min(100, (subscription.usage.presentationsCreated / limits.presentationsPerMonth) * 100)}%` }}
                   />
                 </div>

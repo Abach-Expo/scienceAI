@@ -92,6 +92,12 @@ const DissertationPage = () => {
   const subscription = useSubscriptionStore();
   const canGenerate = subscription.canGenerateDissertationContent();
   
+  // Синхронизируем подписку с сервера при загрузке страницы (источник правды — БД)
+  useEffect(() => {
+    subscription.fetchFromBackend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
   // API ключ хранится ТОЛЬКО на сервере (безопасно, не виден в браузере)
   
   const [showMenu, setShowMenu] = useState(false);
@@ -3299,7 +3305,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
     }
   };
 
-  const toolbarButtons: Array<{ icon?: React.ComponentType<{ size?: number | string; className?: string }>; action?: () => void; title?: string; divider?: boolean }> = [
+  const toolbarButtons = useMemo<Array<{ icon?: React.ComponentType<{ size?: number | string; className?: string }>; action?: () => void; title?: string; divider?: boolean }>>(() => [
     { icon: Bold, action: formatBold, title: t('dissertation.bold') },
     { icon: Italic, action: formatItalic, title: t('dissertation.italic') },
     { icon: Underline, action: formatUnderline, title: t('dissertation.underline') },
@@ -3315,7 +3321,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
     { icon: Link2, action: insertLink, title: t('dissertation.insertLink') },
     { icon: ImageIcon, action: insertImage, title: t('dissertation.insertImage') },
     { icon: Table, action: insertTable, title: t('dissertation.insertTable') },
-  ];
+  ], [t]);
 
   const progressPercentage = Math.round((wordCount / dissertation.targetWordCount) * 100);
 
@@ -3432,25 +3438,26 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
             {(() => {
               const limits = subscription.getLimits();
               const remaining = subscription.getRemainingLimits();
-              const planColors: Record<string, { bg: string; text: string; light: string }> = {
-                free: { bg: 'gray-500', text: 'gray-400', light: 'gray-300' },
-                starter: { bg: 'blue-500', text: 'blue-400', light: 'blue-300' },
-                pro: { bg: 'violet-500', text: 'violet-400', light: 'violet-300' },
-                premium: { bg: 'amber-500', text: 'amber-400', light: 'amber-300' },
+              // Static class maps — dynamic interpolation breaks Tailwind CSS purging in production
+              const planColorClasses: Record<string, { container: string; planName: string; valueText: string; btnText: string }> = {
+                free: { container: 'bg-gray-500/10 border-gray-500/30', planName: 'text-gray-400', valueText: 'text-gray-300', btnText: 'text-gray-400 hover:text-gray-300' },
+                starter: { container: 'bg-blue-500/10 border-blue-500/30', planName: 'text-blue-400', valueText: 'text-blue-300', btnText: 'text-blue-400 hover:text-blue-300' },
+                pro: { container: 'bg-violet-500/10 border-violet-500/30', planName: 'text-violet-400', valueText: 'text-violet-300', btnText: 'text-violet-400 hover:text-violet-300' },
+                premium: { container: 'bg-amber-500/10 border-amber-500/30', planName: 'text-amber-400', valueText: 'text-amber-300', btnText: 'text-amber-400 hover:text-amber-300' },
               };
-              const colors = planColors[subscription.currentPlan] || planColors.free;
+              const cls = planColorClasses[subscription.currentPlan] || planColorClasses.free;
               
               return (
-                <div className={`mt-2 px-2 py-1.5 rounded-lg bg-${colors.bg}/10 border border-${colors.bg}/30`}>
+                <div className={`mt-2 px-2 py-1.5 rounded-lg border ${cls.container}`}>
                   <div className="flex items-center justify-between text-xs">
-                    <span className={`text-${colors.text}`}>{(SUBSCRIPTION_PLANS[subscription.currentPlan] || SUBSCRIPTION_PLANS.starter).name}</span>
+                    <span className={cls.planName}>{(SUBSCRIPTION_PLANS[subscription.currentPlan] || SUBSCRIPTION_PLANS.starter).name}</span>
                   </div>
                   
                   {/* AI генерации */}
                   <div className="flex items-center justify-between text-[10px] mt-1">
                     <span className="text-text-muted">{t('dissertation.aiGenerations')}:</span>
                     <span className={`font-medium ${
-                      remaining.dissertationGenerations <= 0 ? 'text-red-400' : `text-${colors.light}`
+                      remaining.dissertationGenerations <= 0 ? 'text-red-400' : cls.valueText
                     }`}>
                       {remaining.dissertationGenerations}/{limits.dissertationGenerations}
                     </span>
@@ -3460,7 +3467,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                   <div className="flex items-center justify-between text-[10px] mt-0.5">
                     <span className="text-text-muted">{t('dissertation.chaptersLarge')}:</span>
                     <span className={`font-medium ${
-                      remaining.largeChapters <= 0 ? 'text-red-400' : `text-${colors.light}`
+                      remaining.largeChapters <= 0 ? 'text-red-400' : cls.valueText
                     }`}>
                       {remaining.largeChapters}/{limits.largeChapterGenerations}
                     </span>
@@ -3469,7 +3476,7 @@ ${result.matches.length > 0 ? `\n**${t('dissertation.matchesFound')}:**\n` + res
                   {remaining.dissertationGenerations <= 0 && (
                     <button 
                       onClick={() => navigate('/settings')}
-                      className={`w-full mt-1 text-[10px] text-${colors.text} hover:text-${colors.light} underline`}
+                      className={`w-full mt-1 text-[10px] ${cls.btnText} underline`}
                     >
                       {t('dissertation.getProForMore')}
                     </button>

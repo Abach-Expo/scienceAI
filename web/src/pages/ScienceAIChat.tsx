@@ -1322,9 +1322,9 @@ const ScienceAIChat = () => {
                   <p className="text-text-secondary/40 text-[11px] uppercase tracking-[0.2em] mb-5 font-medium">{t('chat.describeTask')}</p>
                   <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {[
-                      { icon: GraduationCap, title: t('nav.dissertations'), desc: t('chat.capDissertations'), color: 'violet', gradient: 'from-violet-500/20 to-violet-600/5', path: '/dissertation' },
-                      { icon: Layers, title: t('nav.presentations'), desc: t('chat.capPresentations'), color: 'fuchsia', gradient: 'from-fuchsia-500/20 to-fuchsia-600/5', path: '/presentations' },
-                      { icon: MessageSquare, title: t('chat.questions'), desc: t('chat.capQuestions'), color: 'indigo', gradient: 'from-indigo-500/20 to-indigo-600/5', path: '' },
+                      { icon: GraduationCap, title: t('nav.dissertations'), desc: t('chat.capDissertations'), color: 'violet', gradient: 'from-violet-500/20 to-violet-600/5', path: '/dissertation', iconCls: 'bg-violet-500/10 border-violet-500/10', iconText: 'text-violet-400/80' },
+                      { icon: Layers, title: t('nav.presentations'), desc: t('chat.capPresentations'), color: 'fuchsia', gradient: 'from-fuchsia-500/20 to-fuchsia-600/5', path: '/presentations', iconCls: 'bg-fuchsia-500/10 border-fuchsia-500/10', iconText: 'text-fuchsia-400/80' },
+                      { icon: MessageSquare, title: t('chat.questions'), desc: t('chat.capQuestions'), color: 'indigo', gradient: 'from-indigo-500/20 to-indigo-600/5', path: '', iconCls: 'bg-indigo-500/10 border-indigo-500/10', iconText: 'text-indigo-400/80' },
                     ].map((cap, i) => (
                       <motion.div key={i}
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -1336,9 +1336,9 @@ const ScienceAIChat = () => {
                         {/* Card glow on hover */}
                         <div className={`absolute inset-0 bg-gradient-to-br ${cap.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                         <div className="relative">
-                          <div className={`w-10 h-10 rounded-xl bg-${cap.color}-500/10 flex items-center justify-center mb-3 border border-${cap.color}-500/10`}
+                          <div className={`w-10 h-10 rounded-xl ${cap.iconCls} flex items-center justify-center mb-3 border`}
                             style={{ boxShadow: `0 0 20px rgba(var(--accent-primary), 0.05)` }}>
-                            <cap.icon size={18} className={`text-${cap.color}-400/80`} />
+                            <cap.icon size={18} className={cap.iconText} />
                           </div>
                           <p className="text-text-primary/70 text-sm font-semibold mb-1">{cap.title}</p>
                           <p className="text-text-secondary/50 text-xs">{cap.desc}</p>

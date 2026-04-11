@@ -1,4 +1,4 @@
-const CACHE_NAME = 'science-ai-v1';
+const CACHE_NAME = 'science-ai-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -27,7 +27,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch — network-first for API, cache-first for assets
+// Fetch — network-first for everything, cache as fallback
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -38,32 +38,14 @@ self.addEventListener('fetch', (event) => {
   // Skip API requests and external URLs
   if (url.pathname.startsWith('/api') || url.origin !== self.location.origin) return;
 
-  // For navigation requests (HTML pages) — network first, fallback to cache
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match('/') || caches.match(request))
-    );
-    return;
-  }
-
-  // For static assets — cache first, fallback to network
-  if (url.pathname.match(/\.(js|css|svg|png|jpg|jpeg|webp|woff2?)$/)) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached;
-        return fetch(request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        });
+  // Network-first for all requests — always try fresh content
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        return response;
       })
-    );
-    return;
-  }
+      .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+  );
 });
