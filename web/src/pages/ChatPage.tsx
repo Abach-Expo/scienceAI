@@ -1132,6 +1132,7 @@ const ChatPage = () => {
       {/* Sidebar - mobile backdrop */}
       {showSidebar && (
         <div
+          aria-hidden="true"
           onClick={() => setShowSidebar(false)}
           className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
         />
@@ -1167,6 +1168,7 @@ const ChatPage = () => {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder={t('chat.searchChats')}
+                    aria-label={t('chat.searchChats')}
                     className="w-full pl-9 pr-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500/50"
                   />
                 </div>
@@ -1195,8 +1197,11 @@ const ChatPage = () => {
                 {filteredChats.map((c) => (
                   <motion.div
                     key={c.id}
+                    role="button"
+                    tabIndex={0}
                     whileHover={{ x: 2 }}
                     onClick={() => handleSwitchChat(c)}
+                    onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') handleSwitchChat(c); }}
                     className={`group relative px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
                       c.id === chat.id 
                         ? 'bg-purple-500/15 border border-purple-500/20' 
@@ -1272,12 +1277,16 @@ const ChatPage = () => {
                   onChange={(e) => setNewTitle(e.target.value)}
                   onBlur={handleSaveTitle}
                   onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle()}
+                  aria-label="Edit chat title"
                   className="bg-bg-secondary px-3 py-1 rounded-lg border border-purple-500 focus:outline-none text-text-primary"
                   autoFocus
                 />
               ) : (
                 <div 
+                  role="button"
+                  tabIndex={0}
                   onClick={() => { setEditingTitle(true); setNewTitle(chat.title); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setEditingTitle(true); setNewTitle(chat.title); } }}
                   className="cursor-pointer group flex items-center gap-2"
                 >
                   <h1 className="font-semibold text-text-primary flex items-center gap-2">

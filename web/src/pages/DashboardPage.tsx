@@ -326,10 +326,10 @@ const DashboardPage = () => {
               <h1 className="text-xl md:text-2xl font-bold text-text-primary truncate">
                 {(() => {
                   const hour = new Date().getHours();
-                  const greeting = hour < 6 ? (language === 'ru' ? 'Доброй ночи' : 'Good night')
-                    : hour < 12 ? (language === 'ru' ? 'Доброе утро' : 'Good morning')
-                    : hour < 18 ? (language === 'ru' ? 'Добрый день' : 'Good afternoon')
-                    : (language === 'ru' ? 'Добрый вечер' : 'Good evening');
+                  const greeting = hour < 6 ? t('dashboard.goodNight')
+                    : hour < 12 ? t('dashboard.goodMorning')
+                    : hour < 18 ? t('dashboard.goodAfternoon')
+                    : t('dashboard.goodEvening');
                   return `${greeting}, ${user?.name?.split(' ')[0] || ''}`;
                 })()}{' '}
                 <span className="text-lg font-normal text-text-muted">
@@ -342,7 +342,7 @@ const DashboardPage = () => {
                 {filteredItems.length} {filteredItems.length === 1 ? t('dashboard.item') : t('dashboard.items')}
                 {stats.streak > 1 && (
                   <span className="ml-2 text-xs text-amber-400">
-                    🔥 {stats.streak} {language === 'ru' ? 'дн. подряд' : 'day streak'}
+                    🔥 {stats.streak} {t('dashboard.stats.streak')}
                   </span>
                 )}
               </p>

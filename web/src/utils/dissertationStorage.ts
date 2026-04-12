@@ -11,9 +11,11 @@ const DB_VERSION = 1;
 const STORE_NAME = 'dissertations';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
+let dbReady = false;
 
 function openDB(): Promise<IDBDatabase> {
-  if (dbPromise) return dbPromise;
+  if (dbPromise && dbReady) return dbPromise;
+  if (dbPromise) return dbPromise; // Already initializing — reuse same promise
   dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
@@ -22,9 +24,13 @@ function openDB(): Promise<IDBDatabase> {
         db.createObjectStore(STORE_NAME, { keyPath: 'id' });
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      dbReady = true;
+      resolve(request.result);
+    };
     request.onerror = () => {
       dbPromise = null;
+      dbReady = false;
       reject(request.error);
     };
   });

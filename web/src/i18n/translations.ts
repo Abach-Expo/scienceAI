@@ -84,6 +84,10 @@ export const translations = {
       removeFromFavorites: 'Убрать из избранного',
       noProjects: 'Нет проектов',
       createFirst: 'Создайте свой первый проект',
+      goodNight: 'Доброй ночи',
+      goodMorning: 'Доброе утро',
+      goodAfternoon: 'Добрый день',
+      goodEvening: 'Добрый вечер',
       widgets: 'Виджеты',
       
       // Stats widgets
@@ -1203,6 +1207,10 @@ export const translations = {
       removeFromFavorites: 'Remove from Favorites',
       noProjects: 'No Projects',
       createFirst: 'Create your first project',
+      goodNight: 'Good night',
+      goodMorning: 'Good morning',
+      goodAfternoon: 'Good afternoon',
+      goodEvening: 'Good evening',
       widgets: 'Widgets',
       
       // Stats widgets
@@ -2298,6 +2306,10 @@ export const translations = {
       removeFromFavorites: 'Таңдаулылардан алу',
       noProjects: 'Жобалар жоқ',
       createFirst: 'Бірінші жобаңызды жасаңыз',
+      goodNight: 'Қайырлы түн',
+      goodMorning: 'Қайырлы таң',
+      goodAfternoon: 'Қайырлы күн',
+      goodEvening: 'Қайырлы кеш',
       widgets: 'Виджеттер',
 
       // Stats widgets
@@ -3312,6 +3324,10 @@ export const translations = {
       removeFromFavorites: 'Aus Favoriten entfernen',
       noProjects: 'Keine Projekte',
       createFirst: 'Erstellen Sie Ihr erstes Projekt',
+      goodNight: 'Gute Nacht',
+      goodMorning: 'Guten Morgen',
+      goodAfternoon: 'Guten Tag',
+      goodEvening: 'Guten Abend',
       widgets: 'Widgets',
       stats: {
         totalProjects: 'Projekte gesamt',
@@ -4301,6 +4317,10 @@ export const translations = {
       removeFromFavorites: 'Quitar de favoritos',
       noProjects: 'Sin proyectos',
       createFirst: 'Crea tu primer proyecto',
+      goodNight: 'Buenas noches',
+      goodMorning: 'Buenos días',
+      goodAfternoon: 'Buenas tardes',
+      goodEvening: 'Buenas noches',
       widgets: 'Widgets',
       stats: {
         totalProjects: 'Proyectos totales',
@@ -5300,6 +5320,10 @@ export const translations = {
       removeFromFavorites: '取消收藏',
       noProjects: '暂无项目',
       createFirst: '创建您的第一个项目',
+      goodNight: '晚安',
+      goodMorning: '早上好',
+      goodAfternoon: '下午好',
+      goodEvening: '晚上好',
       widgets: '小组件',
       stats: {
         totalProjects: '项目总数',

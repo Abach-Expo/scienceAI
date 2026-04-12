@@ -5,6 +5,7 @@ import { useAuthStore } from './authStore';
 
 // Debounce timer for sync
 let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let syncAbortController: AbortController | null = null;
 
 // Типы подписок
 export type PlanType = 'free' | 'starter' | 'pro' | 'premium';
@@ -1282,14 +1283,19 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         if (syncDebounceTimer) {
           clearTimeout(syncDebounceTimer);
         }
+        if (syncAbortController) {
+          syncAbortController.abort();
+        }
         
         syncDebounceTimer = setTimeout(async () => {
           try {
             const token = useAuthStore.getState().token;
             if (!token) return; // Not logged in — skip sync
+            syncAbortController = new AbortController();
             await fetch(`${API_URL}/usage/sync`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              signal: syncAbortController.signal,
               body: JSON.stringify({
                 presentationsCreated: usage.presentationsCreated,
                 academicWorksCreated: usage.academicWorksCreated,
@@ -1313,9 +1319,13 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         try {
           const token = useAuthStore.getState().token;
           if (!token) return; // Not logged in — skip fetch
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
           const res = await fetch(`${API_URL}/usage/sync`, {
             headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
           });
+          clearTimeout(timeoutId);
           if (!res.ok) return; // Silently ignore errors
           const response = await res.json() as {
             success: boolean;

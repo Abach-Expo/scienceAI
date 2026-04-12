@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { translations, Language } from '../i18n/translations';
 
+const VALID_LANGUAGES: Language[] = ['ru', 'en', 'kz', 'de', 'es', 'zh'];
+
+function isValidLanguage(val: unknown): val is Language {
+  return typeof val === 'string' && VALID_LANGUAGES.includes(val as Language);
+}
+
 interface LanguageState {
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -27,7 +33,10 @@ const getNestedValue = (obj: Record<string, unknown>, path: string): string | nu
 export const useLanguageStore = create<LanguageState>()(
   persist(
     (set, get) => ({
-      language: (localStorage.getItem('app_language') as Language) || 'ru',
+      language: (() => {
+        const stored = localStorage.getItem('app_language');
+        return isValidLanguage(stored) ? stored : 'ru';
+      })(),
       
       setLanguage: (lang: Language) => {
         localStorage.setItem('app_language', lang);

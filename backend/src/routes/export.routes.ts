@@ -44,7 +44,8 @@ router.post(
         return;
       }
 
-      // Create PDF
+      // Create PDF (limit content to prevent DoS)
+      const MAX_EXPORT_CHARS = 2_000_000; // ~500 pages
       const pdfDoc = await PDFDocument.create();
       const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
       const timesRomanBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
@@ -58,7 +59,9 @@ router.post(
       const maxWidth = pageWidth - 2 * margin;
 
       // Split content into lines
-      const content = document.content;
+      const content = document.content.length > MAX_EXPORT_CHARS
+        ? document.content.slice(0, MAX_EXPORT_CHARS)
+        : document.content;
       const words = content.split(/\s+/);
       const lines: string[] = [];
       let currentLine = '';
@@ -125,7 +128,7 @@ router.post(
 
       // Set response headers
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${document.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${document.title.replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, '_').slice(0, 100) || 'document'}.pdf"`);
       res.send(Buffer.from(pdfBytes));
     } catch (error) {
       logger.error('PDF export error:', error);

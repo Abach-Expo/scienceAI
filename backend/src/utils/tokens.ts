@@ -65,12 +65,14 @@ export async function rotateRefreshToken(oldToken: string): Promise<TokenPair | 
       return null;
     }
 
-    // Always delete the old token (one-time use)
-    await prisma.refreshToken.delete({ where: { id: stored.id } });
-
+    // Check expiry BEFORE deleting to avoid race condition
     if (stored.expiresAt < new Date()) {
+      await prisma.refreshToken.delete({ where: { id: stored.id } });
       return null;
     }
+
+    // Delete the old token (one-time use / rotation)
+    await prisma.refreshToken.delete({ where: { id: stored.id } });
 
     // Issue a fresh pair
     return issueTokenPair(stored.userId);

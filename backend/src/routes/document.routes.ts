@@ -11,8 +11,8 @@ router.use(authMiddleware);
 router.post(
   '/',
   [
-    body('title').trim().notEmpty(),
-    body('content').trim().notEmpty(),
+    body('title').trim().notEmpty().isLength({ max: 500 }),
+    body('content').trim().notEmpty().isLength({ max: 500000 }),
     body('projectId').notEmpty(),
     body('type').optional().isIn(['DRAFT', 'OUTLINE', 'CHAPTER', 'ABSTRACT', 'CONCLUSION', 'FINAL'])
   ],
@@ -267,13 +267,15 @@ router.get('/:id/history', async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    // Get all versions in the chain
+    // Get all versions in the chain (scoped to current user)
     const allVersions = await prisma.document.findMany({
       where: {
         projectId: document.projectId,
-        title: document.title
+        title: document.title,
+        userId: req.userId
       },
       orderBy: { version: 'desc' },
+      take: 50,
       select: {
         id: true,
         title: true,

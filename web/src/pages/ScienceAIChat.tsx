@@ -322,9 +322,12 @@ const mdComponents = {
   td: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
     <td className="px-3 py-2 text-text-primary/65 border-b border-border-primary/15" {...props}>{children}</td>
   ),
-  a: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a className="text-violet-400 hover:text-violet-300 underline underline-offset-2 transition-colors" target="_blank" rel="noopener noreferrer" {...props}>{children}</a>
-  ),
+  a: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+    const safeHref = href && /^https?:\/\//i.test(href) ? href : undefined;
+    return safeHref
+      ? <a className="text-violet-400 hover:text-violet-300 underline underline-offset-2 transition-colors" target="_blank" rel="noopener noreferrer" href={safeHref} {...props}>{children}</a>
+      : <span className="text-violet-400">{children}</span>;
+  },
   hr: () => <hr className="border-text-primary/[0.06] my-4" />,
 };
 
@@ -1114,7 +1117,7 @@ const ScienceAIChat = () => {
         {showSidebar && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
+              aria-hidden="true" onClick={() => setShowSidebar(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
             <motion.aside
               initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -300, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
@@ -1330,7 +1333,10 @@ const ScienceAIChat = () => {
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.75 + i * 0.08 }}
                         whileHover={{ y: -4, scale: 1.02 }}
+                        role={cap.path ? 'button' : undefined}
+                        tabIndex={cap.path ? 0 : undefined}
                         onClick={() => cap.path && navigate(cap.path)}
+                        onKeyDown={(e: React.KeyboardEvent) => { if (cap.path && (e.key === 'Enter' || e.key === ' ')) navigate(cap.path); }}
                         className={`group relative p-3 sm:p-5 rounded-2xl overflow-hidden ${cap.path ? 'cursor-pointer' : 'cursor-default'}`}
                         style={{ background: 'rgb(var(--text-primary) / 0.02)', border: '1px solid rgb(var(--border-primary) / 0.2)', backdropFilter: 'blur(16px)' }}>
                         {/* Card glow on hover */}
@@ -1400,6 +1406,7 @@ const ScienceAIChat = () => {
                                   value={editText}
                                   onChange={e => setEditText(e.target.value)}
                                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(msg.id); } if (e.key === 'Escape') handleCancelEdit(); }}
+                                  aria-label="Edit message"
                                   className="w-full bg-transparent px-4 py-3 text-sm text-text-primary/90 resize-none focus:outline-none"
                                   rows={3}
                                   autoFocus
